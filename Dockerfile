@@ -54,6 +54,7 @@ RUN apt-get update && \
         cmake \
         python3-pip \
         jackd2 \
+        jack-example-tools \
         libjack-jackd2-dev \
         libasound2-dev \
         liblilv-dev \
@@ -100,6 +101,12 @@ RUN make -C /mod/mod-ui/utils && \
 RUN groupadd -g ${PGID} abc && \
     useradd -m -u ${PUID} -g ${PGID} -G audio -d /mod abc && \
     chown -R ${PUID}:${PGID} /mod
+
+RUN wget https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh -P /usr/local/bin && \
+    chmod +x /usr/local/bin/wait-for-it.sh
+    
+
+RUN mkdir /data && mkdir /data/user-files
 
 # Set MOD environment variables
 ENV MOD_DEV_ENVIRONMENT=0

@@ -1,2 +1,9 @@
 #!/command/with-contenv sh
-/usr/local/bin/mod-host -p 5555 -f 5556 -n
+# Wait until JACK is ready
+
+
+echo "Waiting for JACK to start..." 2>&1 | sed 's/^/[mod-host] /'
+jack_wait -w >/dev/null 2>&1   # suppress all output
+echo "JACK started!" 2>&1 | sed 's/^/[mod-host] /'
+
+/usr/local/bin/mod-host -p 5555 -f 5556 -n 2>&1 | sed 's/^/[mod-ui] /'

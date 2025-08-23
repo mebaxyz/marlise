@@ -20,12 +20,14 @@ services:
       - 'BUFFER=256'
       - 'TTY=ttymxc3'
       - 'JACK_NO_AUDIO_RESERVATION=1'
+      - MOD_DATA_DIR=/data
     ports:
       - '80:8888'
       - '81:8081'
     volumes:
       - '/dev/shm:/dev/shm'
       - '/home/nicolas/plugins/lv2:/usr/lib/lv2'
+      - '/data:/data'
     devices:
       - '/dev/snd:/dev/snd'
 #      - '/dev/ttymxc3:/dev/ttymxc3'

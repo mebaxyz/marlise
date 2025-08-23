@@ -1,4 +1,2 @@
-Mod-Audio for Real-time Live Sound Effect
+# Mod Audio DOcker 
 
-MADELINE
-Mod Audio Docker Engine, Live Nomad Effect.

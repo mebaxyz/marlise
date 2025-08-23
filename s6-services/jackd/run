@@ -10,5 +10,5 @@ touch /tmp/jack-internal-session.conf
 exec /usr/bin/jackd -R -P 80 -S -t 200 \
     -C /tmp/jack-internal-session.conf \
     -d alsa -d hw:${CARD} -r 48000 -p 128 -n 2 -X \
-    2>&1 awk '{print "\033[34m[jackd] " $0 "\033[0m"}'
+    2>&1 | awk '{print "\033[34m[jackd] " $0 "\033[0m"}'
 
