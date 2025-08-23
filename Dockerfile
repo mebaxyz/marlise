@@ -23,6 +23,8 @@ ENV PGID=${PGID}
 ENV S6_VERSION="3.2.1.0"
 
 
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_VERSION}/s6-overlay-noarch.tar.xz /tmp
+RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz
 # Dynamically download and install the correct s6-overlay tarball.
 RUN case "${TARGETARCH}" in \
     "amd64") S6_ARCH="x86_64" ;; \
@@ -32,6 +34,8 @@ RUN case "${TARGETARCH}" in \
     esac && \
     wget -O /tmp/s6-overlay.tar.xz "https://github.com/just-containers/s6-overlay/releases/download/v${S6_VERSION}/s6-overlay-${S6_ARCH}.tar.xz" && \
     tar -Jxvf /tmp/s6-overlay.tar.xz -C /
+
+
 
 
 
@@ -58,8 +62,7 @@ RUN apt-get update && \
         libreadline-dev \
         libfftw3-dev \
         libjpeg-dev \
-        zlib1g-dev \
-        gosu && \
+        zlib1g-dev && \
     # Clean up
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/man/?? /usr/share/man/??_*
@@ -107,19 +110,19 @@ ENV JACK_NO_AUDIO_RESERVATION=1
 
 # --- s6-overlay Service Definition ---
 # Create the service directories
-RUN mkdir -p /etc/s6/services/jackd && \
-    mkdir -p /etc/s6/services/mod-ui/depends.d
+#RUN mkdir -p /etc/s6/services/jackd && \
+#    mkdir -p /etc/s6/services/mod-ui/depends.d
 
 # Create the jackd service script
-COPY s6-services/jackd/run /etc/s6/services/jackd/run
-RUN chmod +x /etc/s6/services/jackd/run
+#COPY s6-services/jackd/run /etc/s6/services/jackd/run
+#RUN chmod +x /etc/s6/services/jackd/run
 
 # Create the mod-ui service script
-COPY s6-services/mod-ui/run /etc/s6/services/mod-ui/run
-RUN chmod +x /etc/s6/services/mod-ui/run
+#COPY s6-services/mod-ui/run /etc/s6/services/mod-ui/run
+#RUN chmod +x /etc/s6/services/mod-ui/run
 
 # Create the dependency link for mod-ui
-RUN ln -s /etc/s6/services/jackd /etc/s6/services/mod-ui/depends.d/jackd
+#RUN ln -s /etc/s6/services/jackd /etc/s6/services/mod-ui/depends.d/jackd
 
 # --- Final Configuration ---
 # Your old entrypoint is no longer needed
