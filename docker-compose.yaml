@@ -3,8 +3,8 @@ version: '3.6'
 services:
   modapp:
     container_name: lv2-host
-    #image: aidadsp/mod-ui:af2945a
-    image: mebaxyz/marlise
+    image: aidadsp/mod-ui:af2945a
+    #image: mebaxyz/marlise
     restart: unless-stopped
     read_only: false
     user: "0"
@@ -21,6 +21,7 @@ services:
       - 'TTY=ttymxc3'
       - 'JACK_NO_AUDIO_RESERVATION=1'
       - MOD_DATA_DIR=/data
+      - MOD_SOUNDCARD=UNO
     ports:
       - '80:8888'
       - '81:8081'
@@ -31,4 +32,4 @@ services:
     devices:
       - '/dev/snd:/dev/snd'
 #      - '/dev/ttymxc3:/dev/ttymxc3'
-#    command: '/entrypoint.sh'
+    command: '/entrypoint.sh'
