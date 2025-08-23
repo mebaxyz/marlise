@@ -1,2 +1,2 @@
-#!/usr/bin/execlineb -P
-/usr/bin/python3 /mod/mod-ui/server.py
+#!/command/with-contenv sh
+/usr/local/bin/python3 /mod/mod-ui/server.py

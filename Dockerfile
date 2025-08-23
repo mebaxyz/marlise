@@ -107,28 +107,37 @@ ENV MOD_DATA_DIR=/mod/data
 ENV MOD_USER_FILES_DIR=/mod/user-files
 ENV MOD_LOG=0
 ENV JACK_NO_AUDIO_RESERVATION=1
+ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=2
 
-# --- s6-overlay Service Definition ---
-# Create the service directories
-#RUN mkdir -p /etc/s6/services/jackd && \
-#    mkdir -p /etc/s6/services/mod-ui/depends.d
+# --- s6-overlay v3 service definitions ---
 
-# Create the jackd service script
-#COPY s6-services/jackd/run /etc/s6/services/jackd/run
-#RUN chmod +x /etc/s6/services/jackd/run
+# JACKD service
+RUN mkdir -p /etc/s6-overlay/s6-rc.d/jackd
 
-# Create the mod-ui service script
-#COPY s6-services/mod-ui/run /etc/s6/services/mod-ui/run
-#RUN chmod +x /etc/s6/services/mod-ui/run
+COPY s6-services/jackd/run /etc/s6-overlay/s6-rc.d/jackd/run
+RUN chmod +x /etc/s6-overlay/s6-rc.d/jackd/run && \
+    echo longrun > /etc/s6-overlay/s6-rc.d/jackd/type && \
+    mkdir -p /etc/s6-overlay/s6-rc.d/user/contents.d && \
+    echo jackd > /etc/s6-overlay/s6-rc.d/user/contents.d/jackd
 
-# Create the dependency link for mod-ui
-#RUN ln -s /etc/s6/services/jackd /etc/s6/services/mod-ui/depends.d/jackd
+# MOD-HOST service (depends on jackd)
+RUN mkdir -p /etc/s6-overlay/s6-rc.d/mod-host
+COPY s6-services/mod-host/run /etc/s6-overlay/s6-rc.d/mod-host/run
+RUN chmod +x /etc/s6-overlay/s6-rc.d/mod-host/run && \
+    echo longrun > /etc/s6-overlay/s6-rc.d/mod-host/type && \
+    mkdir -p /etc/s6-overlay/s6-rc.d/mod-host/dependencies.d && \
+    echo jackd > /etc/s6-overlay/s6-rc.d/mod-host/dependencies.d/jackd && \
+    echo mod-host > /etc/s6-overlay/s6-rc.d/user/contents.d/mod-host
 
-# --- Final Configuration ---
-# Your old entrypoint is no longer needed
-# COPY entrypoint.sh /entrypoint.sh
-# RUN chmod +x /entrypoint.sh
-# CMD ["stdbuf", "-oL", "-eL", "/entrypoint.sh"]
+# MOD-UI service (depends on mod-host)
+RUN mkdir -p /etc/s6-overlay/s6-rc.d/mod-ui
+COPY s6-services/mod-ui/run /etc/s6-overlay/s6-rc.d/mod-ui/run
+RUN chmod +x /etc/s6-overlay/s6-rc.d/mod-ui/run && \
+    echo longrun > /etc/s6-overlay/s6-rc.d/mod-ui/type && \
+    mkdir -p /etc/s6-overlay/s6-rc.d/mod-ui/dependencies.d && \
+    echo mod-host > /etc/s6-overlay/s6-rc.d/mod-ui/dependencies.d/mod-host && \
+    echo mod-ui > /etc/s6-overlay/s6-rc.d/user/contents.d/mod-ui
+
 
 # Set the s6-overlay entrypoint as the final command
 CMD ["/init"]
