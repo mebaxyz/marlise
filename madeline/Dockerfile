@@ -104,7 +104,9 @@ RUN groupadd -g ${PGID} abc && \
 
 RUN wget https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh -P /usr/local/bin && \
     chmod +x /usr/local/bin/wait-for-it.sh
+
     
+
 
 RUN mkdir /data && mkdir /data/user-files
 
@@ -144,7 +146,6 @@ RUN chmod +x /etc/s6-overlay/s6-rc.d/mod-ui/run && \
     mkdir -p /etc/s6-overlay/s6-rc.d/mod-ui/dependencies.d && \
     echo mod-host > /etc/s6-overlay/s6-rc.d/mod-ui/dependencies.d/mod-host && \
     echo mod-ui > /etc/s6-overlay/s6-rc.d/user/contents.d/mod-ui
-
 
 # Set the s6-overlay entrypoint as the final command
 CMD ["/init"]
