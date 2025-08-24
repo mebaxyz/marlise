@@ -1,10 +1,19 @@
 version: '3.6'
 
 services:
+  governator:
+    container_name: mado-governator
+    image: mebaxyz/mado-gov
+    restart: unless-stopped
+    ports: 
+      - 8022:22
+    volumes:
+      - '/system-lv2:/lv2'
+      - '/data:/mod-data'
   modapp:
-    container_name: lv2-host
-    image: aidadsp/mod-ui:af2945a
-    #image: mebaxyz/marlise
+  #  container_name: lv2-host
+    #image: aidadsp/mod-ui:af2945a
+    image: mebaxyz/marlise
     restart: unless-stopped
     read_only: false
     user: "0"
@@ -15,21 +24,21 @@ services:
       memlock: -1
     shm_size: 512m
     environment:
-      - 'CARD=UNO'
       - 'SR=48000'
       - 'BUFFER=256'
       - 'TTY=ttymxc3'
       - 'JACK_NO_AUDIO_RESERVATION=1'
-      - MOD_DATA_DIR=/data
+      #- MOD_DATA_DIR=/data
       - MOD_SOUNDCARD=UNO
+      - CARD=UNO
     ports:
       - '80:8888'
-      - '81:8081'
+      - '8081:8081'
     volumes:
       - '/dev/shm:/dev/shm'
-      - '/home/nicolas/plugins/lv2:/usr/lib/lv2'
-      - '/data:/data'
+      - '/system-lv2:/usr/lib/lv2'
+      - '/data:/mod-data'
     devices:
       - '/dev/snd:/dev/snd'
 #      - '/dev/ttymxc3:/dev/ttymxc3'
-    command: '/entrypoint.sh'
+    #command: '/entrypoint.sh'
