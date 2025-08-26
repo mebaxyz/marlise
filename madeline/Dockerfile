@@ -89,6 +89,9 @@ RUN git clone https://github.com/mod-audio/mod-midi-merger.git /mod/mod-midi-mer
 # Build mod-ui
 RUN git clone https://github.com/mod-audio/mod-ui.git /mod/mod-ui
 
+# Update to tornado 5.1.1
+RUN sed -i -e 's/tornado==4.3/tornado==5.1.1/' /mod/mod-ui/requirements.txt
+
 # Install Python requirements and fix tornado compatibility
 RUN pip3 install -r /mod/mod-ui/requirements.txt
 
@@ -111,6 +114,7 @@ RUN wget https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for
 RUN mkdir /data && mkdir /data/user-files
 
 # Set MOD environment variables
+ENV TRY=2
 ENV MOD_DEV_ENVIRONMENT=0
 ENV MOD_DATA_DIR=/mod/data
 ENV MOD_USER_FILES_DIR=/mod/user-files

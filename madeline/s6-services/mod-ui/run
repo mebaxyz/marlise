@@ -7,4 +7,4 @@ set -e
 #  -- echo "[mod-ui] Port 5555 is ready"
 
 # Now start mod-ui
-/usr/local/bin/python3 /mod/mod-ui/server.py  #2>&1 | sed 's/^/[mod-ui] /'
+exec /usr/local/bin/python3 /mod/mod-ui/server.py 2>&1 | sed 's/^/[mod-ui] /'

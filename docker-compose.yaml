@@ -16,11 +16,11 @@ services:
     image: mebaxyz/mado-file-api
     restart: unless-stopped
     volumes:
-      - '/data/user-files:/data'
+      - '/data/user-files:/data/user-files'
     ports:
       - '5000:5000'
     environment:
-      - USER_FILES_DIR=/data
+      - USER_FILES_DIR=/data/user-files
   mod-gov:
     container_name: mado-gov
     image: mebaxyz/mado-gov
@@ -52,8 +52,8 @@ services:
       - MOD_DATA_DIR=/data
       - MOD_USER_FILES_DIR=/data/user-files
       - MOD_SOUNDCARD=UNO
-    #ports:
-    #  - '80:8888'
+    ports:
+      - '8888:8888'
     volumes:
       - '/dev/shm:/dev/shm'
       - '/system-lv2:/usr/lib/lv2'
