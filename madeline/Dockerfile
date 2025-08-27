@@ -9,7 +9,6 @@ ARG TARGETARCH
 
 # Set non-interactive mode for apt
 ENV DEBIAN_FRONTEND=noninteractive
-ENV REBUILD=true
 
 # Define default build-time arguments
 ARG PUID=1000
@@ -114,7 +113,8 @@ RUN wget https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for
 RUN mkdir /data && mkdir /data/user-files
 
 # Set MOD environment variables
-ENV TRY=2
+
+ENV REBUILD=true
 ENV MOD_DEV_ENVIRONMENT=0
 ENV MOD_DATA_DIR=/mod/data
 ENV MOD_USER_FILES_DIR=/mod/user-files

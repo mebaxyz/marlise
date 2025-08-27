@@ -21,6 +21,14 @@ services:
       - '5000:5000'
     environment:
       - USER_FILES_DIR=/data/user-files
+  system-api:
+    container_name: mado-system-api
+    image: mebaxyz/mado-system_api
+    restart: unless-stopped
+    volumes:
+      - '/data/user-files:/data/user-files'
+    environment:
+      - USER_FILES_DIR=/data/user-files
   mod-gov:
     container_name: mado-gov
     image: mebaxyz/mado-gov
