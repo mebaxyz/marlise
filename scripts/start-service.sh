@@ -11,13 +11,13 @@ RUN_DIR="$ROOT_DIR/run"
 mkdir -p "$LOG_DIR" "$RUN_DIR"
 
 # Configuration (override with env vars)
-MOD_HOST_BIN=${MOD_HOST_BIN:-"$ROOT_DIR/mado-audio-host/mod-host/mod-host"}
+MOD_HOST_BIN=${MOD_HOST_BIN:-"$ROOT_DIR/audio-engine/mod-host/mod-host"}
 if [ ! -x "$MOD_HOST_BIN" ]; then
-    MOD_HOST_BIN="$ROOT_DIR/mod-host/src/mod-host"
+    MOD_HOST_BIN="$ROOT_DIR/audio-engine/mod-host/src/mod-host"
 fi
-MODHOST_BRIDGE_BIN=${MODHOST_BRIDGE_BIN:-"$ROOT_DIR/mado-audio-host/modhost-bridge/build/modhost-bridge"}
+MODHOST_BRIDGE_BIN=${MODHOST_BRIDGE_BIN:-"$ROOT_DIR/audio-engine/modhost-bridge/build/modhost-bridge"}
 if [ ! -x "$MODHOST_BRIDGE_BIN" ]; then
-    MODHOST_BRIDGE_BIN="$ROOT_DIR/modhost-bridge/modhost-bridge"
+    MODHOST_BRIDGE_BIN="$ROOT_DIR/audio-engine/modhost-bridge/modhost-bridge"
 fi
 
 USE_PWJACK=${USE_PWJACK:-1}
@@ -111,7 +111,7 @@ echo "Logs: mod-host -> $MOD_HOST_LOG ; bridge -> $BRIDGE_LOG"
 
 # Start session-manager (optional: used to test clients)
 # You can override with SESSION_MANAGER_SCRIPT env var.
-SESSION_MANAGER_SCRIPT=${SESSION_MANAGER_SCRIPT:-"$ROOT_DIR/mado-audio-host/session-manager/start_session_manager.sh"}
+SESSION_MANAGER_SCRIPT=${SESSION_MANAGER_SCRIPT:-"$ROOT_DIR/session-manager/start_session_manager.sh"}
 SESSION_LOG="$LOG_DIR/session-manager.log"
 SESSION_WAIT_TIMEOUT=${SESSION_WAIT_TIMEOUT:-10}
 

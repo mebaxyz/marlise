@@ -12,42 +12,67 @@ This project is based on the MOD-UI interface, which is the web-based user inter
 - **MOD Audio Website**: https://modaudio.com/
 - **Documentation**: https://wiki.modaudio.com/
 
-## Submodules
+## Project Structure
 
-This project includes the following submodules:
+This project follows a clear, self-explanatory folder structure:
 
-- **mod-ui**: Fork of the original MOD-UI interface (feature/fastapi-migration branch)
-- **mado-audio-host**: Audio host component for enhanced functionality
+```
+marlise/
+├── audio-engine/          # Low-level audio processing
+│   ├── mod-host/         # LV2 plugin host (C)
+│   └── modhost-bridge/   # JSON-RPC to text protocol bridge (C++)
+├── session-manager/       # High-level session management (Python)
+│   └── src/              # Session manager source code
+├── client-interface/      # Web API and UI (FastAPI)
+│   ├── api/              # FastAPI backend
+│   └── web/              # Web client
+├── scripts/               # Start/stop scripts
+├── docs/                  # Complete documentation
+├── tests/                 # Integration tests
+└── README.md
+```
 
 ## Installation
 
-1. Clone the repository with submodules:
+1. Clone the repository:
 ```bash
-git clone --recursive https://github.com/mebaxyz/marlise.git
+git clone https://github.com/mebaxyz/marlise.git
 cd marlise
 ```
 
-2. If you've already cloned without submodules, initialize them:
-```bash
-git submodule init
-git submodule update
-```
+2. Build the components (instructions for each component in their respective directories)
 
 ## Architecture
 
-This project uses a simplified, high-performance architecture with direct ZeroMQ communication:
+This project uses a simplified, high-performance architecture with direct ZeroMQ communication, organized into three self-explanatory layers:
 
-- **mod-host**: LV2 plugin host (audio processing)
-- **modhost-bridge**: C++ service bridging JSON-RPC to mod-host text protocol  
-- **session-manager**: Python service managing high-level operations
-- **client-interface**: FastAPI web service for browser interaction
+### 🎵 Audio Engine (`audio-engine/`)
+Low-level audio processing layer:
+- **mod-host**: LV2 plugin host for audio processing
+- **modhost-bridge**: C++ bridge translating JSON-RPC to mod-host text protocol
+
+### 🎛️ Session Manager (`session-manager/`)
+High-level orchestration layer:
+- Python service managing plugins, pedalboards, and audio connections
+- Maintains session state and provides persistence
+
+### 🌐 Client Interface (`client-interface/`)
+User-facing layer:
+- FastAPI web service for REST API
+- WebSocket support for real-time updates
+- Web-based UI for visual pedalboard editing
 
 ## Documentation
 
-📚 **Complete Communication Documentation**:
-- [**Communication Architecture**](COMMUNICATION_ARCHITECTURE.md) - Complete technical documentation
-- [**Quick Reference**](COMMUNICATION_QUICK_REFERENCE.md) - Developer quick reference  
-- [**Flow Diagrams**](COMMUNICATION_FLOW_DIAGRAMS.md) - Visual sequence diagrams
+📚 **Complete Documentation** (in `docs/` folder):
+- [**Communication Architecture**](docs/COMMUNICATION_ARCHITECTURE.md) - Complete technical documentation
+- [**Quick Reference**](docs/COMMUNICATION_QUICK_REFERENCE.md) - Developer quick reference  
+- [**Flow Diagrams**](docs/COMMUNICATION_FLOW_DIAGRAMS.md) - Visual sequence diagrams
+
+📂 **Component Documentation**:
+- [Audio Engine](audio-engine/README.md) - Low-level audio processing
+- [Session Manager](session-manager/README.md) - High-level orchestration
+- [Client Interface](client-interface/README.md) - Web API and UI
 
 ## Usage
 
@@ -65,7 +90,7 @@ This project uses a simplified, high-performance architecture with direct ZeroMQ
 
 3. **Test communication**:
 ```bash
-python3 test_zmq_communication.py
+python3 tests/test_zmq_communication.py
 ```
 
 4. **Stop services**:
@@ -126,16 +151,14 @@ curl -X PATCH http://localhost:8080/api/plugins/parameters \
 
 ## License
 
-This project is a fork of MOD-UI and is distributed under the GNU Affero General Public License v3 (AGPL-3.0). See the top-level `LICENSE` file for the full license text.
-
-The `mod-ui` submodule included in this repository is also licensed under the AGPLv3; its original license file is kept in `mod-ui/LICENSE`.
+This project is inspired by and builds upon concepts from MOD-UI, and is distributed under the GNU Affero General Public License v3 (AGPL-3.0). See the `LICENSE` file for the full license text.
 
 ### Attribution
 
-This fork builds on work from the MOD-UI project. Original project:
+This project is inspired by the MOD-UI interface and MOD Audio ecosystem:
 
-- MOD-UI repository: https://github.com/moddevices/mod-ui
+- Original MOD-UI repository: https://github.com/moddevices/mod-ui
 - MOD Audio: https://modaudio.com/
+- MOD Audio documentation: https://wiki.modaudio.com/
 
-If you are the copyright holder and want a different license or explicit copyright line in
-the top-level `LICENSE`, please update the `LICENSE` file accordingly.
+We are grateful to the MOD Audio team and community for their pioneering work in creating an open-source audio plugin host and interface.
