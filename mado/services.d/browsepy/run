@@ -1,3 +1,0 @@
-#!/usr/bin/with-contenv sh
-exec /usr/local/bin/browsepy --directory /data/user-files 0.0.0.0 8081 /
-    2>&1 | sed 's/^/[browsepy] /'
