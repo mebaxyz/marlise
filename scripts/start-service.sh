@@ -11,11 +11,11 @@ RUN_DIR="$ROOT_DIR/run"
 mkdir -p "$LOG_DIR" "$RUN_DIR"
 
 # Configuration (override with env vars)
-MOD_HOST_BIN=${MOD_HOST_BIN:-"$ROOT_DIR/mod-host/mod-host"}
+MOD_HOST_BIN=${MOD_HOST_BIN:-"$ROOT_DIR/mado-audio-host/mod-host/mod-host"}
 if [ ! -x "$MOD_HOST_BIN" ]; then
     MOD_HOST_BIN="$ROOT_DIR/mod-host/src/mod-host"
 fi
-MODHOST_BRIDGE_BIN=${MODHOST_BRIDGE_BIN:-"$ROOT_DIR/modhost-bridge/build/modhost-bridge"}
+MODHOST_BRIDGE_BIN=${MODHOST_BRIDGE_BIN:-"$ROOT_DIR/mado-audio-host/modhost-bridge/build/modhost-bridge"}
 if [ ! -x "$MODHOST_BRIDGE_BIN" ]; then
     MODHOST_BRIDGE_BIN="$ROOT_DIR/modhost-bridge/modhost-bridge"
 fi
@@ -45,6 +45,15 @@ start_with_optional_pwjack() {
         echo "Starting: $bin ${args[*]} (log: $log)"
         "$bin" "${args[@]}" &> "$log" &
     fi
+    echo $!
+}
+
+start_without_pwjack() {
+    local bin="$1"; shift
+    local log="$1"; shift
+    local args=("$@")
+    echo "Starting: $bin ${args[*]} (log: $log)"
+    "$bin" "${args[@]}" &> "$log" &
     echo $!
 }
 
@@ -93,7 +102,7 @@ echo "mod-host is reachable on ${MOD_HOST_PORT}"
 
 # Set mod-host connection to use 127.0.0.1 for bridge
 export MOD_HOST_HOST=127.0.0.1
-modbridge_pid=$(start_with_optional_pwjack "$MODHOST_BRIDGE_BIN" "$BRIDGE_LOG" $BRIDGE_ARGS)
+modbridge_pid=$(start_without_pwjack "$MODHOST_BRIDGE_BIN" "$BRIDGE_LOG" $BRIDGE_ARGS)
 echo "modhost-bridge PID: $modbridge_pid (log: $BRIDGE_LOG)"
 echo "$modbridge_pid" > "$RUN_DIR/modhost-bridge.pid"
 
