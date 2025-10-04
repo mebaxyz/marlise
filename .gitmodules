@@ -1,0 +1,7 @@
+[submodule "mod-ui"]
+	path = mod-ui
+	url = https://github.com/mebaxyz/mod-ui.git
+	branch = feature/fastapi-migration
+[submodule "mado-audio-host"]
+	path = mado-audio-host
+	url = https://github.com/mebaxyz/mado-audio-host.git
