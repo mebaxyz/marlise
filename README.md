@@ -33,27 +33,80 @@ git submodule init
 git submodule update
 ```
 
+## Architecture
+
+This project uses a simplified, high-performance architecture with direct ZeroMQ communication:
+
+- **mod-host**: LV2 plugin host (audio processing)
+- **modhost-bridge**: C++ service bridging JSON-RPC to mod-host text protocol  
+- **session-manager**: Python service managing high-level operations
+- **client-interface**: FastAPI web service for browser interaction
+
+## Documentation
+
+📚 **Complete Communication Documentation**:
+- [**Communication Architecture**](COMMUNICATION_ARCHITECTURE.md) - Complete technical documentation
+- [**Quick Reference**](COMMUNICATION_QUICK_REFERENCE.md) - Developer quick reference  
+- [**Flow Diagrams**](COMMUNICATION_FLOW_DIAGRAMS.md) - Visual sequence diagrams
+
 ## Usage
 
-[Add specific usage instructions for your fork here]
+### Quick Start
+
+1. **Start all services**:
+```bash
+./scripts/start-service.sh
+```
+
+2. **Open web interface**:
+```bash
+# Browser: http://localhost:8080
+```
+
+3. **Test communication**:
+```bash
+python3 test_zmq_communication.py
+```
+
+4. **Stop services**:
+```bash  
+./scripts/stop-service.sh
+```
+
+### API Examples
+
+```bash
+# Get available plugins
+curl http://localhost:8080/api/plugins/available
+
+# Load a plugin
+curl -X POST http://localhost:8080/api/plugins \
+  -H "Content-Type: application/json" \
+  -d '{"uri": "http://calf.sourceforge.net/plugins/Reverb"}'
+
+# Update parameter
+curl -X PATCH http://localhost:8080/api/plugins/parameters \
+  -H "Content-Type: application/json" \
+  -d '{"instance_id": "1", "port": "gain", "value": 0.5}'
+```
 
 ## Development
 
 ### Prerequisites
 
-- [List your prerequisites here]
+- **Python 3.8+** with asyncio support
+- **ZeroMQ** library (`libzmq`)  
+- **JACK Audio** (or PipeWire with pw-jack)
+- **LV2 plugins** (e.g., Calf, LSP, etc.)
+- **FastAPI** and dependencies (see requirements.txt)
 
-### Building
+### Architecture Benefits
 
-```bash
-# Add your build instructions here
-```
-
-### Running
-
-```bash
-# Add your run instructions here
-```
+✅ **Direct ZeroMQ Communication** - No Redis dependency  
+✅ **High Performance** - Microsecond-level messaging  
+✅ **Simplified Stack** - Removed ServiceBus complexity  
+✅ **Real-time Events** - WebSocket + ZeroMQ pub/sub  
+✅ **Clean APIs** - RESTful HTTP + JSON-RPC
 
 ## Contributing
 
