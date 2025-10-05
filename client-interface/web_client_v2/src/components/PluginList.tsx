@@ -12,9 +12,17 @@ export default function PluginList() {
   const [plugins, setPlugins] = useState<Plugin[]>([])
 
   useEffect(() => {
-    axios.get('/api/plugins/available').then((resp) => {
-      setPlugins(resp.data || [])
-    })
+    axios
+      .get('/api/plugins/available')
+      .then((resp) => {
+        // Adapter returns { plugins: [...] }
+        const plugins = resp.data && resp.data.plugins ? resp.data.plugins : []
+        setPlugins(plugins)
+      })
+      .catch((err) => {
+        console.error('Failed to fetch plugins', err)
+        setPlugins([])
+      })
   }, [])
 
   const onDragStart = (e: React.DragEvent, plugin: Plugin) => {
