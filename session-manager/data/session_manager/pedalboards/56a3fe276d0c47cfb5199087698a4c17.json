@@ -1,0 +1,21 @@
+{
+  "id": "2c1a99f6-ab13-420a-9096-49368d5e72ac",
+  "name": "System I/O Demo",
+  "description": "Demonstrates automatic system I/O management",
+  "plugins": [],
+  "connections": [],
+  "created_at": "2025-10-03T18:48:39.975822",
+  "modified_at": "2025-10-03T18:48:39.976595",
+  "metadata": {
+    "saved_at": "2025-10-03T18:48:39.977069"
+  },
+  "system_inputs": [
+    "system:capture_1",
+    "system:capture_2"
+  ],
+  "system_outputs": [
+    "system:playback_1",
+    "system:playback_2"
+  ],
+  "_schema_version": 1
+}

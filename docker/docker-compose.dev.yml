@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  client-api:
+    build:
+      context: ../client-interface/web_client/api
+      dockerfile: Dockerfile
+    image: marlise-client-api-dev
+    container_name: marlise-client-api-dev
+    working_dir: /app
+    # Bind-mount the web_client source so edits are visible during development
+    volumes:
+      - ../client-interface/web_client:/app:delegated
+    ports:
+      - "8080:8080"
+    environment:
+      - CLIENT_INTERFACE_PORT=8080
+    # Use the CMD from the Dockerfile (uvicorn --reload)
+
+  static-site:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: marlise-static-dev
+    depends_on:
+      - client-api
+    # Run nginx on the host network so it can proxy to localhost:8080 easily
+    network_mode: "host"
+    volumes:
+      # Mount host nginx.conf to override container config during development
+      - ../docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # Mount the project's static files directory under client-interface/web_client/static
+      - ../client-interface/web_client/static:/usr/share/nginx/html:ro
+    environment:
+      - NGINX_ENV=development
+    restart: unless-stopped
+
+  session-manager:
+    build:
+      context: ../session-manager
+      dockerfile: Dockerfile
+    image: marlise-session-manager-dev
+    container_name: marlise-session-manager-dev
+    working_dir: /app
+    # Bind-mount the session-manager source so code edits are visible without rebuilding
+    volumes:
+      - ../session-manager:/app:delegated
+    # Use host networking so ZeroMQ binds to localhost and other services can connect
+    network_mode: "host"
+    environment:
+      - SERVICE_NAME=session_manager
+    restart: unless-stopped

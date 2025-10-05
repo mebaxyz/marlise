@@ -1,0 +1,14 @@
+[project]
+name = "mod-ui-session-manager"
+version = "0.0.1"
+description = "Session management service for MOD UI pedalboard operations"
+authors = [ { name = "Dev" } ]
+requires-python = ">=3.11"
+
+[tool.poetry.dependencies]
+python = ">=3.11"
+pyzmq = "*"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"

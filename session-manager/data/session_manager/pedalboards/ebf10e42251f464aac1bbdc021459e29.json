@@ -1,0 +1,21 @@
+{
+  "id": "1d1d988b-0507-4418-ab40-d5e15aff2f5e",
+  "name": "Test Pedalboard",
+  "description": "",
+  "plugins": [],
+  "connections": [],
+  "created_at": "2025-10-04T19:34:42.157753",
+  "modified_at": "2025-10-04T19:34:42.168923",
+  "metadata": {
+    "saved_at": "2025-10-04T19:34:42.169410"
+  },
+  "system_inputs": [
+    "system:capture_1",
+    "system:capture_2"
+  ],
+  "system_outputs": [
+    "system:playback_1",
+    "system:playback_2"
+  ],
+  "_schema_version": 1
+}

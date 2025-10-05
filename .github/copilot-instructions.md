@@ -70,14 +70,14 @@ mod-host (LV2 Plugin Host)
 - `5555`: mod-host TCP (command)
 - `5556`: mod-host TCP (feedback)
 
-## Development Setup
+### Development Setup
 
 ### Prerequisites
 ```bash
 # System dependencies
 sudo apt-get install python3 python3-pip libzmq3-dev libjack-jackd2-dev pipewire-jack
 
-# Python dependencies
+# Python dependencies (if you run the API locally instead of in Docker)
 pip3 install fastapi uvicorn pyzmq asyncio
 ```
 
@@ -85,6 +85,18 @@ pip3 install fastapi uvicorn pyzmq asyncio
 ```bash
 # Start all services
 ./scripts/start-service.sh
+
+# Development Docker helpers
+# - The client API dev image is built from `client-interface/web_client/api/Dockerfile` and
+#   installs Python requirements at build time. The dev compose file `docker/docker-compose.dev.yml`
+#   builds the image and bind-mounts the `web_client` directory so code edits are visible without
+#   rebuilding the image.
+
+# - The session manager dev image is built from `session-manager/Dockerfile` and installs its
+#   requirements at build time. The dev compose includes a `session-manager` service that bind-mounts
+#   the `session-manager` directory into `/app` and runs with `network_mode: host` so ZeroMQ sockets
+#   bind to localhost and other services can connect directly. Use `scripts/start-session-manager-dev.sh`
+#   to stop any locally-running session manager and start the container.
 
 # Services will log to:
 # - logs/mod-host.log
@@ -141,6 +153,11 @@ curl -X PATCH http://localhost:8080/api/plugins/parameters \
 # Using wscat (install: npm install -g wscat)
 wscat -c ws://localhost:8080/ws
 ```
+
+### Development static-site and tests
+
+- A development nginx/static-site image and a `docker/docker-compose.dev.yml` are provided to serve the web client during development and to proxy API/WebSocket calls. See `docker/README.md` for usage and examples of the `WAIT_FOR_TARGETS` environment variable that makes nginx wait for dependent services before starting.
+- A smoke test `tests/test_static_site_smoke.py` is included; it brings up the `static-site` service via the dev compose file, checks that it serves HTTP, and tears it down. The test is skipped when `docker` is not available.
 
 ## Code Style and Conventions
 
@@ -224,7 +241,7 @@ python3 tests/test_zmq_communication.py
 
 # Test mod-host directly
 telnet localhost 5555
-# Type: help
+# Type: ping (send the text `ping` over the socket and expect a pong/ack response)
 ```
 
 #### Common Issues
