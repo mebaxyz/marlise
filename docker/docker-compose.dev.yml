@@ -37,13 +37,16 @@ services:
 
   config-service:
     build:
-      context: ../client-interface/config_service
+      context: ../config-service
       dockerfile: Dockerfile
     image: marlise-config-service-dev
     container_name: marlise-config-service-dev
     working_dir: /app
-    ports:
-      - "7070:7070"
+    # Use host networking so the service binds to localhost and other services can reach it via 127.0.0.1
+    network_mode: "host"
+    # Mount the repository data directory so the service can load and persist data/settings.json
+    volumes:
+      - ../data:/app/data:rw
     environment:
       - SERVICE_NAME=config_service
     restart: unless-stopped

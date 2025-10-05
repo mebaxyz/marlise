@@ -1,22 +1,6 @@
 """
-Simple ZeroMQ-based Config Service
-
-This replaces the previous FastAPI HTTP service. It exposes a REP (RPC)
-endpoint using the project's deterministic port allocation (base 5555 + crc32(name) % 1000).
-
-Supported RPC methods:
-- "batch_settings": params={"queries": {<key>: null, ...}} -> returns {"results": {...}}
-- "config_set": params={"key": "path", "value": ...} OR arbitrary dict -> returns {"status": "ok"}
-
-The request/response JSON format follows the lightweight RPC used across the repo:
-{ "method": "name", "params": {...}, "source_service": "caller", "request_id": "..." }
-
-Response on success:
-{ "request_id": "...", "result": <value>, "timestamp": "..." }
-
-On error the response contains an "error" field instead of "result".
+Config service (top-level implementation)
 """
-
 import asyncio
 import json
 import logging
