@@ -6,7 +6,10 @@
     <title>Marlise Web Client v2</title>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Static fallback banner shown immediately while JS bundles load -->
+    <div id="root">
+      <div class="health-banner">Application not healthy: Waiting for backend...</div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
