@@ -11,7 +11,6 @@ import uuid
 import zlib
 from datetime import datetime
 from typing import Any, Dict, Optional
-import os
 
 import zmq
 import zmq.asyncio
@@ -68,59 +67,37 @@ class ZMQClient:
     async def call(self, service_name: str, method: str, timeout: Optional[float] = 5.0, **kwargs) -> Any:
         """Call a method on another service"""
         try:
-            # Try connecting to one of several candidate hosts. This helps when the
-            # target service is bound to the Docker host (network_mode: host) and the
-            # caller runs inside a container (loopback differs).
+            # Create a new REQ socket for each call to avoid state issues
             service_port = self._get_service_rpc_port(service_name)
+            req_socket = self.context.socket(zmq.REQ)
+            connect_addr = f"tcp://127.0.0.1:{service_port}"
+            req_socket.connect(connect_addr)
 
-            # Hosts to try (comma-separated from env or sensible defaults)
-            env_hosts = os.environ.get("ZMQ_SERVICE_HOSTS")
-            if env_hosts:
-                hosts = [h.strip() for h in env_hosts.split(",") if h.strip()]
-            else:
-                hosts = ["127.0.0.1", "host.docker.internal", "172.17.0.1"]
+            try:
+                # Create request
+                request_data = {
+                    "method": method,
+                    "params": kwargs,
+                    "source_service": self.client_name,
+                    "request_id": str(uuid.uuid4()),
+                    "timestamp": datetime.now().isoformat(),
+                }
 
-            last_exc = None
-            for host in hosts:
-                req_socket = self.context.socket(zmq.REQ)
-                connect_addr = f"tcp://{host}:{service_port}"
-                try:
-                    req_socket.connect(connect_addr)
+                # Send request and wait for response
+                await req_socket.send_json(request_data)
 
-                    # Create request
-                    request_data = {
-                        "method": method,
-                        "params": kwargs,
-                        "source_service": self.client_name,
-                        "request_id": str(uuid.uuid4()),
-                        "timestamp": datetime.now().isoformat(),
-                    }
+                if timeout is not None:
+                    response_data = await asyncio.wait_for(req_socket.recv_json(), timeout=timeout)
+                else:
+                    response_data = await req_socket.recv_json()
 
-                    # Send request and wait for response
-                    await req_socket.send_json(request_data)
+                if response_data.get("error"):
+                    raise RuntimeError(f"Remote service error: {response_data['error']}")
 
-                    if timeout is not None:
-                        response_data = await asyncio.wait_for(req_socket.recv_json(), timeout=timeout)
-                    else:
-                        response_data = await req_socket.recv_json()
-
-                    if response_data.get("error"):
-                        raise RuntimeError(f"Remote service error: {response_data['error']}")
-
-                    return response_data.get("result")
-                except Exception as e:
-                    last_exc = e
-                    logger.debug("ZMQ call to %s via %s failed: %s", service_name, connect_addr, e)
-                    try:
-                        req_socket.close()
-                    except Exception:
-                        pass
-                    # try next host
-                    continue
-
-            # If we exhausted hosts, raise the last exception
-            if last_exc:
-                raise last_exc
+                return response_data.get("result")
+            finally:
+                # Always close the socket after use
+                req_socket.close()
             
         except Exception as e:
             logger.error("Failed to call %s.%s: %s", service_name, method, e)
