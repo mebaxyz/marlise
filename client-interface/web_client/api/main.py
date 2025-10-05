@@ -224,7 +224,16 @@ async def load_plugin(plugin: PluginRequest):
         raise HTTPException(status_code=503, detail="ZMQ client not available")
 
     try:
-        result = await zmq_client.call("session_manager", "load_plugin", uri=plugin.uri, timeout=10.0)
+        # Include x/y coordinates so the session manager (or UI) can persist
+        # placement information for the newly loaded plugin instance.
+        result = await zmq_client.call(
+            "session_manager",
+            "load_plugin",
+            uri=plugin.uri,
+            x=plugin.x,
+            y=plugin.y,
+            timeout=10.0,
+        )
         if result and result.get("success"):
             # Broadcast to WebSocket clients
             await connection_manager.broadcast({

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import axios from 'axios'
+import './Pedalboard.css'
 
 interface Instance {
   instance_id: string
@@ -29,9 +30,13 @@ export default function Pedalboard() {
       const y = Math.round(e.clientY - rect.top)
 
       const resp = await axios.post('/api/plugins', { uri: plugin.uri, x, y })
-      // If API returns instance info, add it; else use fallback id
-      const instance = resp.data || { instance_id: `local_${Date.now()}`, uri: plugin.uri, x, y }
-      setInstances((s) => [...s, { instance_id: instance.instance_id || instance.id || `local_${Date.now()}`, uri: plugin.uri, x, y }])
+      // If API returns instance info, prefer that (instance_id, x, y)
+      const instance = (resp && resp.data) ? resp.data : null
+      const instanceId = instance?.instance_id || instance?.id || `local_${Date.now()}`
+      const finalX = typeof instance?.x === 'number' ? instance.x : x
+      const finalY = typeof instance?.y === 'number' ? instance.y : y
+
+      setInstances((s) => [...s, { instance_id: instanceId, uri: plugin.uri, x: finalX, y: finalY }])
     } catch (err) {
       console.error('Failed to add plugin', err)
       alert('Failed to add plugin. Check backend logs.')
