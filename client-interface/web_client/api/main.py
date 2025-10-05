@@ -539,16 +539,27 @@ async def websocket_endpoint(websocket: WebSocket, user_id: Optional[str] = None
     await connection_manager.connect(websocket, user_id)
     
     try:
+        # Send loading sequence to initialize the client UI
+        await websocket.send_text("loading_start 0 0")  # empty=0, modified=0
+        await websocket.send_text("loading_end 0")      # snapshot_id=0
+        
         while True:
             # Wait for messages from client
-            data = await websocket.receive_json()
+            data = await websocket.receive_text()
             
-            # Echo back for now (can be extended for specific message handling)
-            await websocket.send_json({
-                "event": "echo",
-                "data": data,
-                "timestamp": asyncio.get_event_loop().time()
-            })
+            # Handle client messages
+            if data.startswith("data_ready"):
+                # Client is ready, acknowledge
+                await websocket.send_text("pong")
+            elif data == "ping":
+                await websocket.send_text("pong")
+            else:
+                # Echo other messages for debugging
+                await websocket.send_json({
+                    "event": "echo",
+                    "data": data,
+                    "timestamp": asyncio.get_event_loop().time()
+                })
             
     except WebSocketDisconnect:
         await connection_manager.disconnect(websocket)
