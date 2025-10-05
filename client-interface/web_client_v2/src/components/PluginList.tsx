@@ -17,12 +17,28 @@ export default function PluginList() {
     })
   }, [])
 
+  const onDragStart = (e: React.DragEvent, plugin: Plugin) => {
+    try {
+      const payload = JSON.stringify({ uri: plugin.uri, label: plugin.label })
+      e.dataTransfer.setData('application/json', payload)
+      e.dataTransfer.effectAllowed = 'copy'
+    } catch (err) {
+      console.error('Failed to set drag data', err)
+    }
+  }
+
   return (
     <div className="plugin-list">
       <h2>Available plugins</h2>
       <div className="list">
         {plugins.map((p) => (
-          <div key={p.uri} className="plugin-card" draggable>
+          <div
+            key={p.uri}
+            className="plugin-card"
+            draggable
+            onDragStart={(e) => onDragStart(e, p)}
+            title={p.label || p.uri}
+          >
             <img src={p.thumbnail_href || '/static/img/default-plugin.png'} alt="" />
             <div className="meta">
               <div className="label">{p.label || p.uri}</div>
