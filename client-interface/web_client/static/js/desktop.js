@@ -107,6 +107,97 @@ function Desktop(elements) {
     self.pluginIndexerData = plugins;
   };
 
+  // Fetch available plugins from the adapter and populate the plugin index.
+  // Retries a few times with backoff if the adapter returns an empty set.
+  this.fetchAvailablePlugins = function (retries = 3, delayMs = 1000) {
+    var attempt = 0;
+
+    function tryFetch() {
+      attempt++;
+      fetch('/api/plugins/available', { cache: 'no-store' })
+        .then(function (resp) {
+          if (!resp.ok) throw new Error('Network response was not ok');
+          return resp.json();
+        })
+        .then(function (data) {
+          var plugins = data && data.plugins ? data.plugins : data || {};
+
+          // If plugins is an object keyed by URI, convert to array
+          var pluginsArray = [];
+          if (Array.isArray(plugins)) {
+            pluginsArray = plugins;
+          } else if (plugins && typeof plugins === 'object') {
+            for (var k in plugins) {
+              if (Object.prototype.hasOwnProperty.call(plugins, k)) {
+                pluginsArray.push(plugins[k]);
+              }
+            }
+          }
+
+          if (pluginsArray.length > 0) {
+            try {
+              // Process plugins to match expected format
+              var processedPlugins = [];
+              var allplugins = {};
+              for (var i = 0; i < pluginsArray.length; i++) {
+                var plugin = pluginsArray[i];
+                // Add installedVersion property (using version string or defaults)
+                var version = plugin.version || "0.0";
+                var versionParts = version.split(".");
+                plugin.installedVersion = [
+                  0, // builder
+                  parseInt(versionParts[0]) || 0, // minorVersion
+                  parseInt(versionParts[1]) || 0, // microVersion
+                  0 // release
+                ];
+                
+                // Add fields required by the template
+                plugin.thumbnail_href = plugin.thumbnail_href || '/img/effects-icon.png';
+                plugin.demo = plugin.demo || false;
+                plugin.brand = plugin.brand || (plugin.author && plugin.author.name) || '';
+                
+                allplugins[plugin.uri] = plugin;
+                processedPlugins.push(plugin);
+              }
+              
+              self.resetPluginIndexer(allplugins);
+              
+              // Wait a bit for templates to load before showing plugins
+              setTimeout(function() {
+                if (self.effectBox && window.TEMPLATES && window.TEMPLATES.plugin) {
+                  self.effectBox.effectBox('showPlugins', processedPlugins);
+                  console.info('Plugin index populated and displayed with', pluginsArray.length, 'items');
+                } else {
+                  console.warn('Templates not loaded yet, skipping UI display');
+                }
+              }, 1000);
+              
+              console.info('Plugin index populated with', pluginsArray.length, 'items');
+            } catch (e) {
+              console.warn('Failed to reset plugin indexer:', e);
+            }
+          } else {
+            if (attempt <= retries) {
+              // Retry after backoff
+              setTimeout(tryFetch, delayMs * attempt);
+            } else {
+              console.info('No plugins returned by adapter after', attempt - 1, 'retries');
+            }
+          }
+        })
+        .catch(function (err) {
+          if (attempt <= retries) {
+            setTimeout(tryFetch, delayMs * attempt);
+          } else {
+            console.warn('Failed to fetch available plugins:', err);
+          }
+        });
+    }
+
+    // Start first attempt
+    tryFetch();
+  };
+
   this.pedalboardStatsSuccess = false;
   this.pedalboardStats = {};
   this.resetPedalboardStats = function () {
@@ -526,6 +617,16 @@ function Desktop(elements) {
       elements.saveButton.removeClass("unmodified-changes");
     }
   };
+
+  // Attempt to populate plugin index shortly after Desktop is constructed
+  // This allows the adapter/session-manager to finish initialization.
+  setTimeout(function () {
+    try {
+      self.fetchAvailablePlugins(5, 1000);
+    } catch (e) {
+      console.warn('fetchAvailablePlugins failed to start:', e);
+    }
+  }, 500);
 
   elements.devicesIcon.statusTooltip();
   this.ccDeviceManager = new ControlChainDeviceManager({
@@ -1533,15 +1634,14 @@ Desktop.prototype.makePedalboard = function (el, effectBox) {
       var firstTry = true;
       var add = function () {
         $.ajax({
-          url:
-            "/effect/add/" +
-            instance +
-            "?x=" +
-            x +
-            "&y=" +
-            y +
-            "&uri=" +
-            escape(uri),
+          url: "/api/plugins",
+          method: "POST",
+          data: JSON.stringify({
+            uri: uri,
+            x: x,
+            y: y
+          }),
+          contentType: "application/json",
           success: function (pluginData) {
             if (pluginData) {
               callback(pluginData);

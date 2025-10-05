@@ -371,7 +371,24 @@ JqueryClass('effectBox', {
         div.innerHTML = Mustache.render(TEMPLATES.plugin, plugin_data);
         var rendered = $(Array.prototype.slice.call(div.childNodes, 0));
 
-        self.data('pedalboard').pedalboard('registerAvailablePlugin', rendered, plugin, {
+        var pedalboard = self.data('pedalboard');
+        if (!pedalboard || typeof pedalboard.pedalboard !== 'function') {
+            console.error('Error: pedalboard widget not available');
+            return;
+        }
+        
+        // Transform plugin data to expected format (snake_case to camelCase)
+        var transformedPlugin = $.extend({}, plugin, {
+            buildEnvironment: plugin.build_environment || '',
+            microVersion: plugin.micro_version || '',
+            minorVersion: plugin.minor_version || '',
+            builder: plugin.builder || '',
+            release: plugin.release || '',
+            iotype: plugin.ports && plugin.ports.audio ? 
+                (plugin.ports.audio.input || 0) + '_' + (plugin.ports.audio.output || 0) : '0_0'
+        });
+        
+        pedalboard.pedalboard('registerAvailablePlugin', rendered, transformedPlugin, {
             distance: 2,
             delay: 100,
             start: function () {

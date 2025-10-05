@@ -140,9 +140,9 @@ class PluginManager:
             # Verify the bridge actually registered the instance. This avoids
             # transient races where the bridge may take a short moment to
             # publish the new instance internally. Poll get_plugin_info for a
-            # short period (2 seconds) before giving up.
+            # short period (10 seconds) before giving up.
             verified = False
-            max_attempts = 20
+            max_attempts = 100
             for attempt in range(max_attempts):
                 verify = await self.bridge.call("modhost_bridge", "get_plugin_info", instance_id=instance_id)
                 if verify and not verify.get("error") and verify.get("success", True):

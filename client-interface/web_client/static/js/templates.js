@@ -3,7 +3,12 @@
 
 /*
   This file handles client-side configuration loading, replacing server-side
-  template variable injection with API-based config fetching.
+  template var      }, 100); // Increased timeout to ensure DOM is ready
+    });
+  }
+
+  // Populate config on load
+  populateConfigQueries(); injection with API-based config fetching.
 */
 
 // Prevent multiple executions
@@ -75,13 +80,15 @@ if (typeof window.MOD_TEMPLATES_LOADED === "undefined") {
       body: body,
       signal: signal,
     })
-      .then((resp) => {
+      .then(function(resp) {
         clearTimeout(timer);
         if (!resp.ok) throw new Error(`status ${resp.status}`);
         return resp.json();
       })
-      .then((json) => json.results || {})
-      .catch((err) => {
+      .then(function(json) {
+        return json.results || {};
+      })
+      .catch(function(err) {
         console.warn("Failed to fetch batch config:", err);
         return {};
       });
@@ -110,8 +117,8 @@ if (typeof window.MOD_TEMPLATES_LOADED === "undefined") {
     window.CODEC_TRUEBYPASS = false;
 
     // Fetch real values asynchronously and update globals when available
-    fetchAllConfigAsync(2000).then((results) => {
-      Object.keys(results).forEach((key) => {
+    fetchAllConfigAsync(2000).then(function(results) {
+      Object.keys(results).forEach(function(key) {
         if (configQueries.hasOwnProperty(key)) {
           configQueries[key] = results[key];
         }
@@ -119,22 +126,22 @@ if (typeof window.MOD_TEMPLATES_LOADED === "undefined") {
 
       // Apply fetched values
       window.SITEURL = configQueries["system.cloud_url"] || window.SITEURL;
-    window.CLOUD_LABS_URL = configQueries["system.cloud_labs_url"] || "";
-    window.PLUGINS_URL = configQueries["system.plugins_url"] || "";
-    window.PEDALBOARDS_URL = configQueries["system.pedalboards_url"] || "";
-    window.PEDALBOARDS_LABS_URL =
-      configQueries["system.pedalboards_labs_url"] || "";
-    window.CONTROLCHAIN_URL = configQueries["system.controlchain_url"] || "";
-    window.LV2_PLUGIN_DIR = configQueries["system.lv2_plugin_dir"] || "";
-    window.VERSION = configQueries["system.version"] || "";
-    window.BIN_COMPAT = configQueries["system.bin_compat"] || "";
-    window.PLATFORM = configQueries["system.platform"] || "";
-    window.SAMPLERATE = configQueries["system.sampleRate"] || 48000;
-    window.ADDRESSING_PAGES = configQueries["system.addressing_pages"] || [];
-    window.USING_MOD_DESKTOP = configQueries["environment.desktop"] || false;
-    window.FAVORITES = configQueries["user.favorites"] || [];
-    window.PREFERENCES = configQueries["user.preferences"] || {};
-    window.CODEC_TRUEBYPASS = configQueries["system.codec_truebypass"] || false;
+      window.CLOUD_LABS_URL = configQueries["system.cloud_labs_url"] || "";
+      window.PLUGINS_URL = configQueries["system.plugins_url"] || "";
+      window.PEDALBOARDS_URL = configQueries["system.pedalboards_url"] || "";
+      window.PEDALBOARDS_LABS_URL =
+        configQueries["system.pedalboards_labs_url"] || "";
+      window.CONTROLCHAIN_URL = configQueries["system.controlchain_url"] || "";
+      window.LV2_PLUGIN_DIR = configQueries["system.lv2_plugin_dir"] || "";
+      window.VERSION = configQueries["system.version"] || "";
+      window.BIN_COMPAT = configQueries["system.bin_compat"] || "";
+      window.PLATFORM = configQueries["system.platform"] || "";
+      window.SAMPLERATE = configQueries["system.sampleRate"] || 48000;
+      window.ADDRESSING_PAGES = configQueries["system.addressing_pages"] || [];
+      window.USING_MOD_DESKTOP = configQueries["environment.desktop"] || false;
+      window.FAVORITES = configQueries["user.favorites"] || [];
+      window.PREFERENCES = configQueries["user.preferences"] || {};
+      window.CODEC_TRUEBYPASS = configQueries["system.codec_truebypass"] || false;
 
     // Additional variables that may be used in templates
     window.NOTIFICATIONS_ENABLED = true;
@@ -188,8 +195,46 @@ if (typeof window.MOD_TEMPLATES_LOADED === "undefined") {
         if (noFactoryEl) noFactoryEl.style.display = "block";
       }
     }, 100); // Increased timeout to ensure DOM is ready
+    });
   }
 
-  // Populate config on load
+  /**
+   * Load HTML templates into TEMPLATES object
+   */
+  function loadTemplates() {
+    // Load plugin template
+    fetch('/include/plugin.html')
+      .then(function(response) { return response.text(); })
+      .then(function(html) { 
+        window.TEMPLATES = window.TEMPLATES || {};
+        window.TEMPLATES.plugin = html; 
+      })
+      .catch(function(err) { 
+        console.warn('Failed to load plugin template:', err); 
+      });
+
+    // Load other essential templates
+    var templateFiles = [
+      'addressing',
+      'bypass_addressing',
+      'cloudplugin',
+      'notification'
+    ];
+    
+    templateFiles.forEach(function(name) {
+      fetch('/include/' + name + '.html')
+        .then(function(response) { return response.text(); })
+        .then(function(html) { 
+          window.TEMPLATES = window.TEMPLATES || {};
+          window.TEMPLATES[name] = html; 
+        })
+        .catch(function(err) { 
+          console.warn('Failed to load template ' + name + ':', err); 
+        });
+    });
+  }
+
+  // Load templates and populate config on load
+  loadTemplates();
   populateConfigQueries();
 } // End of MOD_TEMPLATES_LOADED guard
