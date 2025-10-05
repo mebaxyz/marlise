@@ -1,4 +1,4 @@
-Scripts to start and stop the audio host components (copied from `mado-audio-host/scripts`).
+Scripts to start and stop the Marlise audio system components.
 
 Files:
 
@@ -22,5 +22,6 @@ Then start or stop the services from the repository root:
 
 Notes:
 
-- These scripts assume binaries live in `mod-host/` and `modhost-bridge/` subdirectories (as in the audio-host repo). Override paths with `MOD_HOST_BIN` and `MODHOST_BRIDGE_BIN` environment variables if needed.
+- These scripts assume binaries live in `audio-engine/mod-host/` and `audio-engine/modhost-bridge/` subdirectories. Override paths with `MOD_HOST_BIN` and `MODHOST_BRIDGE_BIN` environment variables if needed.
+- The session manager is started from `session-manager/`. Override with `SESSION_MANAGER_SCRIPT` if needed.
 - The scripts use `pw-jack` if available and if `USE_PWJACK=1` (default).
