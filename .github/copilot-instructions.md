@@ -15,13 +15,27 @@
 ### Project Structure
 ```
 marlise/
-├── mod-ui/              # Submodule: MOD-UI frontend (feature/fastapi-migration branch)
-├── mado-audio-host/     # Submodule: Audio host components
+├── audio-engine/        # Low-level audio processing
+│   ├── mod-host/        # LV2 plugin host (C)
+│   └── modhost-bridge/  # JSON-RPC bridge (C++)
+├── session-manager/     # High-level orchestration (Python)
+│   └── src/             # Session manager source code
+├── client-interface/    # Web API and UI (FastAPI)
+│   ├── api/             # FastAPI backend
+│   └── web/             # Web client
 ├── scripts/             # Service management scripts
 │   ├── start-service.sh # Start all services
 │   └── stop-service.sh  # Stop all services
-├── test_*.py            # Test scripts
-├── COMMUNICATION_*.md   # Architecture documentation
+├── docs/                # Documentation
+│   ├── ARCHITECTURE_OVERVIEW.md
+│   ├── COMMUNICATION_ARCHITECTURE.md
+│   ├── COMMUNICATION_FLOW_DIAGRAMS.md
+│   └── COMMUNICATION_QUICK_REFERENCE.md
+├── tests/               # Integration tests
+│   ├── test_zmq_communication.py
+│   ├── test_http_api.py
+│   └── test_api_completeness.py
+├── STRUCTURE.md         # Quick structure reference
 └── README.md            # Project documentation
 ```
 
@@ -63,14 +77,8 @@ mod-host (LV2 Plugin Host)
 # System dependencies
 sudo apt-get install python3 python3-pip libzmq3-dev libjack-jackd2-dev pipewire-jack
 
-# Python dependencies (if requirements.txt exists in submodules)
+# Python dependencies
 pip3 install fastapi uvicorn pyzmq asyncio
-```
-
-### Initialize Submodules
-```bash
-git submodule init
-git submodule update --recursive
 ```
 
 ### Start Development Environment
@@ -96,17 +104,17 @@ git submodule update --recursive
 
 ### Test ZeroMQ Communication
 ```bash
-python3 test_zmq_communication.py
+python3 tests/test_zmq_communication.py
 ```
 
 ### Test HTTP API
 ```bash
-python3 test_http_api.py
+python3 tests/test_http_api.py
 ```
 
 ### Test API Completeness
 ```bash
-python3 test_api_completeness.py
+python3 tests/test_api_completeness.py
 ```
 
 ### Manual API Testing
@@ -195,7 +203,7 @@ async def load_plugin(self, uri: str) -> Dict[str, Any]:
        return result
    ```
 
-3. **Update documentation** in `COMMUNICATION_ARCHITECTURE.md`
+3. **Update documentation** in `docs/COMMUNICATION_ARCHITECTURE.md`
 
 ### Debugging
 
@@ -212,7 +220,7 @@ tail -f logs/session-manager.log
 curl http://localhost:8080/api/session/health
 
 # Test session manager directly
-python3 test_zmq_communication.py
+python3 tests/test_zmq_communication.py
 
 # Test mod-host directly
 telnet localhost 5555
@@ -225,29 +233,15 @@ telnet localhost 5555
 3. **JACK not running**: Ensure JACK or PipeWire is running
 4. **Plugin paths**: Check LV2_PATH environment variable
 
-### Working with Submodules
-
-```bash
-# Update submodules to latest commit
-git submodule update --remote
-
-# Check submodule status
-git submodule status
-
-# Make changes in submodule
-cd mod-ui
-git checkout -b feature/my-feature
-# ... make changes ...
-git commit -am "My changes"
-git push origin feature/my-feature
-```
-
 ## Documentation
 
 - **README.md**: High-level project overview and quick start
-- **COMMUNICATION_ARCHITECTURE.md**: Complete technical documentation of all communication layers
-- **COMMUNICATION_QUICK_REFERENCE.md**: Quick reference for common commands and APIs
-- **COMMUNICATION_FLOW_DIAGRAMS.md**: Visual sequence diagrams
+- **STRUCTURE.md**: Quick navigation guide for the repository structure
+- **docs/ARCHITECTURE_OVERVIEW.md**: Comprehensive system architecture overview
+- **docs/COMMUNICATION_ARCHITECTURE.md**: Complete technical documentation of all communication layers
+- **docs/COMMUNICATION_QUICK_REFERENCE.md**: Quick reference for common commands and APIs
+- **docs/COMMUNICATION_FLOW_DIAGRAMS.md**: Visual sequence diagrams
+- **docs/MIGRATION_GUIDE.md**: Guide for migrating from old submodule structure
 
 When adding features, update relevant documentation files.
 
@@ -280,10 +274,11 @@ docs: update communication architecture diagrams
 
 ## Important Notes
 
-### Submodules
-- **mod-ui**: Uses the `feature/fastapi-migration` branch
-- **mado-audio-host**: Contains C++ modhost-bridge and mod-host binaries
-- Always run `git submodule update` after pulling changes
+### Project Structure
+- The project uses an **integrated structure** (no git submodules)
+- All code is directly in the repository for easier development
+- See `STRUCTURE.md` for quick navigation
+- Component-specific documentation is in each component's README.md
 
 ### Audio System
 - The system requires JACK or PipeWire audio server
@@ -311,20 +306,22 @@ When contributing:
 
 ## Getting Help
 
-1. Check existing documentation in `COMMUNICATION_*.md` files
-2. Review test scripts for usage examples
-3. Examine service logs in `logs/` directory
-4. Refer to [MOD-UI wiki](https://wiki.modaudio.com/) for LV2 plugin information
+1. Check existing documentation in `docs/` directory
+2. Review `STRUCTURE.md` for quick navigation
+3. Review test scripts in `tests/` for usage examples
+4. Examine service logs in `logs/` directory
+5. Refer to [MOD-UI wiki](https://wiki.modaudio.com/) for LV2 plugin information
 
 ## Best Practices for Copilot
 
 When working with this repository:
 
-1. **Read the architecture docs first**: Understand the 4-layer communication model before making changes
-2. **Test incrementally**: Use the provided test scripts after making changes
-3. **Check service logs**: Always verify services are running and communicating
-4. **Follow the data flow**: Web Client → Client Interface → Session Manager → Modhost Bridge → mod-host
-5. **Update documentation**: Keep `COMMUNICATION_*.md` files in sync with code changes
-6. **Respect the modularity**: Each layer has a specific responsibility
+1. **Understand the structure**: Review `STRUCTURE.md` and `docs/ARCHITECTURE_OVERVIEW.md` before making changes
+2. **Follow the 4-layer model**: Web Client → Client Interface → Session Manager → Modhost Bridge → mod-host
+3. **Test incrementally**: Use the test scripts in `tests/` after making changes
+4. **Check service logs**: Always verify services are running and communicating (logs in `logs/` directory)
+5. **Update documentation**: Keep `docs/` files in sync with code changes
+6. **Respect the modularity**: Each component folder (`audio-engine/`, `session-manager/`, `client-interface/`) has a specific responsibility
 7. **Use existing patterns**: Look at similar endpoints/handlers for consistency
 8. **Test the full chain**: Changes may affect multiple layers - test end-to-end
+9. **Check component READMEs**: Each major component has its own README.md with specific details
