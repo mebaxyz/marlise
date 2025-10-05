@@ -13,6 +13,8 @@ services:
       - ../client-interface/web_client:/app:delegated
     ports:
       - "8080:8080"
+    # Use host networking so the client-api container can reach services bound to the host loopback
+    network_mode: "host"
     environment:
       - CLIENT_INTERFACE_PORT=8080
     # Use the CMD from the Dockerfile (uvicorn --reload)

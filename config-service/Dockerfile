@@ -3,5 +3,18 @@ WORKDIR /app
 COPY main.py /app/main.py
 # Install pyzmq for ZeroMQ communication
 RUN python -m pip install --no-cache-dir pyzmq
-# The service binds to 127.0.0.1 on the deterministic RPC port (5555 + crc32(name) % 1000)
-CMD ["python", "-u", "main.py"]
+# Create a non-root user to avoid root-owned persisted files
+RUN useradd -m -u 1000 devuser || true
+# Ensure /app exists and is owned by devuser
+RUN mkdir -p /app/data && chown -R 1000:1000 /app
+
+# Add an entrypoint that fixes ownership of the mounted data dir when the container
+# starts (useful when the host bind-mount is owned by root). The entrypoint will
+# then drop privileges and run the main service as devuser.
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Run entrypoint as root so it can fix ownership of bind-mounted files, then the
+# entrypoint will drop privileges and exec the service as the non-root devuser.
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["python", "-u", "/app/main.py"]

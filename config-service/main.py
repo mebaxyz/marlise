@@ -41,19 +41,54 @@ def _load_settings():
 
 def _atomic_write(path: str, data: dict):
     """Write JSON data atomically to path."""
-    import json, os, tempfile
+    import json, os, tempfile, shutil
 
     dirn = os.path.dirname(path) or "."
-    fd, tmp = tempfile.mkstemp(prefix=".tmp.settings.", dir=dirn)
+    # Ensure target directory exists
+    os.makedirs(dirn, exist_ok=True)
+
+    fd = None
+    tmp = None
     try:
+        # Create temp file in the same directory to allow atomic replace
+        fd, tmp = tempfile.mkstemp(prefix=".tmp.settings.", dir=dirn)
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
             f.flush()
             os.fsync(f.fileno())
-        os.replace(tmp, path)
-    except Exception:
+        # Try atomic replace
         try:
-            os.remove(tmp)
+            os.replace(tmp, path)
+            return
+        except OSError as e:
+            # Cross-device link or other issue; attempt safe fallback
+            logger.warning("os.replace failed (%s), falling back to copy", e)
+            try:
+                shutil.copyfile(tmp, path)
+                os.remove(tmp)
+                return
+            except Exception:
+                # Last-resort: write directly (not atomic)
+                try:
+                    with open(path, "w", encoding="utf-8") as f:
+                        json.dump(data, f, indent=2, ensure_ascii=False)
+                        f.flush()
+                        os.fsync(f.fileno())
+                    if tmp and os.path.exists(tmp):
+                        os.remove(tmp)
+                    return
+                except Exception:
+                    raise
+    except Exception:
+        # Clean up temp file on failure
+        try:
+            if fd:
+                os.close(fd)
+        except Exception:
+            pass
+        try:
+            if tmp and os.path.exists(tmp):
+                os.remove(tmp)
         except Exception:
             pass
         raise

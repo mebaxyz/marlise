@@ -70,8 +70,9 @@ class ZMQClient:
             # Create a new REQ socket for each call to avoid state issues
             service_port = self._get_service_rpc_port(service_name)
             req_socket = self.context.socket(zmq.REQ)
-            req_socket.connect(f"tcp://127.0.0.1:{service_port}")
-            
+            connect_addr = f"tcp://127.0.0.1:{service_port}"
+            req_socket.connect(connect_addr)
+
             try:
                 # Create request
                 request_data = {
@@ -81,18 +82,18 @@ class ZMQClient:
                     "request_id": str(uuid.uuid4()),
                     "timestamp": datetime.now().isoformat(),
                 }
-                
+
                 # Send request and wait for response
                 await req_socket.send_json(request_data)
-                
+
                 if timeout is not None:
                     response_data = await asyncio.wait_for(req_socket.recv_json(), timeout=timeout)
                 else:
                     response_data = await req_socket.recv_json()
-                
+
                 if response_data.get("error"):
                     raise RuntimeError(f"Remote service error: {response_data['error']}")
-                
+
                 return response_data.get("result")
             finally:
                 # Always close the socket after use
