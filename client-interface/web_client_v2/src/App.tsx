@@ -4,8 +4,9 @@ import PluginList from './components/PluginList'
 import Pedalboard from './components/Pedalboard'
 
 export default function App() {
-  const [healthy, setHealthy] = useState<boolean | null>(null)
-  const [healthMsg, setHealthMsg] = useState<string>('')
+  // show banner by default until healthcheck confirms OK
+  const [healthy, setHealthy] = useState<boolean | null>(false)
+  const [healthMsg, setHealthMsg] = useState<string>('Waiting for backend...')
 
   useEffect(() => {
     let mounted = true
