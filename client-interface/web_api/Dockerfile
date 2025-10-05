@@ -2,11 +2,6 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system deps required by some wheels
-FROM python:3.11-slim
-
-WORKDIR /app
-
 # Install system deps needed by some wheels (libzmq for pyzmq)
 RUN apt-get update \
     && apt-get install -y --no-install-recommends build-essential libzmq3-dev \
@@ -18,8 +13,8 @@ COPY requirements.txt ./requirements.txt
 # Install python deps at build time
 RUN python -m pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . /app
+# Copy application code into /app/api so the package name `api` is importable
+COPY . /app/api
 
 ENV CLIENT_INTERFACE_PORT=8080
 

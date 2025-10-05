@@ -1,7 +1,5 @@
 """
-Direct ZeroMQ Client
-
-Minimal ZeroMQ client for calling remote services without ServiceBus package.
+Direct ZeroMQ Client (moved)
 """
 
 import asyncio
@@ -12,6 +10,7 @@ import zlib
 from datetime import datetime
 from typing import Any, Dict, Optional
 
+import os
 import zmq
 import zmq.asyncio
 
@@ -27,12 +26,17 @@ class ZMQClient:
         self.client_name = client_name
         self.base_port = base_port
         self.context = zmq.asyncio.Context()
-        
+
         # REQ sockets for calling other services
         self.req_sockets = {}
-        
+
         # State
         self._running = False
+
+        # Configurable host for ZeroMQ connections. When running inside Docker
+        # the host may not be reachable at 127.0.0.1; set CLIENT_INTERFACE_ZMQ_HOST
+        # (or ZMQ_HOST) to the host IP or host.docker.internal as appropriate.
+        self.zmq_host = os.getenv("CLIENT_INTERFACE_ZMQ_HOST", os.getenv("ZMQ_HOST", "127.0.0.1"))
 
     def _get_service_rpc_port(self, service_name: str) -> int:
         """Get the RPC port for a service"""
@@ -70,7 +74,7 @@ class ZMQClient:
             # Create a new REQ socket for each call to avoid state issues
             service_port = self._get_service_rpc_port(service_name)
             req_socket = self.context.socket(zmq.REQ)
-            connect_addr = f"tcp://127.0.0.1:{service_port}"
+            connect_addr = f"tcp://{self.zmq_host}:{service_port}"
             req_socket.connect(connect_addr)
 
             try:
