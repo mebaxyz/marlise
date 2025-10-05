@@ -768,21 +768,41 @@ function Desktop(elements) {
   };
 
   this.saveConfigValue = function (key, value, callback) {
+    // Post the setting to the client adapter endpoint which will forward to the ZMQ config service
     $.ajax({
-      url: "/config/set",
+      url: "/api/config/setting",
       type: "POST",
-      data: {
-    url: '/api/config/setting',
-        value: value,
-    contentType: 'application/json',
-    data: JSON.stringify({ key: key, value: value }),
-          PREFERENCES[key] = value;
+      contentType: "application/json",
+      data: JSON.stringify({ key: key, value: value }),
+      success: function (resp) {
+        // config-service returns a wrapped result (e.g. { result: { status: 'ok' } })
+        var ok = false;
+        try {
+          if (resp && resp.result && (resp.result.status === "ok" || resp.result.status === "success")) {
+            ok = true;
+          } else if (resp && resp.status === "ok") {
+            ok = true;
+          } else if (resp && resp.ok) {
+            ok = true;
+          }
+        } catch (e) {
+          ok = false;
+        }
+
+        if (ok) {
+          // update local preferences cache
+          try {
+            PREFERENCES[key] = value;
+          } catch (e) {
+            // ignore if PREFERENCES missing
+          }
+          if (callback) callback(true);
+        } else {
+          if (callback) callback(false);
         }
       },
       error: function () {
-        if (callback) {
-          callback(false);
-        }
+        if (callback) callback(false);
       },
       cache: false,
       dataType: "json",
@@ -808,10 +828,11 @@ function Desktop(elements) {
         console.log("MOD authentication succeeded");
         self.resetPedalboardStats();
       } else {
-        url: "/api/config/setting",
         self.upgradeWindow.upgradeWindow("setErrored");
-        contentType: "application/json",
-        data: JSON.stringify({ key: key, value: value }),
+      }
+    });
+  };
+
   this.setupMatomo = function () {
     var _mtm = (window._mtm = window._mtm || []);
     _mtm.push({ "mtm.startTime": new Date().getTime(), event: "mtm.Start" });

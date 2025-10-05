@@ -294,20 +294,7 @@ async def batch_config(request: Request):
     return {"results": results}
 
 
-@app.post("/config/set")
-async def set_config(request: Request):
-    """Set a config key used by the frontend (development-only). Expects JSON {"key": "path", "value": ...}"""
-    try:
-        body = await request.json()
-    except Exception:
-        raise HTTPException(status_code=400, detail="invalid json")
-
-    key = body.get("key")
-    if not key or not isinstance(key, str):
-        raise HTTPException(status_code=400, detail="missing key")
-    value = body.get("value")
-    _set_config_value(key, value)
-    return {"success": True, "key": key, "value": value}
+# Legacy development-only route `/config/set` removed. Use `/api/config/setting` (adapter to ZMQ config_service) instead.
 
 
 @app.delete("/api/plugins/{instance_id}")
