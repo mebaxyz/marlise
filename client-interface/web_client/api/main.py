@@ -418,6 +418,81 @@ async def get_session_health():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# Configuration endpoints (adapter to config_service via ZMQ)
+@app.get("/api/config/setting")
+async def http_get_setting(key: Optional[str] = None):
+    """Get a single setting by dotted key, e.g. ?key=ui.theme"""
+    if not zmq_client:
+        raise HTTPException(status_code=503, detail="ZMQ client not available")
+
+    if not key:
+        raise HTTPException(status_code=400, detail="Missing 'key' query parameter")
+
+    try:
+        # config_service exposes get_setting
+        result = await zmq_client.call("config_service", "get_setting", key=key, timeout=5.0)
+        # result is expected to be a dictionary like {'value': ...}
+        return result
+    except Exception as e:
+        logger.error(f"Error getting config setting {key}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class SettingPayload(BaseModel):
+    key: str
+    value: Any
+
+
+@app.post("/api/config/setting")
+async def http_set_setting(payload: SettingPayload):
+    """Set a single setting by dotted key"""
+    if not zmq_client:
+        raise HTTPException(status_code=503, detail="ZMQ client not available")
+
+    try:
+        result = await zmq_client.call("config_service", "set_setting", key=payload.key, value=payload.value, timeout=5.0)
+        return result
+    except Exception as e:
+        logger.error(f"Error setting config {payload.key}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class BatchQuery(BaseModel):
+    queries: Dict[str, str]
+
+
+@app.post("/api/config/settings/batch")
+async def http_get_settings_batch(batch: BatchQuery):
+    """Batch get multiple settings. Body: {"queries": {"k1": "a.b", ...}}"""
+    if not zmq_client:
+        raise HTTPException(status_code=503, detail="ZMQ client not available")
+
+    try:
+        result = await zmq_client.call("config_service", "get_settings", queries=batch.queries, timeout=5.0)
+        return result
+    except Exception as e:
+        logger.error(f"Error getting batch settings: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class SettingsPayload(BaseModel):
+    settings: Dict[str, Any]
+
+
+@app.post("/api/config/settings")
+async def http_set_settings(payload: SettingsPayload):
+    """Set multiple settings at once. Body: {"settings": {"a.b": value, ...}}"""
+    if not zmq_client:
+        raise HTTPException(status_code=503, detail="ZMQ client not available")
+
+    try:
+        result = await zmq_client.call("config_service", "set_settings", settings=payload.settings, timeout=5.0)
+        return result
+    except Exception as e:
+        logger.error(f"Error setting settings batch: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/plugins/{instance_id}/parameters")
 async def get_instance_parameters(instance_id: str):
     """Get parameters for a loaded plugin instance"""

@@ -301,12 +301,10 @@ function show_blocker (action) {
 
 function config_set(key, value) {
     $.ajax({
-        url: '/config/set',
+        url: '/api/config/setting',
         method: 'POST',
-        data: {
-          key: key,
-          value: value,
-        },
+        contentType: 'application/json',
+        data: JSON.stringify({ key: key, value: value }),
         success: function (resp) {
             console.log("success", resp)
         },
