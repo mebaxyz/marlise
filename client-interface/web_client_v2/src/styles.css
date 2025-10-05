@@ -1,0 +1,6 @@
+body { font-family: system-ui, sans-serif; margin: 0; padding: 0 }
+.app { padding: 16px }
+.container { display: flex; gap: 16px }
+.plugin-list { width: 300px; border: 1px solid #ddd; padding: 8px }
+.plugin-card { display: flex; gap: 8px; padding: 6px; border: 1px solid #eee; margin-bottom: 6px; align-items:center }
+.pedalboard { flex: 1; border: 1px solid #ddd; padding: 8px }
