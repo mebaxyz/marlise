@@ -9,10 +9,14 @@ import asyncio
 import json
 import logging
 import os
+import uuid
 from contextlib import asynccontextmanager
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import uvicorn
+import zmq
+import zmq.asyncio
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -100,8 +104,13 @@ class ParameterUpdate(BaseModel):
 
 
 class PedalboardRequest(BaseModel):
-    name: str
-    description: Optional[str] = ""
+    bundlepath: str
+
+class ConfigSettingRequest(BaseModel):
+    key: str
+    value: Any
+
+# Config API Models
 
 
 # Global instances
@@ -186,12 +195,22 @@ async def get_available_plugins():
     try:
         result = await zmq_client.call("session_manager", "get_available_plugins", timeout=10.0)
         if result and result.get("success"):
-            return {"plugins": result.get("plugins", [])}
+            plugins = result.get("plugins", {})
+            if isinstance(plugins, dict):
+                plugins = list(plugins.values())
+            return {"plugins": plugins}
         else:
             raise HTTPException(status_code=500, detail=result.get("error", "Failed to get plugins"))
     except Exception as e:
         logger.error(f"Error getting available plugins: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/snapshot/name")
+async def get_snapshot_name(id: int = 0):
+    """Get snapshot name - placeholder endpoint"""
+    # This is a placeholder for the snapshot functionality
+    # Return empty response for now to avoid 404 errors
+    return {"name": "Default", "id": id}
 
 
 @app.post("/api/plugins")
@@ -438,16 +457,39 @@ class SettingPayload(BaseModel):
 
 
 @app.post("/api/config/setting")
-async def http_set_setting(payload: SettingPayload):
-    """Set a single setting by dotted key"""
-    if not zmq_client:
-        raise HTTPException(status_code=503, detail="ZMQ client not available")
-
+async def set_config_setting(request: ConfigSettingRequest):
+    """Set a configuration setting"""
+    logger.info(f"Setting config: key={request.key}, value={request.value}, type={type(request.value)}")
     try:
-        result = await zmq_client.call("config_service", "set_setting", key=payload.key, value=payload.value, timeout=5.0)
-        return result
+        # Create a direct ZMQ REQ socket to config service
+        context = zmq.asyncio.Context()
+        req_socket = context.socket(zmq.REQ)
+        req_socket.connect("tcp://127.0.0.1:6229")  # Config service port
+        
+        try:
+            # Send request
+            request_data = {
+                "method": "set_setting",
+                "params": {"key": request.key, "value": request.value},
+                "source_service": "client_api",
+                "request_id": str(uuid.uuid4()),
+                "timestamp": datetime.now().isoformat(),
+            }
+            
+            await req_socket.send_json(request_data)
+            response = await asyncio.wait_for(req_socket.recv_json(), timeout=5.0)
+            
+            if response.get("error"):
+                raise HTTPException(status_code=500, detail=response["error"])
+                
+            return {"result": response.get("result")}
+            
+        finally:
+            req_socket.close()
+            context.term()
+            
     except Exception as e:
-        logger.error(f"Error setting config {payload.key}: {e}")
+        logger.error(f"Error setting config: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
