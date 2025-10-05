@@ -1,3 +1,46 @@
+# Development nginx / static-site
+
+This directory contains development Docker assets to serve the web client and proxy API/WebSocket requests to the local services.
+
+Usage (development)
+
+- Build and run only the static-site (nginx) service:
+
+```bash
+docker compose -f docker/docker-compose.dev.yml up --build static-site
+```
+
+- To run the full dev stack (client-api, session-manager, static-site):
+
+```bash
+docker compose -f docker/docker-compose.dev.yml up --build
+```
+
+Waiting for dependent services
+
+The nginx image includes a small entrypoint wrapper that can wait for dependent services before starting nginx. Set the `WAIT_FOR_TARGETS` environment variable on the `static-site` service (in the compose file or at runtime) with a comma-separated list of targets to wait for. Targets can be either `host:port` for a TCP check or a full HTTP URL for an HTTP healthcheck.
+
+Examples
+
+- Wait for a local client API (port 8080) and session manager (5718):
+
+```yaml
+services:
+  static-site:
+    environment:
+      - WAIT_FOR_TARGETS=127.0.0.1:8080,127.0.0.1:5718
+```
+
+- Wait for an HTTP health endpoint:
+
+```yaml
+      - WAIT_FOR_TARGETS=http://127.0.0.1:8080/health
+```
+
+Notes
+
+- The `scripts/wait-for.sh` helper is copied into the image and used by the entrypoint wrapper. It accepts `--timeout` and `--interval` options.
+- The development compose file uses bind-mounts for service sources so you can edit code locally and see changes in running containers.
 This folder contains Docker artifacts to serve the project's static files using nginx.
 
 Files added

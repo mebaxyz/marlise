@@ -154,6 +154,11 @@ curl -X PATCH http://localhost:8080/api/plugins/parameters \
 wscat -c ws://localhost:8080/ws
 ```
 
+### Development static-site and tests
+
+- A development nginx/static-site image and a `docker/docker-compose.dev.yml` are provided to serve the web client during development and to proxy API/WebSocket calls. See `docker/README.md` for usage and examples of the `WAIT_FOR_TARGETS` environment variable that makes nginx wait for dependent services before starting.
+- A smoke test `tests/test_static_site_smoke.py` is included; it brings up the `static-site` service via the dev compose file, checks that it serves HTTP, and tears it down. The test is skipped when `docker` is not available.
+
 ## Code Style and Conventions
 
 ### Python Code
