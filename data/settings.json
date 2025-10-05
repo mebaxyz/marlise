@@ -94,9 +94,16 @@
   },
   "test": {
     "value": "via-dict",
-    "run_marker": "from-e2e-2"
+    "run_marker": "from-e2e-2",
+    "frontend": "it-works-host-4"
   },
   "general": {
     "cloud-terms-accepted": "true"
+  },
+  "cloud-terms-accepted": true,
+  "user": {
+    "preferences": {
+      "testKey": "hello"
+    }
   }
 }
