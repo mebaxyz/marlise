@@ -1,7 +1,13 @@
-import React, { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import PluginList from './components/PluginList'
 import Pedalboard from './components/Pedalboard'
+import './styles/mod-ui.css'
+
+interface HealthData {
+  service: string
+  status: string
+}
 
 export default function App() {
   // show banner by default until healthcheck confirms OK
@@ -47,17 +53,30 @@ export default function App() {
   }, [])
 
   return (
-    <div className="app">
+    <div className="mod-app">
+      {/* Health Status Banner */}
       {healthy === false && (
-        <div className="health-banner">Application not healthy: {healthMsg}</div>
+        <div className="mod-health-banner error">
+          Application not healthy: {healthMsg}
+        </div>
       )}
       {healthy === true && (
-        <div className="health-banner ok">Connected to backend</div>
+        <div className="mod-health-banner">
+          🟢 Marlise v2 - Connected to backend
+        </div>
       )}
-      <h1>Marlise v2</h1>
-      <div className="container">
-        <PluginList />
-        <Pedalboard />
+      
+      {/* Main Layout */}
+      <div className="mod-main">
+        {/* Sidebar with Plugin List */}
+        <div className="mod-sidebar">
+          <PluginList />
+        </div>
+        
+        {/* Main Content Area with Pedalboard */}
+        <div className="mod-content">
+          <Pedalboard />
+        </div>
       </div>
     </div>
   )
