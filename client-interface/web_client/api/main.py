@@ -24,6 +24,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from .zmq_client import ZMQClient
+from .routers import health as health_router
 
 # Configuration
 SERVICE_NAME = "client_interface"
@@ -153,6 +154,9 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+# include small routers
+app.include_router(health_router.router)
 
 # Add CORS middleware
 app.add_middleware(

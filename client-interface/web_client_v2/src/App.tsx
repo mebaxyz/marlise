@@ -13,15 +13,23 @@ export default function App() {
     const check = async () => {
       try {
         // short timeout so healthcheck won't block page load
-        const resp = await axios.get('/api/session/health', { timeout: 2000 })
+        // Try the lightweight adapter API health first (fast and local)
+        let resp = await axios.get('/api/health', { timeout: 1000 }).catch(() => null)
+        if (!resp) {
+          // fallback to session-level health which may call session_manager over ZMQ
+          resp = await axios.get('/api/session/health', { timeout: 2000 })
+        }
         if (!mounted) return
         // Accept either {ok:true} or 200
-        if (resp.status === 200 && (resp.data == null || resp.data.ok === true || resp.data.status === 'ok')) {
+        if (resp && resp.status === 200 && (resp.data == null || resp.data.ok === true || resp.data.status === 'ok')) {
           setHealthy(true)
           setHealthMsg('')
+        } else if (resp) {
+          setHealthy(false)
+          setHealthMsg(JSON.stringify(resp.data ?? resp.status))
         } else {
           setHealthy(false)
-          setHealthMsg(JSON.stringify(resp.data || resp.status))
+          setHealthMsg('no response')
         }
       } catch (err: any) {
         if (!mounted) return
