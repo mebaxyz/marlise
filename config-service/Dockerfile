@@ -14,7 +14,7 @@ RUN mkdir -p /app/data && chown -R 1000:1000 /app
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-USER 1000
-ENV HOME=/home/devuser
+# Run entrypoint as root so it can fix ownership of bind-mounted files, then the
+# entrypoint will drop privileges and exec the service as the non-root devuser.
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["python", "-u", "/app/main.py"]
