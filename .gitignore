@@ -78,6 +78,7 @@ pnpm-debug.log*
 # Env files
 .env
 .env.*
+!.env.example
 
 # Editor/IDE temp
 .eslintcache
