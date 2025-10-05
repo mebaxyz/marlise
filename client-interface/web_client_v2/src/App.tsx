@@ -12,7 +12,8 @@ export default function App() {
     let mounted = true
     const check = async () => {
       try {
-        const resp = await axios.get('/api/session/health')
+        // short timeout so healthcheck won't block page load
+        const resp = await axios.get('/api/session/health', { timeout: 2000 })
         if (!mounted) return
         // Accept either {ok:true} or 200
         if (resp.status === 200 && (resp.data == null || resp.data.ok === true || resp.data.status === 'ok')) {
