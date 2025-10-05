@@ -221,6 +221,95 @@ async def load_plugin(plugin: PluginRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# Simple in-memory config store for the web client templates
+CONFIG_STORE: Dict[str, Any] = {
+    "device": {"api_key": "devkey", "host": "localhost", "port": 8080},
+    "system": {
+        "version": "0.0.0",
+        "build_date": "1970-01-01",
+        "cloud_url": "",
+        "cloud_labs_url": "",
+        "plugins_url": "",
+        "pedalboards_url": "",
+        "pedalboards_labs_url": "",
+        "controlchain_url": "",
+        "dev_api_class": "",
+        "bin_compat": False,
+        "codec_truebypass": False,
+        "factory_pedalboards": [],
+        "platform": "linux",
+        "addressing_pages": [],
+        "bufferSize": 512,
+        "sampleRate": 48000,
+        "lv2_plugin_dir": "/usr/lib/lv2",
+    },
+    "user": {"name": "dev", "email": "dev@local", "favorites": [], "preferences": {}},
+    "environment": {"desktop": True},
+}
+
+
+def _get_config_value(path: str) -> Any:
+    """Resolve dotted config path like 'system.version' into CONFIG_STORE."""
+    parts = path.split(".")
+    node = CONFIG_STORE
+    for p in parts:
+        if isinstance(node, dict) and p in node:
+            node = node[p]
+        else:
+            return None
+    return node
+
+
+def _set_config_value(path: str, value: Any) -> None:
+    parts = path.split(".")
+    node = CONFIG_STORE
+    for p in parts[:-1]:
+        if p not in node or not isinstance(node[p], dict):
+            node[p] = {}
+        node = node[p]
+    node[parts[-1]] = value
+
+
+@app.post("/api/config/settings/batch")
+async def batch_config(request: Request):
+    """Batch endpoint used by the static web client to fetch multiple config keys.
+
+    Expected body: {"queries": {"key": null, ...}}
+    Returns: {"results": {"key": value, ...}}
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="invalid json")
+
+    queries = body.get("queries") if isinstance(body, dict) else None
+    if not isinstance(queries, dict):
+        raise HTTPException(status_code=400, detail="missing queries object")
+
+    results: Dict[str, Any] = {}
+    for key in queries.keys():
+        val = _get_config_value(key)
+        if val is not None:
+            results[key] = val
+    return {"results": results}
+
+
+@app.post("/config/set")
+async def set_config(request: Request):
+    """Set a config key used by the frontend (development-only). Expects JSON {"key": "path", "value": ...}"""
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="invalid json")
+
+    key = body.get("key")
+    if not key or not isinstance(key, str):
+        raise HTTPException(status_code=400, detail="missing key")
+    value = body.get("value")
+    _set_config_value(key, value)
+    return {"success": True, "key": key, "value": value}
+
+
 @app.delete("/api/plugins/{instance_id}")
 async def unload_plugin(instance_id: str):
     """Unload a plugin"""
