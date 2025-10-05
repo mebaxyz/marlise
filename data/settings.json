@@ -93,7 +93,8 @@
     "redis_port": 6379
   },
   "test": {
-    "value": "via-dict"
+    "value": "via-dict",
+    "run_marker": "from-e2e-2"
   },
   "general": {
     "cloud-terms-accepted": "true"

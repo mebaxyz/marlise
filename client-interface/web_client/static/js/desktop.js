@@ -772,12 +772,10 @@ function Desktop(elements) {
       url: "/config/set",
       type: "POST",
       data: {
-        key: key,
+    url: '/api/config/setting',
         value: value,
-      },
-      success: function () {
-        if (callback) {
-          callback(true);
+    contentType: 'application/json',
+    data: JSON.stringify({ key: key, value: value }),
           PREFERENCES[key] = value;
         }
       },
@@ -810,12 +808,10 @@ function Desktop(elements) {
         console.log("MOD authentication succeeded");
         self.resetPedalboardStats();
       } else {
-        console.log("MOD authentication failed");
+        url: "/api/config/setting",
         self.upgradeWindow.upgradeWindow("setErrored");
-      }
-    });
-  };
-
+        contentType: "application/json",
+        data: JSON.stringify({ key: key, value: value }),
   this.setupMatomo = function () {
     var _mtm = (window._mtm = window._mtm || []);
     _mtm.push({ "mtm.startTime": new Date().getTime(), event: "mtm.Start" });
