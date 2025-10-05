@@ -35,6 +35,19 @@ services:
       - NGINX_ENV=development
     restart: unless-stopped
 
+  config-service:
+    build:
+      context: ../client-interface/config_service
+      dockerfile: Dockerfile
+    image: marlise-config-service-dev
+    container_name: marlise-config-service-dev
+    working_dir: /app
+    ports:
+      - "7070:7070"
+    environment:
+      - SERVICE_NAME=config_service
+    restart: unless-stopped
+
   session-manager:
     build:
       context: ../session-manager
