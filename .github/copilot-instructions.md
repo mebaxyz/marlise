@@ -241,7 +241,7 @@ python3 tests/test_zmq_communication.py
 
 # Test mod-host directly
 telnet localhost 5555
-# Type: help
+# Type: ping (send the text `ping` over the socket and expect a pong/ack response)
 ```
 
 #### Common Issues
