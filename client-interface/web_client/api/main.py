@@ -294,6 +294,13 @@ async def batch_config(request: Request):
     return {"results": results}
 
 
+# Provide a lightweight endpoint returning the full client-side CONFIG_STORE
+# This replaces the old batch RPC which queried the config_service. The
+# static site should consume this endpoint for template values.
+@app.get("/api/config/all")
+async def get_all_config():
+    return CONFIG_STORE
+
 # Legacy development-only route `/config/set` removed. Use `/api/config/setting` (adapter to ZMQ config_service) instead.
 
 
@@ -455,8 +462,15 @@ async def http_get_settings_batch(batch: BatchQuery):
         raise HTTPException(status_code=503, detail="ZMQ client not available")
 
     try:
-        result = await zmq_client.call("config_service", "get_settings", queries=batch.queries, timeout=5.0)
-        return result
+        # The static client should pass the keys it wants. Use the in-process
+        # CONFIG_STORE to satisfy the request (no ZMQ call) — the legacy
+        # config_service batch RPC is deprecated for template loading.
+        results: Dict[str, Any] = {}
+        for key in batch.queries.keys():
+            val = _get_config_value(key)
+            if val is not None:
+                results[key] = val
+        return {"results": results}
     except Exception as e:
         logger.error(f"Error getting batch settings: {e}")
         raise HTTPException(status_code=500, detail=str(e))

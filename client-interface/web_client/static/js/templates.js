@@ -59,46 +59,66 @@ if (typeof window.MOD_TEMPLATES_LOADED === "undefined") {
    * Fetch all config data using the batch endpoint.
    * Uses XMLHttpRequest for compatibility with legacy code.
    */
-  function fetchAllConfig() {
-    const xhr = new XMLHttpRequest();
+  function fetchAllConfigAsync(timeoutMs = 2000) {
+    // Prepare body with the keys the client expects
     const url = `/api/config/settings/batch`;
-    xhr.open("POST", url, false); // Synchronous request
-    xhr.setRequestHeader("Content-Type", "application/json");
+    const body = JSON.stringify({ queries: configQueries });
 
-    try {
-      // Send the configQueries object as the request body
-      const requestData = { queries: configQueries };
-      xhr.send(JSON.stringify(requestData));
+    // Use AbortController to implement a client-side timeout
+    const controller = new AbortController();
+    const signal = controller.signal;
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-      if (xhr.status === 200) {
-        const response = JSON.parse(xhr.responseText);
-        return response.results || {};
-      } else {
-        console.warn(`Failed to fetch batch config: ${xhr.status}`);
+    return fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: body,
+      signal: signal,
+    })
+      .then((resp) => {
+        clearTimeout(timer);
+        if (!resp.ok) throw new Error(`status ${resp.status}`);
+        return resp.json();
+      })
+      .then((json) => json.results || {})
+      .catch((err) => {
+        console.warn("Failed to fetch batch config:", err);
         return {};
-      }
-    } catch (error) {
-      console.error(`Error fetching batch config:`, error);
-      return {};
-    }
+      });
   }
 
   /**
    * Populate configQueries with data from the backend using batch endpoint.
    */
   function populateConfigQueries() {
-    const results = fetchAllConfig();
+    // Immediately set defaults so UI does not hang waiting for network
+    window.SITEURL = "";
+    window.CLOUD_LABS_URL = "";
+    window.PLUGINS_URL = "";
+    window.PEDALBOARDS_URL = "";
+    window.PEDALBOARDS_LABS_URL = "";
+    window.CONTROLCHAIN_URL = "";
+    window.LV2_PLUGIN_DIR = "";
+    window.VERSION = "";
+    window.BIN_COMPAT = false;
+    window.PLATFORM = "";
+    window.SAMPLERATE = 48000;
+    window.ADDRESSING_PAGES = [];
+    window.USING_MOD_DESKTOP = false;
+    window.FAVORITES = [];
+    window.PREFERENCES = {};
+    window.CODEC_TRUEBYPASS = false;
 
-    // Update configQueries with the fetched values
-    Object.keys(results).forEach((key) => {
-      if (configQueries.hasOwnProperty(key)) {
-        configQueries[key] = results[key];
-      }
-    });
+    // Fetch real values asynchronously and update globals when available
+    fetchAllConfigAsync(2000).then((results) => {
+      Object.keys(results).forEach((key) => {
+        if (configQueries.hasOwnProperty(key)) {
+          configQueries[key] = results[key];
+        }
+      });
 
-    // Set global variables for template compatibility
-    // These replace the {{variable}} template placeholders with actual config values
-    window.SITEURL = configQueries["system.cloud_url"] || "";
+      // Apply fetched values
+      window.SITEURL = configQueries["system.cloud_url"] || window.SITEURL;
     window.CLOUD_LABS_URL = configQueries["system.cloud_labs_url"] || "";
     window.PLUGINS_URL = configQueries["system.plugins_url"] || "";
     window.PEDALBOARDS_URL = configQueries["system.pedalboards_url"] || "";
