@@ -12,6 +12,12 @@ from ..models import (
     PresetRequest, PresetDeleteRequest, StatusResponse
 )
 
+from ..main import zmq_client
+import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/effect", tags=["plugins"])
 
 
@@ -21,9 +27,46 @@ async def get_plugin_list():
 
     TODO: integrate with session manager via ZMQ client to fetch plugin list.
     """
-    # This would call the session manager via ZMQ
-    # For now, return empty list as placeholder
-    return []
+    if zmq_client is None:
+        logger.debug("zmq_client not available, returning empty plugin list")
+        return []
+
+    try:
+        fut = zmq_client.call("session_manager", "list_plugins")
+        resp = await asyncio.wait_for(fut, timeout=3.0)
+
+        # Expecting resp to be an iterable of dict-like plugin info objects
+        plugins = []
+        if isinstance(resp, list):
+            items = resp
+        elif isinstance(resp, dict):
+            # some services may return {"plugins": [...]}
+            items = resp.get("plugins") or resp.get("result") or []
+        else:
+            items = []
+
+        for p in items:
+            try:
+                plugins.append(PluginInfo(
+                    uri=p.get("uri") if isinstance(p, dict) else p["uri"],
+                    name=p.get("name") if isinstance(p, dict) else p["name"],
+                    category=p.get("category") if isinstance(p, dict) else p.get("category", []),
+                    version=str(p.get("version", "")) if isinstance(p, dict) else str(p.get("version", "")),
+                    microVersion=int(p.get("microVersion", 0)),
+                    minorVersion=int(p.get("minorVersion", 0)),
+                    release=int(p.get("release", 0)),
+                    builder=p.get("builder", "")
+                ))
+            except Exception:
+                logger.debug("Skipping invalid plugin entry: %r", p)
+
+        return plugins
+    except asyncio.TimeoutError:
+        logger.warning("list_plugins timed out")
+        return []
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.exception("Error calling list_plugins: %s", exc)
+        return []
 
 
 @router.post("/bulk", response_model=Dict[str, PluginDetailInfo])

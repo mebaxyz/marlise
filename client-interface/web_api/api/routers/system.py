@@ -8,6 +8,12 @@ from ..models import (
     ConfigSetRequest, ConfigGetResponse, StatusResponse
 )
 
+from ..main import zmq_client
+import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/system", tags=["system"])
 
 
@@ -17,11 +23,34 @@ async def ping_device():
 
     TODO: call session manager to test HMI serial communication and measure round-trip time.
     """
-    # Call session manager to ping HMI
-    return PingResponse(
-        ihm_online=False,
-        ihm_time=0.0
-    )
+    # If ZMQ client is available, ask session manager for ping/HMI health
+    if zmq_client is None:
+        logger.debug("zmq_client not available, returning default ping response")
+        return PingResponse(ihm_online=False, ihm_time=0.0)
+
+    try:
+        # The session manager method name is assumed to be 'ping_hmi'. This is
+        # a safe, best-effort call; adjust the RPC name if your session manager
+        # uses a different method.
+        fut = zmq_client.call("session_manager", "ping_hmi")
+        # Wait with timeout to avoid hanging request
+        resp = await asyncio.wait_for(fut, timeout=2.0)
+
+        # Expecting a dict-like response with keys 'ihm_online' and 'ihm_time'
+        if isinstance(resp, dict):
+            return PingResponse(
+                ihm_online=bool(resp.get("ihm_online", False)),
+                ihm_time=float(resp.get("ihm_time", 0.0)),
+            )
+        # Fallback
+        logger.warning("Unexpected ping_hmi response type: %s", type(resp))
+        return PingResponse(ihm_online=False, ihm_time=0.0)
+    except asyncio.TimeoutError:
+        logger.warning("ping_hmi timed out")
+        return PingResponse(ihm_online=False, ihm_time=0.0)
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.exception("Error calling ping_hmi: %s", exc)
+        return PingResponse(ihm_online=False, ihm_time=0.0)
 
 
 @router.get("/reset")
