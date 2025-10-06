@@ -4,17 +4,11 @@ Moved Client Interface main app (copied from previous location).
 
 # ...existing code...
 
-import asyncio
-import json
 import logging
 import os
-import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-import uvicorn
-import zmq
 import zmq.asyncio
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,7 +17,21 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from .zmq_client import ZMQClient
-from .routers import health as health_router
+from .routers import (
+    health as health_router,
+    plugins as plugins_router, 
+    pedalboards as pedalboards_router,
+    snapshots as snapshots_router,
+    banks as banks_router,
+    favorites as favorites_router,
+    recording as recording_router,
+    system as system_router,
+    jack as jack_router,
+    files as files_router,
+    auth as auth_router,
+    updates as updates_router,
+    misc as misc_router
+)
 
 # Configuration
 SERVICE_NAME = "client_interface"
@@ -154,8 +162,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# include small routers
+# Include all routers organized by responsibility
 app.include_router(health_router.router)
+app.include_router(plugins_router.router)
+app.include_router(pedalboards_router.router)
+app.include_router(snapshots_router.router)
+app.include_router(banks_router.router)
+app.include_router(favorites_router.router)
+app.include_router(recording_router.router)
+app.include_router(system_router.router)
+app.include_router(jack_router.router)
+app.include_router(files_router.router)
+app.include_router(auth_router.router)
+app.include_router(updates_router.router)
+app.include_router(misc_router.router)
 
 # Add CORS middleware
 app.add_middleware(
