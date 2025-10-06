@@ -1,71 +1,15 @@
 version: '3.8'
 
 services:
-  client-api:
+  static-site:
     build:
-      context: ../client-interface/web_api/api
-      dockerfile: Dockerfile
-    image: marlise-client-api-dev
-    container_name: marlise-client-api-dev
-    version: '3.8'
-
-    services:
-      client-api:
-        build:
-          context: ../client-interface/web_api/api
-          dockerfile: Dockerfile
-        image: marlise-client-api-dev
-        container_name: marlise-client-api-dev
-        working_dir: /app
-        volumes:
-          - ../client-interface/web_api:/app:delegated
-        ports:
-          - "8080:8080"
-        network_mode: "host"
-        environment:
-          - CLIENT_INTERFACE_PORT=8080
-
-      static-site:
-        version: '3.8'
-
-        services:
-          static-site:
-            build:
-              context: ..
-              dockerfile: docker/Dockerfile
-            image: marlise-static-dev
-            network_mode: "host"
-            volumes:
-              - ../docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-              - ../client-interface/web_client_wo_template/static:/usr/share/nginx/html:ro
-            environment:
-              - NGINX_ENV=development
-            restart: unless-stopped
-          config-service:
-            build:
-              context: ../config-service
-              dockerfile: Dockerfile
-            image: marlise-config-service-dev
-            container_name: marlise-config-service-dev
-            working_dir: /app
-            network_mode: "host"
-            volumes:
-              - ../data:/app/data:rw
-            environment:
-              - SERVICE_NAME=config_service
-            restart: unless-stopped
-
-          session-manager:
-            build:
-              context: ../session-manager
-              dockerfile: Dockerfile
-            image: marlise-session-manager-dev
-            container_name: marlise-session-manager-dev
-            working_dir: /app
-            volumes:
-              - ../session-manager:/app:delegated
-            network_mode: "host"
-            environment:
-              - SERVICE_NAME=session_manager
-            restart: unless-stopped
-              restart: unless-stopped
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: marlise-static-dev
+    network_mode: "host"
+    volumes:
+      - ../docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../client-interface/web_client_wo_template/static:/usr/share/nginx/html:ro
+    environment:
+      - NGINX_ENV=development
+    restart: unless-stopped
