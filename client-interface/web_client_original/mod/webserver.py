@@ -15,6 +15,8 @@ from base64 import b64decode, b64encode
 from datetime import timedelta
 from random import randint
 from tornado import gen, iostream, web, websocket
+from tornado.httpclient import AsyncHTTPClient, HTTPRequest
+from tornado.httpclient import AsyncHTTPClient, HTTPRequest, HTTPClientError
 from tornado.escape import squeeze, url_escape, xhtml_escape
 from tornado.ioloop import IOLoop
 from tornado.template import Loader
@@ -1936,6 +1938,73 @@ class Hello(RemoteRequestHandler):
         }
         self.write(resp)
 
+
+class ProxyHandler(JsonRequestHandler):
+    """Simple Tornado HTTP proxy to forward API requests to the new backend.
+
+    This forwards method, headers and body to the configured backend and
+    returns the backend response with status code and body.
+    """
+
+    SUPPORTED_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+
+    @gen.coroutine
+    def forward_request(self, path=None):
+        backend = os.environ.get('MOD_NEW_BACKEND', 'http://127.0.0.1:8080')
+        uri = backend + self.request.uri
+
+        client = AsyncHTTPClient()
+
+        body = self.request.body or None
+
+        # prepare headers: copy most headers but avoid Host which the client will set
+        headers = {k: v for k, v in self.request.headers.items() if k.lower() != 'host'}
+
+        req = HTTPRequest(uri, method=self.request.method, headers=headers, body=body, follow_redirects=False)
+
+        try:
+            resp = yield client.fetch(req)
+        except HTTPClientError as e:
+            # If the backend returned a non-2xx, HTTPClientError contains the response
+            if hasattr(e, 'response') and e.response is not None:
+                backend_resp = e.response
+                self.set_status(backend_resp.code)
+                for h, v in backend_resp.headers.get_all():
+                    if h.lower() in ('transfer-encoding', 'content-encoding', 'connection', 'content-length'):
+                        continue
+                    self.set_header(h, v)
+                self.write(backend_resp.body)
+                return
+            raise
+
+        # Successful response
+        self.set_status(resp.code)
+        for h, v in resp.headers.get_all():
+            if h.lower() in ('transfer-encoding', 'content-encoding', 'connection', 'content-length'):
+                continue
+            self.set_header(h, v)
+        # resp.body may be bytes
+        self.write(resp.body)
+
+    def get(self, path=None):
+        return self.forward_request(path)
+
+    def post(self, path=None):
+        return self.forward_request(path)
+
+    def put(self, path=None):
+        return self.forward_request(path)
+
+    def patch(self, path=None):
+        return self.forward_request(path)
+
+    def delete(self, path=None):
+        return self.forward_request(path)
+
+    def options(self, path=None):
+        # Handle CORS preflight by forwarding as well
+        return self.forward_request(path)
+
 class TrueBypass(JsonRequestHandler):
     def get(self, channelName, bypassed):
         ok = set_truebypass_value(channelName == "Right", bypassed == "true")
@@ -2265,6 +2334,86 @@ class FilesList(JsonRequestHandler):
 
 settings = {'log_function': lambda handler: None} if not LOG else {}
 
+
+class ProxyHandler(TimelessRequestHandler):
+    """Proxy HTTP requests to a backend service.
+
+    The backend URL can be configured with the environment variable
+    MOD_PROXY_BACKEND (defaults to http://127.0.0.1:8080).
+    """
+
+    HOP_BY_HOP_HEADERS = set([
+        'connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization',
+        'te', 'trailers', 'transfer-encoding', 'upgrade'
+    ])
+
+    @gen.coroutine
+    def _proxy(self):
+        backend = os.environ.get('MOD_PROXY_BACKEND', 'http://127.0.0.1:8080')
+        url = backend.rstrip('/') + self.request.uri
+
+        # Forward most headers but strip hop-by-hop headers and host
+        headers = {}
+        for k, v in self.request.headers.items():
+            if k.lower() in self.HOP_BY_HOP_HEADERS or k.lower() == 'host':
+                continue
+            headers[k] = v
+
+        body = self.request.body if self.request.body else None
+
+        client = AsyncHTTPClient()
+        req = HTTPRequest(url, method=self.request.method, headers=headers, body=body,
+                          follow_redirects=False, request_timeout=60)
+        try:
+            resp = yield client.fetch(req, raise_error=False)
+        except Exception as e:
+            self.set_status(502)
+            self.write({'ok': False, 'error': str(e)})
+            return
+
+        # Copy response status and headers (skip hop-by-hop and encoding headers we don't want to pass)
+        self.set_status(resp.code)
+        for k, v in resp.headers.items():
+            if k.lower() in self.HOP_BY_HOP_HEADERS or k.lower() in ('content-encoding',):
+                continue
+            # Avoid overwriting content-length; Tornado will set it based on body
+            if k.lower() == 'content-length':
+                continue
+            self.set_header(k, v)
+
+        if resp.body:
+            # Write raw body
+            try:
+                self.write(resp.body)
+            except Exception:
+                # Fallback: write as text
+                try:
+                    self.write(resp.body.decode('utf-8', errors='ignore'))
+                except Exception:
+                    pass
+
+        self.finish()
+
+    # Support common HTTP methods
+    def get(self, path=''):
+        return self._proxy()
+
+    def post(self, path=''):
+        return self._proxy()
+
+    def put(self, path=''):
+        return self._proxy()
+
+    def delete(self, path=''):
+        return self._proxy()
+
+    def patch(self, path=''):
+        return self._proxy()
+
+    def options(self, path=''):
+        return self._proxy()
+
+
 application = web.Application(
         EffectInstaller.urls('effect/install') +
         [
@@ -2371,6 +2520,14 @@ application = web.Application(
 
             (r"/ping/?", Ping),
             (r"/hello/?", Hello),
+
+            # Proxy common API prefixes to the new backend (see ProxyHandler)
+            (r"/api/(.*)", ProxyHandler),
+            (r"/system/(.*)", ProxyHandler),
+            (r"/controlchain/(.*)", ProxyHandler),
+            (r"/config/(.*)", ProxyHandler),
+            (r"/set_buffersize/(.*)", ProxyHandler),
+            (r"/hello", ProxyHandler),
 
             (r"/truebypass/(Left|Right)/(true|false)", TrueBypass),
             (r"/set_buffersize/(128|256)", SetBufferSize),
