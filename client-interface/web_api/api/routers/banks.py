@@ -13,12 +13,18 @@ router = APIRouter(prefix="/banks", tags=["banks"])
 @router.get("", response_model=List[Bank])
 async def get_banks():
     """Get organized collections of pedalboards grouped into banks"""
-    # Call session manager for banks list
+    """NOT IMPLEMENTED: Get organized collections of pedalboards grouped into banks.
+
+    TODO: return bank structure sourced from session manager or user preferences.
+    """
     return []
 
 
 @router.post("/save")
 async def save_banks(request: BankSaveRequest):
     """Save bank organization and pedalboard groupings"""
-    # Call session manager to save banks configuration
+    """NOT IMPLEMENTED: Save bank organization and pedalboard groupings.
+
+    TODO: delegate to session manager or preferences store to persist bank config.
+    """
     return {"ok": False}

@@ -10,42 +10,60 @@ router = APIRouter(prefix="/recording", tags=["recording"])
 
 @router.get("/start")
 async def start_recording():
-    """Start recording audio from the current pedalboard"""
+    """NOT IMPLEMENTED: Start recording audio from the current pedalboard.
+
+    TODO: instruct session manager to begin recording and return immediate status.
+    """
     # Call session manager to start recording
     return {"ok": False}
 
 
 @router.get("/stop")
 async def stop_recording():
-    """Stop audio recording and finalize the file"""
+    """NOT IMPLEMENTED: Stop audio recording and finalize the file.
+
+    TODO: instruct session manager to stop recording and finalize temporary audio file.
+    """
     # Call session manager to stop recording
     return {"ok": False}
 
 
 @router.get("/play/start")
 async def start_playback():
-    """Start playback of the recorded audio"""
+    """NOT IMPLEMENTED: Start playback of the recorded audio.
+
+    TODO: request session manager to start playback (mute live audio as needed).
+    """
     # Call session manager to start playback
     return {"ok": False}
 
 
 @router.get("/play/wait")
 async def wait_playback():
-    """Wait for audio playback to complete"""
+    """NOT IMPLEMENTED: Wait for audio playback to complete.
+
+    TODO: block or poll session manager until playback has finished, with timeout.
+    """
     # Call session manager to wait for playback completion
     return {"ok": False}
 
 
 @router.get("/play/stop")
 async def stop_playback():
-    """Stop audio playback immediately"""
+    """NOT IMPLEMENTED: Stop audio playback immediately.
+
+    TODO: instruct session manager to stop playback and restore live audio.
+    """
     # Call session manager to stop playback
     return {"ok": False}
 
 
 @router.get("/download")
 async def download_recording():
-    """Download the recorded audio file"""
+    """NOT IMPLEMENTED: Download the recorded audio file.
+
+    TODO: obtain audio file from session manager, base64-encode and return.
+    """
     # Call session manager to get recorded audio
     return RecordingDownloadResponse(
         ok=False,
@@ -55,7 +73,10 @@ async def download_recording():
 
 @router.get("/reset")
 async def reset_recording():
-    """Clear/delete the current recording"""
+    """NOT IMPLEMENTED: Clear/delete the current recording.
+
+    TODO: instruct session manager to delete temporary recording file and reset state.
+    """
     # Call session manager to reset recording
     return {"ok": False}
 

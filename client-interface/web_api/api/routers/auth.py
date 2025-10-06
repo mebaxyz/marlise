@@ -13,7 +13,10 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 
 @router.post("/nonce", response_model=AuthNonceResponse)
 async def handle_auth_nonce(request: AuthNonceRequest):
-    """Handle authentication nonce from MOD Cloud service"""
+    """NOT IMPLEMENTED: Handle authentication nonce from MOD Cloud service.
+
+    TODO: forward nonce to cloud auth handler via session manager and validate device identity.
+    """
     # Call session manager to process nonce
     return AuthNonceResponse(
         message="Nonce processing not implemented"
@@ -22,7 +25,10 @@ async def handle_auth_nonce(request: AuthNonceRequest):
 
 @router.post("/token", response_model=AuthTokenResponse)
 async def handle_auth_token(request: AuthTokenRequest):
-    """Store authentication token from MOD Cloud for API access"""
+    """NOT IMPLEMENTED: Store authentication token from MOD Cloud for API access.
+
+    TODO: persist token securely via session manager/preferences and return stored token reference.
+    """
     # Call session manager to store token
     return AuthTokenResponse(
         access_token=""

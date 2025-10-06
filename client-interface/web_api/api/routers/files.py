@@ -13,7 +13,10 @@ router = APIRouter(prefix="/files", tags=["files"])
 async def list_user_files(
     types: str = Query(..., description="Comma-separated file types: audioloop,audiorecording,audiosample,audiotrack,cabsim,h2drumkit,ir,midiclip,midisong,sf2,sfz,aidadspmodel,nammodel")
 ):
-    """List user files of specific types for plugin file selectors"""
+    """NOT IMPLEMENTED: List user files of specific types for plugin file selectors.
+
+    TODO: parse requested types and ask session manager to scan user directories for matching files.
+    """
     # Parse comma-separated types
     file_types = [t.strip() for t in types.split(',')]
     

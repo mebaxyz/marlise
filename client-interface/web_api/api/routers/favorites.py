@@ -12,7 +12,10 @@ router = APIRouter(prefix="/favorites", tags=["favorites"])
 async def add_favorite(
     uri: str = Form(..., description="Plugin URI")
 ):
-    """Add a plugin to user's favorites list"""
+    """NOT IMPLEMENTED: Add a plugin to user's favorites list.
+
+    TODO: forward the favorite add request to the session manager and persist in preferences.
+    """
     # Call session manager to add favorite
     return {"ok": False}
 
@@ -21,6 +24,9 @@ async def add_favorite(
 async def remove_favorite(
     uri: str = Form(..., description="Plugin URI")
 ):
-    """Remove a plugin from user's favorites list"""
+    """NOT IMPLEMENTED: Remove a plugin from user's favorites list.
+
+    TODO: forward the favorite removal to the session manager and update stored preferences.
+    """
     # Call session manager to remove favorite
     return {"ok": False}
