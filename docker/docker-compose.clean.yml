@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  static-site:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: marlise-static-dev
+    network_mode: "host"
+    volumes:
+      - ../docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../client-interface/web_client_wo_template/static:/usr/share/nginx/html:ro
+    environment:
+      - NGINX_ENV=development
+    restart: unless-stopped

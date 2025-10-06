@@ -1,0 +1,625 @@
+/*
+ * MOD UI - Styling adapted for React v2 Client
+ * Based on original MOD UI design patterns
+ */
+
+/* Color Palette from MOD UI */
+:root {
+  /* Primary Colors */
+  --mod-primary: #883996;
+  --mod-primary-hover: #662b71;
+  --mod-primary-dark: #56245f;
+  --mod-accent: #f29446;
+  --mod-accent-hover: #ef7816;
+  
+  /* Background Colors */
+  --mod-bg-dark: #111;
+  --mod-bg-medium: #2c2c2c;
+  --mod-bg-light: #444;
+  --mod-surface: rgba(255, 255, 255, 0.07);
+  
+  /* Text Colors */
+  --mod-text-primary: #fff;
+  --mod-text-secondary: #ccc;
+  --mod-text-muted: #999;
+  --mod-text-dark: #333;
+  
+  /* Status Colors */
+  --mod-success: #3c763d;
+  --mod-warning: #f29446;
+  --mod-error: #c40000;
+  --mod-info: #3a633d;
+  
+  /* Borders & Separators */
+  --mod-border-color: #333;
+  --mod-border-light: #ddd;
+  
+  /* Shadows */
+  --mod-shadow-light: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --mod-shadow-medium: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --mod-shadow-heavy: 0 4px 16px rgba(0, 0, 0, 0.5);
+  
+  /* Plugin Shadows (from original pedals.css) */
+  --mod-pedal-shadow: 
+    2px 8px 7px rgba(0, 0, 0, 0.2),
+    4px 16px 7px rgba(0, 0, 0, 0.2),
+    6px 24px 7px rgba(0, 0, 0, 0.2),
+    8px 32px 7px rgba(0, 0, 0, 0.2),
+    10px 40px 7px rgba(0, 0, 0, 0.2),
+    5px 20px 50px rgba(0, 0, 0, 0.9),
+    4px 12px 30px rgba(0, 0, 0, 0.5);
+    
+  /* Transitions */
+  --mod-transition: all 0.33s ease;
+  --mod-transition-fast: all 0.15s ease;
+}
+
+/* Cooper Hewitt Font */
+@font-face {
+  font-family: 'Cooper Hewitt';
+  src: url('../../../static/fonts/cooper/cooperhewitt-book-webfont.woff2') format('woff2'),
+       url('../../../static/fonts/cooper/cooperhewitt-book-webfont.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cooper Hewitt';
+  src: url('../../../static/fonts/cooper/cooperhewitt-semibold-webfont.woff2') format('woff2'),
+       url('../../../static/fonts/cooper/cooperhewitt-semibold-webfont.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Reset & Base Styles */
+* {
+  box-sizing: border-box;
+  outline: 0 !important;
+}
+
+body {
+  font-family: 'Cooper Hewitt', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+  background: var(--mod-bg-dark);
+  color: var(--mod-text-primary);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  overflow-x: auto;
+}
+
+/* Layout */
+.mod-app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--mod-bg-dark);
+}
+
+.mod-header {
+  height: 45px;
+  background: var(--mod-bg-dark);
+  border-bottom: 1px solid var(--mod-border-color);
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  position: relative;
+  z-index: 10;
+}
+
+.mod-main {
+  flex: 1;
+  display: flex;
+  background: var(--mod-bg-dark);
+}
+
+.mod-sidebar {
+  width: 300px;
+  background: var(--mod-bg-medium);
+  border-right: 1px solid var(--mod-border-color);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.mod-content {
+  flex: 1;
+  position: relative;
+  background: var(--mod-bg-dark) url('/static/img/background.jpg') repeat;
+  background-size: auto 1200px;
+  overflow: auto;
+}
+
+/* Pedalboard View Layout (Original MOD UI Style) */
+.mod-pedalboard-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--mod-bg-dark);
+  position: relative;
+}
+
+.mod-pedalboard-container {
+  flex: 1;
+  position: relative;
+  background: var(--mod-bg-dark) url('/static/img/background.jpg') repeat;
+  background-size: auto 1200px;
+  overflow: auto;
+  padding: 20px;
+}
+
+.mod-plugin-constructor {
+  height: 300px;
+  background: var(--mod-bg-medium);
+  border-top: 1px solid var(--mod-border-color);
+  overflow-y: auto;
+  position: relative;
+}
+
+.mod-fullscreen-view {
+  flex: 1;
+  background: var(--mod-bg-dark);
+  overflow: auto;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Cooper Hewitt', sans-serif !important;
+  font-weight: 600;
+  color: var(--mod-text-primary);
+  margin: 0 0 16px 0;
+}
+
+h1 { font-size: 24px; }
+h2 { font-size: 20px; }
+h3 { font-size: 18px; }
+h4 { font-size: 16px; }
+h5 { font-size: 14px; }
+h6 { font-size: 12px; }
+
+p {
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+}
+
+/* Buttons */
+.mod-button {
+  display: inline-block;
+  padding: 8px 16px;
+  background: var(--mod-primary);
+  color: var(--mod-text-primary);
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: var(--mod-transition);
+  line-height: 1;
+}
+
+.mod-button:hover {
+  background: var(--mod-primary-hover);
+  box-shadow: var(--mod-shadow-light);
+}
+
+.mod-button:active {
+  transform: translateY(1px);
+}
+
+.mod-button.secondary {
+  background: var(--mod-bg-light);
+  color: var(--mod-text-primary);
+}
+
+.mod-button.secondary:hover {
+  background: var(--mod-border-color);
+}
+
+.mod-button.accent {
+  background: var(--mod-accent);
+}
+
+.mod-button.accent:hover {
+  background: var(--mod-accent-hover);
+}
+
+.mod-button.small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.mod-button.large {
+  padding: 12px 24px;
+  font-size: 16px;
+}
+
+/* Form Controls */
+.mod-input {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--mod-bg-dark);
+  border: 1px solid var(--mod-border-color);
+  border-radius: 0;
+  color: var(--mod-text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  transition: var(--mod-transition-fast);
+}
+
+.mod-input:focus {
+  border-color: var(--mod-primary);
+  box-shadow: 0 0 0 2px rgba(136, 57, 150, 0.2);
+}
+
+.mod-input::placeholder {
+  color: var(--mod-text-muted);
+}
+
+.mod-input:disabled {
+  background: var(--mod-bg-light);
+  color: var(--mod-text-muted);
+  cursor: not-allowed;
+}
+
+/* Health Banner */
+.mod-health-banner {
+  background: linear-gradient(90deg, var(--mod-success) 0%, var(--mod-info) 100%);
+  color: var(--mod-text-primary);
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mod-health-banner.error {
+  background: var(--mod-error);
+}
+
+.mod-health-banner.warning {
+  background: var(--mod-warning);
+}
+
+/* Plugin List - Horizontal Layout */
+.plugin-list-horizontal {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--mod-bg-medium);
+}
+
+.plugin-list-header {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--mod-border-color);
+  background: var(--mod-bg-dark);
+}
+
+.plugin-list-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mod-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.plugin-list-content {
+  flex: 1;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 12px 20px;
+  gap: 16px;
+  align-items: center;
+}
+
+/* Plugin Cards - Horizontal */
+.plugin-card-horizontal {
+  flex-shrink: 0;
+  background: var(--mod-surface);
+  border: 1px solid var(--mod-border-color);
+  padding: 12px;
+  cursor: grab;
+  transition: var(--mod-transition);
+  position: relative;
+  min-width: 140px;
+  text-align: center;
+}
+
+.plugin-card-horizontal:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+  box-shadow: var(--mod-shadow-medium);
+  border-color: var(--mod-primary);
+}
+
+.plugin-card-horizontal:active {
+  cursor: grabbing;
+}
+
+.plugin-card-horizontal img {
+  width: 80px;
+  height: 60px;
+  margin: 0 auto 8px;
+  display: block;
+  background: var(--mod-bg-dark);
+  padding: 4px;
+  object-fit: contain;
+}
+
+.plugin-card-horizontal .meta {
+  text-align: center;
+}
+
+.plugin-card-horizontal .label {
+  font-weight: 600;
+  color: var(--mod-text-primary);
+  margin-bottom: 2px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.plugin-card-horizontal .author {
+  color: var(--mod-text-secondary);
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+/* Pedalboard */
+.pedalboard {
+  padding: 20px;
+}
+
+.pedalboard h2 {
+  color: var(--mod-text-primary);
+  font-size: 18px;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.board {
+  position: relative;
+  width: 100%;
+  height: 600px;
+  background: rgba(17, 17, 17, 0.8);
+  border: 2px dashed var(--mod-border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  backdrop-filter: blur(2px);
+}
+
+.board:hover {
+  border-color: var(--mod-primary);
+}
+
+.placeholder {
+  color: var(--mod-text-muted);
+  text-align: center;
+  padding-top: 280px;
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  user-select: none;
+}
+
+/* Plugin Instances on Pedalboard */
+.plugin-instance {
+  background: linear-gradient(145deg, #2a2a2a 0%, #1a1a1a 100%);
+  border: 1px solid var(--mod-border-color);
+  border-radius: 8px;
+  padding: 12px 16px;
+  min-width: 120px;
+  box-shadow: var(--mod-pedal-shadow);
+  pointer-events: auto;
+  cursor: move;
+  transition: var(--mod-transition);
+  
+  /* Plugin styling inspired by original pedals */
+  position: relative;
+  z-index: 100;
+}
+
+.plugin-instance:hover {
+  border-color: var(--mod-primary);
+  transform: translateY(-1px);
+  box-shadow: 
+    var(--mod-pedal-shadow),
+    0 0 0 1px var(--mod-primary);
+}
+
+.plugin-instance:active {
+  cursor: grabbing;
+}
+
+.plugin-instance::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  bottom: -1px;
+  background: linear-gradient(45deg, var(--mod-primary), var(--mod-accent));
+  border-radius: 8px;
+  z-index: -1;
+  opacity: 0;
+  transition: var(--mod-transition);
+}
+
+.plugin-instance:hover::before {
+  opacity: 0.1;
+}
+
+/* Status Indicators */
+.mod-status {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mod-status.online {
+  background: var(--mod-success);
+  color: white;
+}
+
+.mod-status.offline {
+  background: var(--mod-error);
+  color: white;
+}
+
+.mod-status.loading {
+  background: var(--mod-warning);
+  color: white;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Loading States */
+.mod-loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--mod-border-color);
+  border-radius: 50%;
+  border-top-color: var(--mod-primary);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--mod-bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--mod-border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--mod-primary);
+}
+
+/* Utilities */
+.mod-hidden {
+  display: none !important;
+}
+
+.mod-invisible {
+  opacity: 0;
+}
+
+.mod-text-center {
+  text-align: center;
+}
+
+.mod-text-right {
+  text-align: right;
+}
+
+.mod-text-muted {
+  color: var(--mod-text-muted);
+}
+
+.mod-text-primary {
+  color: var(--mod-primary);
+}
+
+.mod-mb-0 { margin-bottom: 0 !important; }
+.mod-mb-1 { margin-bottom: 8px !important; }
+.mod-mb-2 { margin-bottom: 16px !important; }
+.mod-mb-3 { margin-bottom: 24px !important; }
+
+.mod-mt-0 { margin-top: 0 !important; }
+.mod-mt-1 { margin-top: 8px !important; }
+.mod-mt-2 { margin-top: 16px !important; }
+.mod-mt-3 { margin-top: 24px !important; }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .mod-sidebar {
+    width: 250px;
+  }
+  
+  .plugin-list .list {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+  
+  .mod-plugin-constructor {
+    height: 250px;
+  }
+  
+  .board {
+    height: 400px;
+  }
+  
+  .placeholder {
+    padding-top: 180px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mod-main {
+    flex-direction: column;
+  }
+  
+  .mod-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--mod-border-color);
+    height: auto;
+    max-height: 300px;
+  }
+  
+  .mod-plugin-constructor {
+    height: 200px;
+  }
+  
+  .plugin-list .list {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  
+  .board {
+    height: 300px;
+  }
+}
+
+/* Selection styling */
+::selection {
+  background: var(--mod-primary);
+  color: white;
+}
+
+::-moz-selection {
+  background: var(--mod-primary);
+  color: white;
+}

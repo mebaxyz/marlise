@@ -1,0 +1,9 @@
+body { font-family: system-ui, sans-serif; margin: 0; padding: 0 }
+.app { padding: 16px }
+.container { display: flex; gap: 16px }
+.plugin-list { width: 300px; border: 1px solid #ddd; padding: 8px }
+.plugin-card { display: flex; gap: 8px; padding: 6px; border: 1px solid #eee; margin-bottom: 6px; align-items:center }
+.pedalboard { flex: 1; border: 1px solid #ddd; padding: 8px }
+
+.health-banner { background: #ffdddd; color: #660000; padding: 8px; margin-bottom: 8px; border: 1px solid #ff9999 }
+.health-banner.ok { background: #ddffdd; color: #006600; border-color: #99ff99 }

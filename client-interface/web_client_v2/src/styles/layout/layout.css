@@ -1,0 +1,118 @@
+/* MOD UI Layout System */
+
+/* Core Layout */
+.mod-layout {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--mod-background);
+}
+
+.mod-header {
+  height: var(--mod-header-height);
+  background: var(--mod-background);
+  border-bottom: 1px solid var(--mod-border);
+  z-index: var(--z-header);
+  position: relative;
+}
+
+.mod-main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+.mod-content {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.mod-footer {
+  height: var(--mod-footer-height);
+  background: var(--mod-background);
+  border-top: 1px solid var(--mod-border);
+  z-index: var(--z-footer);
+  position: relative;
+}
+
+/* Pedalboard Layout */
+.mod-pedalboard-view {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.mod-pedalboard-container {
+  flex: 1;
+  background: var(--mod-background) url('/static/img/background.jpg') repeat;
+  background-size: auto 1200px;
+  position: relative;
+  overflow: auto;
+}
+
+.mod-plugin-constructor {
+  height: var(--mod-plugin-strip-height);
+  background: rgba(17, 17, 17, 0.9);
+  border-top: 1px solid var(--mod-border);
+  position: relative;
+}
+
+/* Sidebar Layout */
+.mod-sidebar {
+  width: var(--mod-sidebar-width);
+  background: var(--mod-surface);
+  border-right: 1px solid var(--mod-border);
+  overflow: auto;
+}
+
+.mod-sidebar.right {
+  border-right: none;
+  border-left: 1px solid var(--mod-border);
+}
+
+/* Modal Overlay */
+.mod-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(17, 17, 17, 0.9);
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Full Screen Library Views */
+.mod-library-view {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: var(--mod-footer-height);
+  background: var(--mod-surface);
+  z-index: 2;
+  overflow: hidden;
+}
+
+.mod-library-header {
+  height: var(--mod-header-height);
+  background: var(--mod-background);
+  border-bottom: 1px solid var(--mod-border);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--mod-spacing-md);
+}
+
+.mod-library-content {
+  position: absolute;
+  top: var(--mod-header-height);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: auto;
+}

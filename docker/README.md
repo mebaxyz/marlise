@@ -54,7 +54,7 @@ Prerequisites: Docker and docker-compose.
 
 Development (mounts local files so you can edit them):
 
-1. Ensure your static files are in `client-interface/web_client/static` at the repository root.
+1. Ensure your static files are in `client-interface/web_client_wo_template/static` at the repository root.
 2. From the `marlise/docker` directory run:
 
 ```bash

@@ -1,10 +1,3 @@
-Starting session_manager...
-Configuration:
-  Service Name: session_manager
-  Log Level: INFO
-  Bridge Endpoint: tcp://127.0.0.1:6000
-  Bridge Timeout: 5.0
-  ServiceBus Implementation: zeromq
 INFO:__main__:Starting session_manager service
 INFO:zmq_service:Service 'session_manager' ports: RPC=5718, PUB=6718, SUB=7718
 ERROR:zmq_service:Failed to start ZMQ service 'session_manager': Address already in use (addr='tcp://127.0.0.1:5718')
@@ -19,15 +12,3 @@ INFO:__main__:Plugin manager initialized
 INFO:__main__:Session manager initialized
 INFO:handlers.zmq_handlers:ZeroMQ methods registered
 INFO:__main__:session_manager service started successfully
-INFO:__main__:Received signal 15, shutting down...
-INFO:__main__:Shutting down session_manager service
-INFO:__main__:Shutting down session manager
-INFO:core.plugin_manager:Shutting down plugin manager
-INFO:core.plugin_manager:Cleared all plugin instances
-INFO:core.plugin_manager:Plugin manager shutdown complete
-INFO:__main__:Plugin manager shutdown
-INFO:core.bridge_client:Disconnected from modhost-bridge
-INFO:__main__:Bridge client stopped
-INFO:zmq_service:ZMQ Service 'session_manager' stopped
-INFO:__main__:ZeroMQ service stopped
-INFO:__main__:Shutting down session_manager service

@@ -1,0 +1,208 @@
+/* MOD UI Plugin Cards */
+
+/* Base Plugin Card */
+.plugin-card {
+  background: var(--mod-surface-light);
+  color: var(--mod-text-primary);
+  border: 1px solid transparent;
+  transition: var(--mod-transition-normal);
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+.plugin-card:hover {
+  background: var(--mod-primary);
+  border-color: var(--mod-primary-light);
+}
+
+/* Horizontal Plugin Cards (for bottom strip) */
+.plugin-card-horizontal {
+  width: 120px;
+  height: 108px;
+  padding: var(--mod-spacing-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin: 0 1px 0 0;
+}
+
+.plugin-card-horizontal .plugin-thumb {
+  height: 64px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--mod-spacing-xs);
+  position: relative;
+}
+
+.plugin-card-horizontal .plugin-thumb img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.plugin-card-horizontal .plugin-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.plugin-card-horizontal .plugin-title {
+  font-size: var(--mod-font-size-xs);
+  font-weight: bold;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+  display: block;
+}
+
+.plugin-card-horizontal .plugin-author {
+  font-size: var(--mod-font-size-xs);
+  color: var(--mod-text-secondary);
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+  display: block;
+}
+
+/* Vertical Plugin Cards (for lists) */
+.plugin-card-vertical {
+  display: flex;
+  align-items: center;
+  padding: var(--mod-spacing-sm);
+  margin-bottom: 1px;
+  min-height: 48px;
+  background: #222;
+  color: #888;
+}
+
+.plugin-card-vertical:hover {
+  background: #000;
+}
+
+.plugin-card-vertical.selected {
+  background: var(--mod-primary);
+  color: var(--mod-text-primary);
+}
+
+.plugin-card-vertical .plugin-thumb {
+  width: 48px;
+  height: 32px;
+  margin-right: var(--mod-spacing-sm);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.plugin-card-vertical .plugin-thumb img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.plugin-card-vertical .plugin-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.plugin-card-vertical .plugin-title {
+  font-weight: bold;
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plugin-card-vertical .plugin-author {
+  font-size: var(--mod-font-size-sm);
+  color: inherit;
+  opacity: 0.7;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Plugin Status Indicators */
+.plugin-status {
+  position: absolute;
+  top: var(--mod-spacing-xs);
+  right: var(--mod-spacing-xs);
+  font-size: var(--mod-font-size-xs);
+  padding: 1px 4px;
+  font-weight: bold;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1;
+}
+
+.plugin-status.installed {
+  background: var(--mod-primary);
+  border: 1px solid var(--mod-primary);
+}
+
+.plugin-status.installed::after {
+  content: "installed";
+}
+
+.plugin-status.demo {
+  background: var(--mod-warning);
+  border: 1px solid var(--mod-warning);
+  color: #212121;
+}
+
+.plugin-status.demo::after {
+  content: "demo";
+}
+
+.plugin-status.outdated {
+  background: var(--mod-warning);
+  border: 1px solid var(--mod-warning);
+  color: #212121;
+}
+
+.plugin-status.outdated::after {
+  content: "new version";
+}
+
+/* Drag and Drop States */
+.plugin-card.dragging {
+  opacity: 0.5;
+  transform: rotate(2deg);
+  z-index: 1000;
+}
+
+.plugin-card.drag-over {
+  border-color: var(--mod-accent);
+  background: rgba(242, 148, 70, 0.2);
+}
+
+/* Active state for dragging */
+.plugin-card-horizontal .plugin-thumb:active {
+  cursor: grabbing !important;
+}
+
+/* Plugin rating stars */
+.plugin-rating {
+  background: url('/static/img/icn-rating.png') no-repeat center top;
+  display: inline-block;
+  height: 14px;
+  width: 84px;
+  margin: 2px 0;
+}
+
+.plugin-rating.one { background-position: center -15px; }
+.plugin-rating.two { background-position: center -30px; }
+.plugin-rating.three { background-position: center -45px; }
+.plugin-rating.four { background-position: center -60px; }
+.plugin-rating.five { background-position: center -75px; }

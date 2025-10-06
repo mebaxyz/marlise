@@ -61,3 +61,31 @@ tmp/
 
 # Dependencies
 node_modules/
+
+# Node/Vite/React build and cache
+dist/
+.vite/
+.parcel-cache/
+.cache/
+coverage/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Editor/IDE temp
+.eslintcache
+
+# TypeScript
+*.tsbuildinfo
+
+# package manager caches
+.npm/
+.pnpm-store/

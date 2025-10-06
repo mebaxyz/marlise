@@ -1,0 +1,318 @@
+/*
+ * MOD UI Bank Library - React Component Styling
+ * Based on original MOD UI bank library design
+ */
+
+.bank-library {
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.bank-library .box {
+  background: var(--mod-surface);
+  border-radius: 8px;
+  padding: 0;
+}
+
+.bank-library header {
+  padding: 20px;
+  border-bottom: 1px solid var(--mod-border-color);
+  position: relative;
+}
+
+.bank-library header h1 {
+  margin: 0 0 15px 0;
+  color: var(--mod-text-primary);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.bank-library .form-group {
+  margin-bottom: 15px;
+}
+
+.bank-library .form-control {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--mod-bg-dark);
+  border: 1px solid var(--mod-border-color);
+  border-radius: 0;
+  color: var(--mod-text-primary);
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.bank-library .form-control:focus {
+  border-color: var(--mod-primary);
+  outline: none;
+}
+
+.bank-library .bank-actions {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.bank-library .bank-action-btn {
+  padding: 8px 16px;
+  background: var(--mod-primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: var(--mod-transition);
+}
+
+.bank-library .bank-action-btn:hover {
+  background: var(--mod-primary-hover);
+}
+
+.bank-library .bank-action-btn.secondary {
+  background: var(--mod-bg-medium);
+  color: var(--mod-text-primary);
+}
+
+.bank-library .bank-action-btn.secondary:hover {
+  background: var(--mod-bg-dark);
+}
+
+.bank-library .banks {
+  padding: 20px;
+}
+
+/* Bank Items */
+.bank-library .bank-item {
+  cursor: pointer;
+  transition: var(--mod-transition);
+  margin-bottom: 15px;
+  background: var(--mod-bg-medium);
+  border: 1px solid var(--mod-border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bank-library .bank-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--mod-shadow-medium);
+  border-color: var(--mod-primary);
+}
+
+.bank-library .bank-item.selected {
+  border-color: var(--mod-primary);
+  background: rgba(136, 57, 150, 0.1);
+}
+
+.bank-library .bank-header {
+  padding: 15px;
+  border-bottom: 1px solid var(--mod-border-color);
+  background: var(--mod-bg-dark);
+}
+
+.bank-library .bank-header h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--mod-text-primary);
+}
+
+.bank-library .bank-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--mod-text-secondary);
+}
+
+.bank-library .bank-stats {
+  display: flex;
+  gap: 15px;
+}
+
+.bank-library .bank-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bank-library .bank-content {
+  padding: 15px;
+}
+
+.bank-library .pedalboards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.bank-library .pedalboard-mini {
+  background: var(--mod-bg-dark);
+  border: 1px solid var(--mod-border-color);
+  border-radius: 4px;
+  padding: 12px;
+  text-align: center;
+  transition: var(--mod-transition);
+}
+
+.bank-library .pedalboard-mini:hover {
+  border-color: var(--mod-accent);
+  transform: translateY(-1px);
+}
+
+.bank-library .pedalboard-mini h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mod-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bank-library .pedalboard-mini .pedalboard-plugins {
+  font-size: 12px;
+  color: var(--mod-text-secondary);
+}
+
+/* Bank Creation Modal */
+.bank-library .modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.bank-library .modal {
+  background: var(--mod-surface);
+  border-radius: 8px;
+  padding: 20px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.bank-library .modal h2 {
+  margin: 0 0 20px 0;
+  color: var(--mod-text-primary);
+  font-size: 20px;
+}
+
+.bank-library .modal .form-group {
+  margin-bottom: 15px;
+}
+
+.bank-library .modal .form-row {
+  display: flex;
+  gap: 15px;
+}
+
+.bank-library .modal .form-row .form-group {
+  flex: 1;
+}
+
+.bank-library .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.bank-library .modal-actions button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: var(--mod-transition);
+}
+
+.bank-library .modal-actions .cancel-btn {
+  background: var(--mod-bg-medium);
+  color: var(--mod-text-primary);
+}
+
+.bank-library .modal-actions .cancel-btn:hover {
+  background: var(--mod-bg-dark);
+}
+
+.bank-library .modal-actions .create-btn {
+  background: var(--mod-primary);
+  color: white;
+}
+
+.bank-library .modal-actions .create-btn:hover {
+  background: var(--mod-primary-hover);
+}
+
+/* Empty State */
+.bank-library .empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--mod-text-secondary);
+}
+
+.bank-library .empty-state h3 {
+  margin: 0 0 15px 0;
+  color: var(--mod-text-primary);
+  font-size: 18px;
+}
+
+.bank-library .empty-state p {
+  margin: 0 0 20px 0;
+  font-size: 14px;
+}
+
+.bank-library .empty-state .create-first-btn {
+  padding: 12px 24px;
+  background: var(--mod-primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: var(--mod-transition);
+}
+
+.bank-library .empty-state .create-first-btn:hover {
+  background: var(--mod-primary-hover);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .bank-library .bank-actions {
+    position: static;
+    margin-top: 15px;
+    justify-content: center;
+  }
+
+  .bank-library .pedalboards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+
+  .bank-library .modal .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .bank-library .pedalboards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bank-library .bank-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}

@@ -1,0 +1,257 @@
+/*
+ * MOD UI Main Menu - React Component Styling
+ * Based on original MOD UI main menu design
+ */
+
+.mod-main-menu {
+  background: var(--mod-bg-dark);
+  bottom: 0;
+  color: var(--mod-text-primary);
+  height: 45px;
+  left: 0;
+  position: absolute;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+}
+
+.mod-main-menu > div {
+  cursor: pointer;
+  float: left;
+}
+
+.mod-main-menu .icon {
+  height: 45px;
+  width: 45px;
+  position: relative;
+  background-image: url('/static/img/menu-icons-sprite.png?v=2');
+  background-repeat: no-repeat;
+  transition: all 0.33s;
+}
+
+.mod-main-menu .icon > img {
+  margin: 5px 0 0 6px;
+}
+
+.mod-main-menu .icon.selected {
+  background-color: #000;
+}
+
+.mod-main-menu .icon > a {
+  display: block;
+  height: 45px;
+  width: 45px;
+}
+
+/* Main navigation icons */
+.mod-main-menu #mod-plugins {
+  background-position: -45px top;
+}
+
+.mod-main-menu #mod-plugins:hover,
+.mod-main-menu #mod-plugins.selected {
+  background-color: #000;
+  background-position: -45px bottom;
+}
+
+.mod-main-menu #mod-pedalboard {
+  background-position: -90px top;
+}
+
+.mod-main-menu #mod-pedalboard:hover,
+.mod-main-menu #mod-pedalboard.selected {
+  background-color: #000;
+  background-position: -90px bottom;
+}
+
+.mod-main-menu #mod-bank {
+  background-position: -135px top;
+}
+
+.mod-main-menu #mod-bank:hover,
+.mod-main-menu #mod-bank.selected {
+  background-color: #000;
+  background-position: -135px bottom;
+}
+
+.mod-main-menu #mod-file-manager {
+  background-position: -180px top;
+}
+
+.mod-main-menu #mod-file-manager:hover,
+.mod-main-menu #mod-file-manager.selected {
+  background-color: #000;
+  background-position: -180px bottom;
+}
+
+.mod-main-menu #mod-cloud-plugins {
+  background-position: -315px top;
+}
+
+.mod-main-menu #mod-cloud-plugins:hover,
+.mod-main-menu #mod-cloud-plugins.selected {
+  background-color: #000;
+  background-position: -315px bottom;
+}
+
+/* Status icons */
+
+
+.mod-main-menu #mod-update {
+  background-position: -225px top;
+}
+
+.mod-main-menu #mod-status {
+  background-position: -270px top;
+}
+
+.mod-main-menu #mod-devices {
+  background-position: -360px top;
+}
+
+.mod-main-menu #mod-settings {
+  background-position: -405px top;
+}
+
+/* Bank saving indicator */
+.mod-main-menu #banks-saving {
+  margin: 21px 0 0 6px;
+  font-size: 10px;
+  color: #666;
+  display: none;
+}
+
+/* System monitoring */
+.mod-main-menu #mod-ram .progress,
+.mod-main-menu #mod-cpu .progress {
+  width: 100%;
+  height: 45px;
+  position: relative;
+}
+
+.mod-main-menu #mod-ram .bar,
+.mod-main-menu #mod-cpu .bar {
+  background-color: rgba(136, 57, 150, 0.7);
+  height: 90%;
+  margin: 0;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: width 0.3s ease;
+}
+
+.mod-main-menu #mod-ram .progress-title,
+.mod-main-menu #mod-cpu .progress-title {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  font-weight: bold;
+  color: #fff;
+  text-transform: uppercase;
+  z-index: 1;
+}
+
+.mod-main-menu #mod-cpu-stats {
+  background-position: 8px 50%;
+  background-repeat: no-repeat;
+  padding-left: 40px;
+  padding-right: 12px;
+  color: #fff;
+  float: right;
+  font-size: 11px;
+  height: 45px;
+  line-height: 45px;
+}
+
+.mod-main-menu #mod-xruns {
+  background-position: 8px 50%;
+  background-repeat: no-repeat;
+  padding-left: 40px;
+  padding-right: 12px;
+  color: #fff;
+  float: right;
+  font-size: 11px;
+  height: 45px;
+  line-height: 45px;
+}
+
+.mod-main-menu #mod-buffersize {
+  background-position: 8px 50%;
+  background-repeat: no-repeat;
+  padding-left: 40px;
+  padding-right: 12px;
+  color: #fff;
+  float: right;
+  font-size: 11px;
+  height: 45px;
+  line-height: 45px;
+}
+
+/* Bypass controls */
+.mod-main-menu .mod-bypass {
+  background-position: 8px 50%;
+  background-repeat: no-repeat;
+  padding-left: 40px;
+  padding-right: 12px;
+  color: #fff;
+  float: right;
+  font-size: 11px;
+  height: 45px;
+  line-height: 45px;
+}
+
+/* MIDI Ports and Transport */
+.mod-main-menu #mod-show-midi-port,
+.mod-main-menu #mod-transport-icon {
+  background-position: 8px 50%;
+  background-repeat: no-repeat;
+  padding-left: 40px;
+  padding-right: 12px;
+  color: #fff;
+  float: right;
+  font-size: 11px;
+  height: 45px;
+  line-height: 45px;
+}
+
+.mod-main-menu #mod-transport-icon span {
+  display: block;
+  font-weight: bold;
+}
+
+/* Hover states */
+.mod-main-menu .icon:hover {
+  background-color: #000;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .mod-main-menu {
+    height: 40px;
+  }
+  
+  .mod-main-menu .icon {
+    height: 40px;
+    width: 40px;
+  }
+  
+  .mod-main-menu .icon > a {
+    height: 40px;
+    width: 40px;
+  }
+  
+  .mod-main-menu #mod-cpu-stats,
+  .mod-main-menu #mod-xruns,
+  .mod-main-menu #mod-buffersize,
+  .mod-main-menu .mod-bypass,
+  .mod-main-menu #mod-show-midi-port,
+  .mod-main-menu #mod-transport-icon {
+    font-size: 10px;
+    padding-left: 35px;
+    padding-right: 8px;
+  }
+}
