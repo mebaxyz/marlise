@@ -1,0 +1,148 @@
+/* MOD UI Main Menu (Bottom Navigation) */
+
+.main-menu {
+  height: var(--mod-footer-height);
+  background: var(--mod-background);
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: var(--z-footer);
+}
+
+.main-menu-item {
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--mod-transition-normal);
+  background-size: 24px;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+.main-menu-item:hover {
+  background-color: #000;
+}
+
+.main-menu-item.active {
+  background-color: #000;
+}
+
+/* Menu Icons - Using sprite positions from original */
+.main-menu-item.plugins {
+  background-image: url('/static/img/menu-icons-sprite.png');
+  background-position: -45px top;
+}
+
+.main-menu-item.plugins:hover,
+.main-menu-item.plugins.active {
+  background-position: -45px bottom;
+}
+
+.main-menu-item.cloud-plugins {
+  background-image: url('/static/img/menu-icons-sprite.png');
+  background-position: -315px top;
+}
+
+.main-menu-item.cloud-plugins:hover,
+.main-menu-item.cloud-plugins.active {
+  background-position: -315px bottom;
+}
+
+.main-menu-item.pedalboards {
+  background-image: url('/static/img/menu-icons-sprite.png');
+  background-position: -90px top;
+}
+
+.main-menu-item.pedalboards:hover,
+.main-menu-item.pedalboards.active {
+  background-position: -90px bottom;
+}
+
+.main-menu-item.banks {
+  background-image: url('/static/img/menu-icons-sprite.png');
+  background-position: -135px top;
+}
+
+.main-menu-item.banks:hover,
+.main-menu-item.banks.active {
+  background-position: -135px bottom;
+}
+
+.main-menu-item.file-manager {
+  background-image: url('/static/img/menu-icons-sprite.png');
+  background-position: -180px top;
+}
+
+.main-menu-item.file-manager:hover,
+.main-menu-item.file-manager.active {
+  background-position: -180px bottom;
+}
+
+/* Status Section */
+.main-menu-status {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.status-item {
+  height: 45px;
+  padding: 0 var(--mod-spacing-sm);
+  display: flex;
+  align-items: center;
+  font-size: var(--mod-font-size-xs);
+  color: var(--mod-text-primary);
+  text-transform: uppercase;
+  font-weight: bold;
+  background-position: 8px center;
+  background-repeat: no-repeat;
+  background-size: 20px;
+  padding-left: 35px;
+  transition: var(--mod-transition-normal);
+  cursor: pointer;
+}
+
+.status-item:hover {
+  background-color: #000;
+}
+
+.status-item.cpu {
+  background-image: url('/static/img/icons/25/cpu.png');
+}
+
+.status-item.ram {
+  background-image: url('/static/img/icons/25/ram.png');
+}
+
+.status-item.midi {
+  background-image: url('/static/img/icons/25/midi.png');
+}
+
+/* Settings Button */
+.main-menu-settings {
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--mod-text-primary);
+  font-size: 28px;
+  opacity: 0.66;
+  transition: var(--mod-transition-normal);
+  margin-right: var(--mod-spacing-sm);
+}
+
+.main-menu-settings:hover {
+  opacity: 1;
+}
+
+.main-menu-settings::after {
+  content: '⚙';
+  font-family: system-ui;
+}

@@ -1,0 +1,82 @@
+/* MOD UI Reset & Base Styles */
+
+* {
+  outline: 0 !important;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+*:before,
+*:after {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 10px;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--mod-background);
+  min-width: 1024px;
+}
+
+body.ios {
+  position: fixed;
+  min-width: 980px;
+}
+
+/* Selection styles */
+::selection {
+  background: var(--mod-primary) !important;
+  color: white !important;
+}
+
+::-moz-selection {
+  background: var(--mod-primary) !important;
+  color: white !important;
+}
+
+/* Remove default button styles */
+button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+/* Remove default input styles */
+input,
+textarea,
+select {
+  border: none;
+  outline: none;
+  background: none;
+}
+
+/* Remove default list styles */
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Images */
+img {
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+}

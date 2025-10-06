@@ -1,0 +1,306 @@
+/*
+ * MOD UI Settings - React Component Styling
+ * Based on original MOD UI settings panel design
+ */
+
+.settings {
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.settings .box {
+  background: var(--mod-surface);
+  border-radius: 8px;
+  padding: 0;
+}
+
+.settings header {
+  padding: 20px;
+  border-bottom: 1px solid var(--mod-border-color);
+}
+
+.settings header h1 {
+  margin: 0;
+  color: var(--mod-text-primary);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.settings .settings-content {
+  padding: 20px;
+}
+
+.settings .settings-section {
+  margin-bottom: 30px;
+}
+
+.settings .settings-section h2 {
+  margin: 0 0 15px 0;
+  color: var(--mod-text-primary);
+  font-size: 18px;
+  font-weight: 600;
+  border-bottom: 2px solid var(--mod-primary);
+  padding-bottom: 8px;
+}
+
+.settings .setting-group {
+  margin-bottom: 20px;
+}
+
+.settings .setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--mod-border-color);
+}
+
+.settings .setting-item:last-child {
+  border-bottom: none;
+}
+
+.settings .setting-info {
+  flex: 1;
+}
+
+.settings .setting-info label {
+  display: block;
+  font-weight: 600;
+  color: var(--mod-text-primary);
+  margin-bottom: 4px;
+}
+
+.settings .setting-info .description {
+  color: var(--mod-text-secondary);
+  font-size: 14px;
+  margin: 0;
+}
+
+.settings .setting-control {
+  flex-shrink: 0;
+  margin-left: 20px;
+}
+
+.settings .form-control {
+  padding: 8px 12px;
+  background: var(--mod-bg-dark);
+  border: 1px solid var(--mod-border-color);
+  border-radius: 0;
+  color: var(--mod-text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  min-width: 200px;
+}
+
+.settings .form-control:focus {
+  border-color: var(--mod-primary);
+  outline: none;
+}
+
+.settings .checkbox-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings .checkbox-control input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--mod-primary);
+}
+
+.settings .select-control select {
+  padding: 8px 12px;
+  background: var(--mod-bg-dark);
+  border: 1px solid var(--mod-border-color);
+  border-radius: 0;
+  color: var(--mod-text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  min-width: 200px;
+}
+
+.settings .select-control select:focus {
+  border-color: var(--mod-primary);
+  outline: none;
+}
+
+.settings .range-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 250px;
+}
+
+.settings .range-control input[type="range"] {
+  flex: 1;
+  height: 6px;
+  background: var(--mod-bg-dark);
+  border-radius: 3px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.settings .range-control input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--mod-primary);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.settings .range-control input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: var(--mod-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+.settings .range-control .range-value {
+  min-width: 40px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--mod-text-primary);
+}
+
+.settings .button-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.settings .btn {
+  padding: 8px 16px;
+  background: var(--mod-primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: var(--mod-transition);
+}
+
+.settings .btn:hover {
+  background: var(--mod-primary-hover);
+}
+
+.settings .btn.secondary {
+  background: var(--mod-bg-medium);
+  color: var(--mod-text-primary);
+}
+
+.settings .btn.secondary:hover {
+  background: var(--mod-bg-dark);
+}
+
+.settings .btn.danger {
+  background: #d32f2f;
+}
+
+.settings .btn.danger:hover {
+  background: #b71c1c;
+}
+
+/* Audio Settings */
+.settings .audio-device-info {
+  background: var(--mod-bg-medium);
+  padding: 15px;
+  border-radius: 4px;
+  margin-top: 10px;
+}
+
+.settings .audio-device-info h3 {
+  margin: 0 0 10px 0;
+  color: var(--mod-text-primary);
+  font-size: 16px;
+}
+
+.settings .audio-device-info p {
+  margin: 5px 0;
+  color: var(--mod-text-secondary);
+  font-size: 14px;
+}
+
+/* System Info */
+.settings .system-info {
+  background: var(--mod-bg-medium);
+  padding: 15px;
+  border-radius: 4px;
+  margin-top: 10px;
+}
+
+.settings .system-info h3 {
+  margin: 0 0 10px 0;
+  color: var(--mod-text-primary);
+  font-size: 16px;
+}
+
+.settings .system-info .info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.settings .system-info .info-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--mod-border-color);
+}
+
+.settings .system-info .info-item:last-child {
+  border-bottom: none;
+}
+
+.settings .system-info .info-label {
+  font-weight: 600;
+  color: var(--mod-text-primary);
+}
+
+.settings .system-info .info-value {
+  color: var(--mod-text-secondary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .settings .setting-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .settings .setting-control {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .settings .form-control,
+  .settings .select-control select {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .settings .range-control {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .settings .button-group {
+    flex-direction: column;
+  }
+
+  .settings .button-group .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings .info-grid {
+    grid-template-columns: 1fr;
+  }
+}

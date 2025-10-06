@@ -1,0 +1,285 @@
+/*
+ * MOD UI Pedalboard Library - React Component Styling
+ * Based on original MOD UI pedalboard library design
+ */
+
+.pedalboard-library {
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.pedalboard-library .box {
+  background: var(--mod-surface);
+  border-radius: 8px;
+  padding: 0;
+}
+
+.pedalboard-library header {
+  padding: 20px;
+  border-bottom: 1px solid var(--mod-border-color);
+  position: relative;
+}
+
+.pedalboard-library header h1 {
+  margin: 0 0 15px 0;
+  color: var(--mod-text-primary);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.pedalboard-library .form-group {
+  margin-bottom: 15px;
+}
+
+.pedalboard-library .form-control {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--mod-bg-dark);
+  border: 1px solid var(--mod-border-color);
+  border-radius: 0;
+  color: var(--mod-text-primary);
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.pedalboard-library .form-control:focus {
+  border-color: var(--mod-primary);
+  outline: none;
+}
+
+.pedalboard-library .view-modes {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.pedalboard-library .view-mode {
+  display: inline-block;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  background: var(--mod-bg-medium);
+  border: 1px solid var(--mod-border-color);
+  margin-left: 5px;
+  position: relative;
+  transition: var(--mod-transition);
+}
+
+.pedalboard-library .view-mode:hover {
+  background: var(--mod-primary);
+  border-color: var(--mod-primary);
+}
+
+.pedalboard-library .view-mode.selected {
+  background: var(--mod-primary);
+  border-color: var(--mod-primary);
+}
+
+.pedalboard-library .view-mode:before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  background-image: url('/static/img/icons/36/view-modes.png');
+  background-repeat: no-repeat;
+}
+
+.pedalboard-library .icon-th-1:before {
+  background-position: 0 0;
+}
+
+.pedalboard-library .icon-th-list:before {
+  background-position: -16px 0;
+}
+
+.pedalboard-library .pedalboards {
+  padding: 20px;
+}
+
+/* Separators */
+.pedalboard-library .separator-title {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--mod-text-primary);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.pedalboard-library .separator {
+  height: 2px;
+  margin-bottom: 20px;
+}
+
+.pedalboard-library .separator-user {
+  background: linear-gradient(90deg, var(--mod-primary) 0%, var(--mod-accent) 100%);
+}
+
+.pedalboard-library .separator-factory {
+  background: linear-gradient(90deg, var(--mod-accent) 0%, var(--mod-primary) 100%);
+}
+
+/* Pedalboard Items */
+.pedalboard-library .pedalboard-item {
+  cursor: pointer;
+  transition: var(--mod-transition);
+  margin-bottom: 15px;
+}
+
+.pedalboard-library .pedalboard-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--mod-shadow-medium);
+}
+
+/* Grid View */
+.pedalboard-library .grid .pedalboard-item {
+  display: inline-block;
+  width: calc(25% - 15px);
+  margin-right: 15px;
+  vertical-align: top;
+  background: var(--mod-bg-medium);
+  border: 1px solid var(--mod-border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.pedalboard-library .grid .pedalboard-thumbnail {
+  width: 100%;
+  height: 120px;
+  overflow: hidden;
+  background: var(--mod-bg-dark);
+}
+
+.pedalboard-library .grid .pedalboard-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pedalboard-library .grid .pedalboard-info {
+  padding: 12px;
+}
+
+.pedalboard-library .grid .pedalboard-info h3 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mod-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pedalboard-library .grid .pedalboard-info .author {
+  margin: 0;
+  font-size: 12px;
+  color: var(--mod-text-secondary);
+}
+
+/* List View */
+.pedalboard-library .list .pedalboard-item {
+  display: flex;
+  align-items: center;
+  background: var(--mod-bg-medium);
+  border: 1px solid var(--mod-border-color);
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.pedalboard-library .list .pedalboard-thumbnail {
+  width: 60px;
+  height: 60px;
+  margin-right: 15px;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--mod-bg-dark);
+  border-radius: 4px;
+}
+
+.pedalboard-library .list .pedalboard-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pedalboard-library .list .pedalboard-info {
+  flex: 1;
+}
+
+.pedalboard-library .list .pedalboard-info h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mod-text-primary);
+}
+
+.pedalboard-library .list .pedalboard-info .author {
+  margin: 0;
+  font-size: 14px;
+  color: var(--mod-text-secondary);
+}
+
+/* Loading and Empty States */
+.pedalboard-library .loading,
+.pedalboard-library .no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--mod-text-secondary);
+}
+
+.pedalboard-library .loading p,
+.pedalboard-library .no-results p {
+  margin: 15px 0 0 0;
+  font-size: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .pedalboard-library .grid .pedalboard-item {
+    width: calc(33.333% - 15px);
+  }
+}
+
+@media (max-width: 768px) {
+  .pedalboard-library .grid .pedalboard-item {
+    width: calc(50% - 15px);
+  }
+  
+  .pedalboard-library .view-modes {
+    position: static;
+    text-align: center;
+    margin-bottom: 15px;
+  }
+  
+  .pedalboard-library header {
+    text-align: center;
+  }
+  
+  .pedalboard-library .form-group {
+    max-width: 300px;
+    margin: 0 auto 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pedalboard-library .grid .pedalboard-item {
+    width: 100%;
+    margin-right: 0;
+  }
+  
+  .pedalboard-library .list .pedalboard-item {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .pedalboard-library .list .pedalboard-thumbnail {
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "cloud-terms-accepted": true,
+  "test": "testvalue",
+  "test-from-outside": "testvalue",
+  "test-debug": "testvalue",
+  "test-after-restart": "testvalue"
+}

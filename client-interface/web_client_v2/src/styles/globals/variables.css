@@ -1,0 +1,77 @@
+/* MOD UI CSS Variables */
+:root {
+  /* Colors */
+  --mod-primary: #883996;
+  --mod-primary-dark: #662b71;
+  --mod-primary-light: #a144b2;
+  --mod-background: #111;
+  --mod-surface: #2c2c2c;
+  --mod-surface-light: rgba(255, 255, 255, 0.07);
+  --mod-accent: #f29446;
+  --mod-success: #dff0d8;
+  --mod-warning: #f29446;
+  --mod-error: #d9534f;
+  --mod-text-primary: #ffffff;
+  --mod-text-secondary: #999999;
+  --mod-text-disabled: #666666;
+  --mod-border: #333333;
+  
+  /* Spacing */
+  --mod-spacing-xs: 4px;
+  --mod-spacing-sm: 8px;
+  --mod-spacing-md: 16px;
+  --mod-spacing-lg: 24px;
+  --mod-spacing-xl: 32px;
+  --mod-spacing-xxl: 48px;
+  
+  /* Typography */
+  --mod-font-family: "Cooper Hewitt", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --mod-font-size-xs: 10px;
+  --mod-font-size-sm: 12px;
+  --mod-font-size-base: 14px;
+  --mod-font-size-lg: 16px;
+  --mod-font-size-xl: 18px;
+  --mod-font-size-xxl: 24px;
+  
+  /* Layout and spacing */
+  --mod-header-height: 60px;
+  --mod-footer-height: 80px;
+  --mod-sidebar-width: 300px;
+  --mod-main-padding: var(--mod-spacing-lg);
+  
+  /* Border radius */
+  --mod-border-radius: 4px;
+  --mod-border-radius-sm: 2px;
+  --mod-border-radius-lg: 8px;
+  
+  /* Pedalboard specific */
+  --mod-pedalboard-background: #0a0a0a;
+  --mod-pedalboard-grid-dot: rgba(136, 57, 150, 0.3);
+  
+  /* Shadows */
+  --mod-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+  --mod-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.16);
+  --mod-shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.19);
+  --mod-shadow-pedal: 2px 8px 7px rgba(0, 0, 0, 0.2),
+                      4px 16px 7px rgba(0, 0, 0, 0.2),
+                      6px 24px 7px rgba(0, 0, 0, 0.2),
+                      8px 32px 7px rgba(0, 0, 0, 0.2),
+                      10px 40px 7px rgba(0, 0, 0, 0.2),
+                      5px 20px 50px rgba(0, 0, 0, 0.9);
+  
+  /* Transitions */
+  --mod-transition-fast: 0.15s ease;
+  --mod-transition-normal: 0.33s ease;
+  --mod-transition-slow: 0.5s ease;
+  
+  /* Borders */
+  --mod-border-radius: 0px; /* MOD uses sharp corners */
+  --mod-border-width: 1px;
+  
+  /* Z-index layers */
+  --z-modal: 1000;
+  --z-dropdown: 100;
+  --z-header: 10;
+  --z-footer: 10;
+  --z-content: 1;
+}

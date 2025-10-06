@@ -36,24 +36,53 @@ export default function PluginList() {
   }
 
   return (
-    <div className="plugin-list">
-      <h2>Available plugins</h2>
-      <div className="list">
-        {plugins.map((p) => (
-          <div
-            key={p.uri}
-            className="plugin-card"
-            draggable
-            onDragStart={(e) => onDragStart(e, p)}
-            title={p.label || p.uri}
-          >
-            <img src={p.thumbnail_href || '/static/img/default-plugin.png'} alt="" />
-            <div className="meta">
-              <div className="label">{p.label || p.uri}</div>
-              <div className="author">{p.author?.name}</div>
+    <div className="plugin-list-horizontal">
+      <div className="plugin-list-header">
+        <div className="plugin-list-categories">
+          <ul>
+            <li className="selected">All</li>
+            <li>Delay</li>
+            <li>Distortion</li>
+            <li>Filter</li>
+            <li>Modulator</li>
+            <li>Reverb</li>
+          </ul>
+        </div>
+        
+        <div className="plugin-list-controls">
+          <div className="plugin-list-settings" title="Plugin Library Settings" />
+          <div className="plugin-list-fold" title="Fold Plugin Library" />
+        </div>
+      </div>
+      
+      <div className="plugin-list-content">
+        <div className="plugin-list-nav left" title="Previous plugins" />
+        
+        <div className="plugin-list-results">
+          <div className="plugin-list-wrapper selected">
+            <div className="plugin-list-plugins">
+              {plugins.map((p) => (
+                <div
+                  key={p.uri}
+                  className="plugin-card plugin-card-horizontal"
+                  draggable
+                  onDragStart={(e) => onDragStart(e, p)}
+                  title={p.label || p.uri}
+                >
+                  <div className="plugin-thumb">
+                    <img src={p.thumbnail_href || '/static/img/default-plugin.png'} alt="" />
+                  </div>
+                  <div className="plugin-info">
+                    <div className="plugin-title">{p.label || p.uri}</div>
+                    <div className="plugin-author">{p.author?.name || 'Unknown'}</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        ))}
+        </div>
+        
+        <div className="plugin-list-nav right" title="Next plugins" />
       </div>
     </div>
   )

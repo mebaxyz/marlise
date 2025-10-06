@@ -1,0 +1,62 @@
+/* MOD UI Typography */
+
+/* Cooper Hewitt Font Definitions */
+@font-face {
+  font-family: 'Cooper Hewitt';
+  src: url('../assets/fonts/cooper-hewitt-book.woff2') format('woff2'),
+       url('../assets/fonts/cooper-hewitt-book.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cooper Hewitt';
+  src: url('../assets/fonts/cooper-hewitt-semibold.woff2') format('woff2'),
+       url('../assets/fonts/cooper-hewitt-semibold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Base Typography */
+* {
+  font-family: var(--mod-font-family) !important;
+}
+
+body {
+  font-family: var(--mod-font-family);
+  font-size: var(--mod-font-size-base);
+  line-height: 1.42857143;
+  color: var(--mod-text-secondary);
+  background-color: var(--mod-background);
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: inherit;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--mod-text-primary);
+  margin: 0;
+}
+
+h1 { font-size: var(--mod-font-size-xxl); }
+h2 { font-size: var(--mod-font-size-xl); }
+h3 { font-size: var(--mod-font-size-lg); }
+h4 { font-size: var(--mod-font-size-base); }
+h5 { font-size: var(--mod-font-size-sm); }
+h6 { font-size: var(--mod-font-size-xs); }
+
+/* Text utilities */
+.text-primary { color: var(--mod-text-primary); }
+.text-secondary { color: var(--mod-text-secondary); }
+.text-disabled { color: var(--mod-text-disabled); }
+.text-accent { color: var(--mod-accent); }
+
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.text-uppercase { text-transform: uppercase; }
+.text-bold { font-weight: 600; }

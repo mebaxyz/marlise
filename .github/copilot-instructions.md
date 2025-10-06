@@ -87,7 +87,7 @@ pip3 install fastapi uvicorn pyzmq asyncio
 ./scripts/start-service.sh
 
 # Development Docker helpers
-# - The client API dev image is built from `client-interface/web_client/api/Dockerfile` and
+# - The client API dev image is built from `client-interface/web_api/api/Dockerfile` and
 #   installs Python requirements at build time. The dev compose file `docker/docker-compose.dev.yml`
 #   builds the image and bind-mounts the `web_client` directory so code edits are visible without
 #   rebuilding the image.
@@ -105,6 +105,73 @@ pip3 install fastapi uvicorn pyzmq asyncio
 
 # Access web interface
 # Open browser to http://localhost:8080
+
+### Dev: use host networking (recommended for local development)
+
+When developing locally it's often easiest to run the Client Interface (adapter)
+container with host networking so the container can reach services bound to
+127.0.0.1 on the host (for example the `session-manager` ZeroMQ RPC port).
+This avoids container loopback networking issues during iterative development.
+
+Example (run the prebuilt dev image with host networking):
+```bash
+# Run with host networking so adapter can connect to host-local ZeroMQ services
+docker rm -f marlise-client-api-dev || true
+docker run -d --name marlise-client-api-dev --network host \
+    -v $(pwd)/client-interface/web_client:/app \
+    --workdir /app \
+    marlise-client-api-dev:latest /usr/local/bin/python -m uvicorn api.main:app --host 0.0.0.0 --port 8080 --app-dir /app
+```
+
+If you prefer not to use host networking, set the `CLIENT_INTERFACE_ZMQ_HOST`
+environment variable so the adapter can reach the host ZeroMQ services. For
+example `-e CLIENT_INTERFACE_ZMQ_HOST=host.docker.internal` or
+`-e CLIENT_INTERFACE_ZMQ_HOST=<host-ip>`.
+
+Using Docker Compose (dev convenience):
+```yaml
+services:
+    client-api:
+        image: marlise-client-api-dev:latest
+        network_mode: host # dev convenience only; not for production
+        volumes:
+            - ./client-interface/web_client:/app
+        working_dir: /app
+        command: /usr/local/bin/python -m uvicorn api.main:app --host 0.0.0.0 --port 8080 --app-dir /app
+```
+
+## Build & Rerun (quick reference)
+
+1. Build and run the v2 web client (development)
+```bash
+# from repository root
+cd client-interface/web_client_v2
+npm install
+# start dev server with Vite (HMR)
+npm run dev -- --host --port 5173
+```
+
+2. Build production bundle
+```bash
+cd client-interface/web_client_v2
+npm install
+npm run build
+# serve the dist/ folder with a static server or copy to your HTTP server
+```
+
+3. Restart the client interface adapter (FastAPI) if needed
+```bash
+cd client-interface/web_api/api
+pip3 install -r requirements.txt
+uvicorn api.main:app --host 0.0.0.0 --port 8080
+```
+
+4. Health checks
+```bash
+curl http://localhost:8080/health
+curl http://localhost:5173/
+```
+
 ```
 
 ### Stop Services

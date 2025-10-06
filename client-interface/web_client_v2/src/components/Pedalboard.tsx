@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import axios from 'axios'
-import './Pedalboard.css'
+import '../styles/components/Pedalboard.css'
 
 interface Instance {
   instance_id: string
@@ -44,15 +44,45 @@ export default function Pedalboard() {
   }
 
   return (
-    <div className="pedalboard" id="pedalboard">
-      <h2>Pedalboard</h2>
-      <div className="board" onDragOver={onDragOver} onDrop={onDrop}>
-        {instances.length === 0 && <div className="placeholder">Drop plugins here</div>}
-        {instances.map((ins) => (
-          <div key={ins.instance_id} className="plugin-instance" style={{ position: 'absolute', left: ins.x, top: ins.y }}>
-            {ins.uri}
-          </div>
-        ))}
+    <div className="mod-pedalboard-view">
+      <div className="pedalboard-container" id="pedalboard">
+        <div className="pedalboard-background">
+          <canvas 
+            className="pedalboard-canvas"
+            onDragOver={onDragOver} 
+            onDrop={onDrop}
+          />
+          
+          {instances.length === 0 && (
+            <div className="pedalboard-empty">
+              <div className="pedalboard-message">
+                Drag plugins from the library below to create your pedalboard
+              </div>
+            </div>
+          )}
+          
+          {instances.map((ins) => (
+            <div 
+              key={ins.instance_id} 
+              className="plugin-pedal" 
+              style={{ 
+                position: 'absolute', 
+                left: ins.x, 
+                top: ins.y,
+                transform: 'translate(-50%, -50%)'
+              }}
+            >
+              <div className="pedal-content">
+                <div className="pedal-image">
+                  <img src="/static/img/default-pedal.png" alt="" />
+                </div>
+                <div className="pedal-info">
+                  <div className="pedal-title">{ins.uri.split('/').pop() || ins.uri}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )

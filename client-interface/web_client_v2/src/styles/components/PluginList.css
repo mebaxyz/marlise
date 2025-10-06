@@ -1,0 +1,233 @@
+/* MOD UI Plugin List (Horizontal Strip) */
+
+.plugin-list-horizontal {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: rgba(17, 17, 17, 0.66);
+  position: relative;
+  z-index: 1;
+}
+
+.plugin-list-header {
+  height: 38px;
+  background: rgba(17, 17, 17, 0.66);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--mod-spacing-sm);
+  border-bottom: 1px solid var(--mod-border);
+}
+
+.plugin-list-categories {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-right: 73px;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.plugin-list-categories ul {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 1px;
+}
+
+.plugin-list-categories li {
+  background: rgba(17, 17, 17, 0.66);
+  color: #bbb;
+  cursor: pointer;
+  display: inline-block;
+  font-size: var(--mod-font-size-xs);
+  margin: 0;
+  padding: 3px 11px;
+  text-shadow: 1px 1px 0 #000;
+  text-transform: uppercase;
+  border-top: solid 3px transparent;
+  transition: all var(--mod-transition-normal);
+}
+
+.plugin-list-categories li:hover {
+  margin-top: -6px;
+  padding: 6px 11px;
+  color: white;
+}
+
+.plugin-list-categories li.selected {
+  color: white;
+  font-weight: bold;
+  margin-top: -6px;
+  padding: 6px 11px;
+  border-top: solid 3px var(--mod-primary);
+}
+
+.plugin-list-content {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  overflow: hidden;
+  position: relative;
+  background: rgba(17, 17, 17, 0.66);
+}
+
+/* Navigation arrows */
+.plugin-list-nav {
+  position: absolute;
+  top: 0;
+  width: 50px;
+  height: 100%;
+  z-index: 2;
+  cursor: pointer;
+  opacity: 0.66;
+  transition: opacity var(--mod-transition-normal);
+  background-repeat: no-repeat;
+  background-position: 50% 50%;
+}
+
+.plugin-list-nav:hover {
+  opacity: 1;
+}
+
+.plugin-list-nav.left {
+  left: 0;
+  background-image: url('/static/img/nav-left.png');
+}
+
+.plugin-list-nav.right {
+  right: 0;
+  background-image: url('/static/img/nav-right.png');
+}
+
+/* Plugin results container */
+.plugin-list-results {
+  position: absolute;
+  left: 50px;
+  right: 50px;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.plugin-list-wrapper {
+  position: absolute;
+  display: inline-block;
+  white-space: nowrap;
+  transition: all 0.5s;
+  top: 120px;
+  left: 0;
+  opacity: 0;
+  height: 100%;
+  padding: 14px 0 10px 0;
+}
+
+.plugin-list-wrapper.selected {
+  top: 0;
+  opacity: 1;
+}
+
+.plugin-list-wrapper.scrolling {
+  transition: all 0.1s !important;
+}
+
+/* Plugin cards container */
+.plugin-list-plugins {
+  display: inline-flex;
+  gap: 0;
+  height: 100%;
+  align-items: flex-start;
+}
+
+/* Settings and fold controls */
+.plugin-list-controls {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  z-index: 3;
+}
+
+.plugin-list-settings {
+  width: 36px;
+  height: 36px;
+  background-color: rgba(17, 17, 17, 0.66);
+  background-image: url('/static/img/icn-search-white.png');
+  background-position: center center;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.plugin-list-fold {
+  width: 36px;
+  height: 36px;
+  background-color: rgba(17, 17, 17, 0.66);
+  background-image: url('/static/img/icons/25/pinned.png');
+  background-position: center center;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.plugin-list-fold.auto {
+  background-image: url('/static/img/icons/25/autohide.png');
+}
+
+/* Folded state */
+.plugin-list-horizontal.folded {
+  height: 38px;
+}
+
+.plugin-list-horizontal.folded .plugin-list-content {
+  display: none;
+}
+
+/* Fade state */
+.plugin-list-horizontal.fade {
+  opacity: 0.2;
+}
+
+/* Settings window */
+.plugin-list-settings-window {
+  position: absolute;
+  bottom: 130px;
+  right: 74px;
+  background-color: rgba(17, 17, 17, 0.66);
+  color: var(--mod-text-primary);
+  padding: var(--mod-spacing-sm);
+  border: 1px solid var(--mod-border);
+  transition: bottom 0.5s;
+  z-index: 10;
+}
+
+.plugin-list-horizontal.folded .plugin-list-settings-window {
+  bottom: 0;
+}
+
+.plugin-list-settings-window h1 {
+  font-size: var(--mod-font-size-lg);
+  margin-bottom: var(--mod-spacing-sm);
+  padding: 0;
+}
+
+.plugin-list-settings-window form {
+  padding: 4px;
+  border: 0;
+  margin: 0;
+}
+
+.plugin-list-settings-window label {
+  margin-right: 10px;
+  font-size: var(--mod-font-size-sm);
+  color: var(--mod-text-primary);
+}
+
+.plugin-list-settings-window input {
+  width: 120px;
+  height: 28px;
+  line-height: 28px;
+  padding: 0 6px;
+  background: var(--mod-text-primary);
+  color: var(--mod-background);
+  border: 1px solid var(--mod-border);
+}
