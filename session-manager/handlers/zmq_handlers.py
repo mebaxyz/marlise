@@ -1,28 +1,33 @@
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Callable, Optional
 
 logger = logging.getLogger(__name__)
 
 
+def zmq_handler(name: Optional[str] = None) -> Callable:
+    """Decorator to explicitly mark a method as an RPC handler.
+
+    Usage:
+        @zmq_handler('custom_name')
+        async def my_handler(self, **kwargs):
+            ...
+
+    If name is omitted, the exposed method name will be derived from the
+    function name by removing a leading 'handle_' prefix when present.
+    The decorator sets attributes on the function so the auto-registrar
+    can discover and register only explicitly-marked handlers.
+    """
+
+    def decorator(fn: Callable) -> Callable:
+        setattr(fn, "_zmq_handler_name", name)
+        setattr(fn, "_zmq_handler_marked", True)
+        return fn
+
+    return decorator
+
+
 class ZMQHandlers:
     """ZeroMQ RPC method handlers for audio processing service"""
-
-    async def handle_set_parameter(self, **kwargs) -> Dict[str, Any]:
-        """Set plugin parameter"""
-        try:
-            instance_id = kwargs.get("instance_id")
-            port = kwargs.get("port") or kwargs.get("parameter")  # Support both for compatibility
-            value = kwargs.get("value")
-
-            if instance_id is None or port is None or value is None:
-                return {"success": False, "error": "Missing required parameters"}
-
-            await self.plugin_manager.set_parameter(instance_id, port, value)
-            return {"success": True}
-        except Exception as e:
-            logger.error("Failed to set parameter: %s", e)
-            return {"success": False, "error": str(e)}
-
     def __init__(self, bridge_client, plugin_manager, session_manager, zmq_service):
         self.bridge_client = bridge_client
         self.plugin_manager = plugin_manager
@@ -30,84 +35,44 @@ class ZMQHandlers:
         self.zmq_service = zmq_service
 
     def register_service_methods(self):
-        """Register all ZeroMQ RPC methods"""
-        # Plugin management methods
-        self.zmq_service.register_handler("get_available_plugins", self.handle_get_available_plugins)
-        self.zmq_service.register_handler("load_plugin", self.handle_load_plugin)
-        self.zmq_service.register_handler("unload_plugin", self.handle_unload_plugin)
-        self.zmq_service.register_handler("get_plugin_info", self.handle_get_plugin_info)
-        self.zmq_service.register_handler("list_instances", self.handle_list_instances)
-        self.zmq_service.register_handler("set_parameter", self.handle_set_parameter)
-        self.zmq_service.register_handler("get_parameter", self.handle_get_parameter)
-        self.zmq_service.register_handler("get_plugin_essentials", self.handle_get_plugin_essentials)
+        """Register all ZeroMQ RPC methods by discovering methods named
+        ``handle_<method_name>`` on this instance. Optionally a handler can
+        be decorated with ``@zmq_method('explicit_name')`` to override the
+        exposed method name.
+        """
+        registered = 0
+        # First register explicitly-decorated handlers
+        for attr_name in dir(self):
+            method = getattr(self, attr_name)
+            if not callable(method):
+                continue
+            if getattr(method, "_zmq_handler_marked", False):
+                zmq_name = getattr(method, "_zmq_handler_name", None)
+                if not zmq_name:
+                    # derive name from function name if not provided
+                    if attr_name.startswith("handle_"):
+                        zmq_name = attr_name[len("handle_"):]
+                    else:
+                        zmq_name = attr_name
+                self.zmq_service.register_handler(zmq_name, method)
+                registered += 1
 
-        # Pedalboard management methods
-        self.zmq_service.register_handler("create_pedalboard", self.handle_create_pedalboard)
-        self.zmq_service.register_handler("load_pedalboard", self.handle_load_pedalboard)
-        self.zmq_service.register_handler("save_pedalboard", self.handle_save_pedalboard)
-        self.zmq_service.register_handler("get_current_pedalboard", self.handle_get_current_pedalboard)
-        self.zmq_service.register_handler("setup_system_io", self.handle_setup_system_io)
+        # Backwards compatible: register methods named handle_<name>
+        # that were not explicitly decorated.
+        for attr_name in dir(self):
+            if not attr_name.startswith("handle_"):
+                continue
+            method = getattr(self, attr_name)
+            if not callable(method):
+                continue
+            # Skip methods already registered via decorator
+            if getattr(method, "_zmq_handler_marked", False):
+                continue
+            zmq_name = attr_name[len("handle_"):]
+            self.zmq_service.register_handler(zmq_name, method)
+            registered += 1
 
-        # Connection management methods
-        self.zmq_service.register_handler("create_connection", self.handle_create_connection)
-        self.zmq_service.register_handler("remove_connection", self.handle_remove_connection)
-
-        # Snapshot management methods
-        self.zmq_service.register_handler("create_snapshot", self.handle_create_snapshot)
-        self.zmq_service.register_handler("apply_snapshot", self.handle_apply_snapshot)
-
-        # Utility methods
-        self.zmq_service.register_handler("health_check", self.handle_health_check)
-        self.zmq_service.register_handler("echo", self.handle_echo)
-
-        # Phase 1 Critical mod-host command handlers
-        self.zmq_service.register_handler("activate_plugin", self.handle_activate_plugin)
-        self.zmq_service.register_handler("preload_plugin", self.handle_preload_plugin)
-        self.zmq_service.register_handler("bypass_plugin", self.handle_bypass_plugin)
-        self.zmq_service.register_handler("disconnect_all_ports", self.handle_disconnect_all_ports)
-        self.zmq_service.register_handler("get_cpu_load", self.handle_get_cpu_load)
-        self.zmq_service.register_handler("get_max_cpu_load", self.handle_get_max_cpu_load)
-
-        # Phase 2 Preset Management handlers
-        self.zmq_service.register_handler("load_preset", self.handle_load_preset)
-        self.zmq_service.register_handler("save_preset", self.handle_save_preset)
-        self.zmq_service.register_handler("show_presets", self.handle_show_presets)
-
-        # Phase 3 Monitoring handlers
-        self.zmq_service.register_handler("monitor_parameter", self.handle_monitor_parameter)
-        self.zmq_service.register_handler("monitor_output", self.handle_monitor_output)
-        self.zmq_service.register_handler("get_audio_levels", self.handle_get_audio_levels)
-        self.zmq_service.register_handler("flush_parameters", self.handle_flush_parameters)
-
-        # Phase 4 Patch Management handlers
-        self.zmq_service.register_handler("set_patch_property", self.handle_set_patch_property)
-        self.zmq_service.register_handler("get_patch_property", self.handle_get_patch_property)
-
-        # Phase 5 Bundle Management handlers
-        # Add bundle handlers here if needed
-
-        # Audio System Management handlers
-        self.zmq_service.register_handler("init_jack", self.handle_init_jack)
-        self.zmq_service.register_handler("close_jack", self.handle_close_jack)
-        self.zmq_service.register_handler("get_jack_data", self.handle_get_jack_data)
-        self.zmq_service.register_handler("get_jack_buffer_size", self.handle_get_jack_buffer_size)
-        self.zmq_service.register_handler("set_jack_buffer_size", self.handle_set_jack_buffer_size)
-        self.zmq_service.register_handler("get_jack_sample_rate", self.handle_get_jack_sample_rate)
-        self.zmq_service.register_handler("get_jack_port_alias", self.handle_get_jack_port_alias)
-        self.zmq_service.register_handler("get_jack_hardware_ports", self.handle_get_jack_hardware_ports)
-        self.zmq_service.register_handler("has_midi_beat_clock_sender_port", self.handle_has_midi_beat_clock_sender_port)
-        self.zmq_service.register_handler("has_serial_midi_input_port", self.handle_has_serial_midi_input_port)
-        self.zmq_service.register_handler("has_serial_midi_output_port", self.handle_has_serial_midi_output_port)
-        self.zmq_service.register_handler("has_midi_merger_output_port", self.handle_has_midi_merger_output_port)
-        self.zmq_service.register_handler("has_midi_broadcaster_input_port", self.handle_has_midi_broadcaster_input_port)
-        self.zmq_service.register_handler("has_duox_split_spdif", self.handle_has_duox_split_spdif)
-        self.zmq_service.register_handler("connect_jack_ports", self.handle_connect_jack_ports)
-        self.zmq_service.register_handler("connect_jack_midi_output_ports", self.handle_connect_jack_midi_output_ports)
-        self.zmq_service.register_handler("disconnect_jack_ports", self.handle_disconnect_jack_ports)
-        self.zmq_service.register_handler("disconnect_all_jack_ports", self.handle_disconnect_all_jack_ports)
-        self.zmq_service.register_handler("reset_xruns", self.handle_reset_xruns)
-
-        logger.info("ZeroMQ methods registered")
+        logger.info("ZeroMQ methods registered: %s", registered)
 
     # --- Internal helpers -------------------------------------------------
     async def _call_bridge(self, method: str, **params):
@@ -391,9 +356,10 @@ class ZMQHandlers:
         except Exception as e:
             logger.error("Health check failed: %s", e)
             return {"success": False, "error": str(e)}
-
+    @zmq_handler("ping")
     async def handle_echo(self, **kwargs) -> Dict[str, Any]:
-        """Echo message"""
+        """Echo message (registered on the 'ping' event via @zmq_handler('ping')).
+        """
         return {"echo": kwargs.get("message", "")}
 
     # Phase 1 Critical mod-host command handlers
