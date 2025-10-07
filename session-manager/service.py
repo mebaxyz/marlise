@@ -23,7 +23,7 @@ import zmq
 from core.bridge_client import BridgeClient
 from core.plugin_manager import PluginManager
 from core.session_manager import SessionManager
-from handlers.zmq_handlers import ZMQHandlers
+from session_manager.zmq_handlers import ZMQHandlers
 from zmq_service import ZMQService
 
 SERVICE_NAME = "session_manager"

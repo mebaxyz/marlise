@@ -8,7 +8,7 @@ import asyncio
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from handlers.servicebus_handlers import ServiceBusHandlers
+from session_manager.zmq_handlers import ZMQHandlers
 
 
 class TestAudioSystemHandlers:
@@ -41,12 +41,16 @@ class TestAudioSystemHandlers:
 
     @pytest.fixture
     def handlers(self, mock_bridge_client, mock_plugin_manager, mock_session_manager, mock_service_bus):
-        """Create handlers instance with mocked dependencies"""
-        return ServiceBusHandlers(
+        """Create handlers instance with mocked dependencies.
+
+        We pass the `mock_service_bus` as the `zmq_service` argument so the
+        handler registration uses the same `register_handler` API for tests.
+        """
+        return ZMQHandlers(
             mock_bridge_client,
             mock_plugin_manager,
             mock_session_manager,
-            mock_service_bus
+            mock_service_bus,
         )
 
     @pytest.mark.asyncio
