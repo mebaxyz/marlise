@@ -30,15 +30,32 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Global components
+# These module-level globals are intentionally used for simple runtime
+# wiring between the startup/shutdown lifecycle and other modules. They are
+# rebound during startup() and cleared in shutdown() so the module can be
+# restarted during tests or by a supervisor.
 plugin_manager = None
 session_manager = None
 zmq_service = None
 bridge_client = None
+# Running flag used by the main event loop to determine when to exit.
 running = False
 
 
 async def startup():
-    """Service startup"""
+    """Start the session-manager service.
+
+    This function performs the following high-level steps:
+    - starts the ZeroMQ service used for RPC/pubsub
+    - connects to the modhost-bridge via the bridge client (with retries)
+    - initializes the plugin manager and session manager
+    - registers ZeroMQ handlers
+
+    Raises:
+        Exception: when a critical component (bridge client, zmq) fails to
+        start after the configured number of retries. Any exception will
+        trigger a graceful shutdown attempt and be re-raised to the caller.
+    """
     global zmq_service, plugin_manager, session_manager, bridge_client, running
 
     logger.info("Starting %s service", SERVICE_NAME)
@@ -99,10 +116,10 @@ async def startup():
         session_manager = SessionManager(plugin_manager, bridge_client, zmq_service)
         logger.info("Session manager initialized")
 
-        # Optionally auto-create a default pedalboard on startup. Controlled via
-        # environment variable SESSION_MANAGER_AUTO_CREATE_DEFAULT. This keeps
-        # behaviour opt-in and avoids surprising side-effects for existing
-        # deployments.
+        # Optionally auto-create a default pedalboard on startup.
+        # Controlled via environment variable SESSION_MANAGER_AUTO_CREATE_DEFAULT.
+        # This keeps behaviour opt-in and avoids surprising side-effects for
+        # existing deployments.
         try:
             auto_create = os.environ.get("SESSION_MANAGER_AUTO_CREATE_DEFAULT", "0")
             if str(auto_create) in ("1", "true", "True", "yes", "on"):
@@ -121,17 +138,30 @@ async def startup():
         )
         handlers.register_service_methods()
 
+        # Mark the service as running and log successful startup.
         running = True
         logger.info("%s service started successfully", SERVICE_NAME)
 
     except Exception as e:
+        # Log and attempt a best-effort shutdown so resources are cleaned up.
         logger.error("Failed to start %s service: %s", SERVICE_NAME, e)
         await shutdown()
+        # Re-raise so the caller (or process supervisor) can observe failure.
         raise
 
 
 async def shutdown():
-    """Service shutdown"""
+    """Shut down the session-manager service gracefully.
+
+    This will stop managed components in the reverse order of startup:
+    - session manager (if running)
+    - plugin manager
+    - bridge client
+    - ZeroMQ service
+
+    The function is idempotent: calling it multiple times is safe and will
+    simply attempt to stop components that still exist.
+    """
     global zmq_service, plugin_manager, session_manager, bridge_client, running
 
     logger.info("Shutting down %s service", SERVICE_NAME)
@@ -152,7 +182,8 @@ async def shutdown():
         await zmq_service.stop()
         logger.info("ZeroMQ service stopped")
 
-    # Clear globals so future startup attempts can rebind sockets
+    # Clear globals so future startup attempts can rebind sockets and
+    # resources. This also helps tests isolate state between runs.
     zmq_service = None
     bridge_client = None
     plugin_manager = None
@@ -160,12 +191,18 @@ async def shutdown():
 
 
 async def main():
-    """Main service entry point"""
+    """Main service entry point.
+
+    This coroutine boots the service and installs signal handlers so the
+    process can be stopped with SIGINT/SIGTERM. The main loop waits while the
+    `running` flag is True and yields to the event loop periodically.
+    """
     try:
         # Start the service
         await startup()
 
-        # Setup signal handlers for graceful shutdown
+        # Setup signal handlers for graceful shutdown. Handlers schedule the
+        # async shutdown() coroutine to run in the event loop.
         def signal_handler(signum, _frame):
             logger.info("Received signal %s, shutting down...", signum)
             asyncio.create_task(shutdown())
@@ -173,16 +210,20 @@ async def main():
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
 
-        # Keep the service running
+        # Keep the service running until shutdown() clears the `running` flag.
         while running:
             await asyncio.sleep(1)
 
     except KeyboardInterrupt:
+        # Allow Ctrl-C to stop the service in interactive runs.
         logger.info("Service interrupted by user")
     except Exception as e:
+        # Log and propagate unexpected exceptions so they are visible to the
+        # process supervisor.
         logger.error("Service failed: %s", e)
         raise
     finally:
+        # Ensure shutdown is attempted before exiting.
         await shutdown()
 
 
