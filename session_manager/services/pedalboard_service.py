@@ -5,8 +5,8 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from .pedalboard import Pedalboard
-from .connection import Connection
+from ..models.pedalboard import Pedalboard
+from ..models.connection import Connection
 from ..managers.connection_manager import ConnectionManager
 from ..infrastructure.utils import serialize_pedalboard
 from ..infrastructure.storage import save_pedalboard

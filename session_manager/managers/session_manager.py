@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # pylint: disable=broad-except
 
 
-from ..models.pedalboard_service import PedalboardService
+from ..services.pedalboard_service import PedalboardService
 from ..services.connection_service import ConnectionService
 from .session_control_service import SessionControlService
 
