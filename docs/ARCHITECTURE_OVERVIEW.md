@@ -70,7 +70,7 @@ marlise/
 │       ├── build/             # Build output
 │       └── modhost-bridge     # Compiled binary
 │
-├── session-manager/           # Session Manager Layer
+├── session_manager/           # Session Manager Layer
 │   ├── src/                   # Python source code
 │   │   ├── session_manager.py # Main service
 │   │   ├── pedalboard.py      # Pedalboard management

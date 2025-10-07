@@ -9,8 +9,8 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 import pytest_asyncio
 
-from core.plugin_manager import PluginManager
-from core.session_manager import SessionManager
+from ..managers.plugin_manager import PluginManager
+from ..managers.session_manager import SessionManager
 
 # Configure pytest-asyncio
 pytest_plugins = ("pytest_asyncio",)
@@ -38,6 +38,9 @@ def mock_bridge_client():
     """Mock bridge client for testing."""
     mock = Mock()
     mock.call = AsyncMock()
+    
+    # Counter for instance IDs
+    instance_counter = [0]
     
     # Configure default response for different bridge methods
     def mock_call(service, method, **kwargs):
@@ -81,10 +84,25 @@ def mock_bridge_client():
                         },
                     }
                 }
-            elif method in ["load_plugin", "unload_plugin", "set_parameter"]:
-                return {"success": True}
-            elif method == "get_parameter":
-                return {"success": True, "value": 0.5}
+            elif method == "load_plugin":
+                instance_counter[0] += 1
+                return {"success": True, "instance_id": f"test_instance_{instance_counter[0]}"}
+            elif method == "get_plugin_essentials":
+                return {
+                    "success": True,
+                    "essentials": {
+                        "parameters": [
+                            {
+                                "symbol": "drive",
+                                "name": "Drive",
+                                "default": 0.5,
+                                "minimum": 0.0,
+                                "maximum": 1.0,
+                                "valid": True
+                            }
+                        ]
+                    }
+                }
         return {"success": True}
     
     mock.call.side_effect = mock_call

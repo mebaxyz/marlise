@@ -5,7 +5,7 @@ import subprocess
 import pytest
 
 import main
-from main import startup, shutdown
+from ..core.main import startup, shutdown
 
 
 # Run against a real bridge only

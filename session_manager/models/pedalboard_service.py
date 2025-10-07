@@ -7,9 +7,9 @@ from typing import Any, Dict, List, Optional
 
 from .pedalboard import Pedalboard
 from .connection import Connection
-from .connection_manager import ConnectionManager
-from .utils import serialize_pedalboard
-from .storage import save_pedalboard
+from ..managers.connection_manager import ConnectionManager
+from ..infrastructure.utils import serialize_pedalboard
+from ..infrastructure.storage import save_pedalboard
 
 logger = logging.getLogger(__name__)
 

@@ -2,7 +2,7 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from core.session_control_service import SessionControlService
+from ..managers.session_control_service import SessionControlService
 
 
 @pytest.fixture

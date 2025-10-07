@@ -8,7 +8,7 @@ import asyncio
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from zmq_handlers import ZMQHandlers
+from ..handlers.zmq_handlers import ZMQHandlers
 
 
 class TestAudioSystemHandlers:

@@ -1,3 +1,10 @@
+"""
+MOD UI - Session Manager Service
+
+High-level session management service that coordinates pedalboard operations,
+plugin management, and state persistence through the modhost-bridge service.
+"""
+
 
 """
 Session Manager Service
@@ -20,11 +27,11 @@ import signal
 import zmq
 
 # Local imports
-from core.bridge_client import BridgeClient
-from core.plugin_manager import PluginManager
-from core.session_manager import SessionManager
-from session_manager.zmq_handlers import ZMQHandlers
-from zmq_service import ZMQService
+from .infrastructure.bridge_client import BridgeClient
+from .managers.plugin_manager import PluginManager
+from .managers.session_manager import SessionManager
+from .handlers.zmq_handlers import ZMQHandlers
+from .services.zmq_service import ZMQService
 
 SERVICE_NAME = "session_manager"
 logger = logging.getLogger(__name__)
@@ -190,3 +197,10 @@ class SessionManagerService:
             raise
         finally:
             await self.shutdown()
+
+
+logging.basicConfig(level=logging.INFO)
+
+if __name__ == "__main__":
+    service = SessionManagerService()
+    asyncio.run(service.run())

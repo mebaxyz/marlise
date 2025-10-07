@@ -1,7 +1,7 @@
 """Simple manager for connections to decouple list handling from SessionManager."""
 from typing import List, Optional
 
-from .connection import Connection
+from ..models.connection import Connection
 
 
 class ConnectionManager:

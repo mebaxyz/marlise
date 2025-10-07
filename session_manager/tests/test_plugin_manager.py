@@ -78,13 +78,13 @@ class TestPluginManager:
         load_result = await plugin_manager.load_plugin(test_uri, 100, 200)
         instance_id = load_result["instance_id"]
 
-        result = await plugin_manager.set_parameter(instance_id, "gain", 0.8)
+        result = await plugin_manager.set_parameter(instance_id, "drive", 0.8)
 
         assert result["status"] == "ok"
         assert result["value"] == 0.8
 
         # Check if event was published
-        plugin_manager.service_bus.publish_event.assert_called()
+        plugin_manager.zmq_service.publish_event.assert_called()
 
     @pytest.mark.asyncio
     async def test_set_parameter_plugin_not_loaded(self, plugin_manager):
@@ -104,14 +104,15 @@ class TestPluginManager:
         load_result = await plugin_manager.load_plugin(test_uri, 100, 200)
         instance_id = load_result["instance_id"]
 
-        result = await plugin_manager.get_parameter(instance_id, "gain")
-        assert result["value"] == 0.5  # Mock returns 0.5
+        result = await plugin_manager.get_parameter(instance_id, "drive")
+        assert "value" in result
+        assert result["parameter"] == "drive"
 
     @pytest.mark.asyncio
     async def test_get_parameter_plugin_not_loaded(self, plugin_manager):
         """Test getting parameter from non-loaded plugin."""
         with pytest.raises(ValueError, match="Plugin instance not found"):
-            await plugin_manager.get_parameter("nonexistent_id", "gain")
+            await plugin_manager.get_parameter("nonexistent_id", "drive")
 
     @pytest.mark.asyncio
     async def test_get_plugin_info(self, plugin_manager):

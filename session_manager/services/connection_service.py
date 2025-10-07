@@ -3,8 +3,8 @@ import logging
 from typing import Any, Dict, Optional
 from dataclasses import asdict
 
-from .connection import Connection
-from .connection_manager import ConnectionManager
+from ..models.connection import Connection
+from ..managers.connection_manager import ConnectionManager
 
 logger = logging.getLogger(__name__)
 

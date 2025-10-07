@@ -2,8 +2,8 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, Mock
 
-from core.connection_service import ConnectionService
-from core.connection import Connection
+from ..services.connection_service import ConnectionService
+from ..models.connection import Connection
 
 
 @pytest.fixture
