@@ -1,3 +1,53 @@
 {
+  // Hide noisy folders from the Explorer and Problems view
+  "files.exclude": {
+    "**/.git": true,
+    "**/.venv": true,
+    "**/client-interface/web_client_original": true,
+    "**/__pycache__": true,
+    "**/build": true,
+    "**/dist": true
+  },
+
+  // Exclude from search
+  "search.exclude": {
+    "**/.venv": true,
+    "**/client-interface/web_client_original": true,
+    "**/build": true,
+    "**/dist": true
+  },
+
+  // Reduce file watcher noise
+  "files.watcherExclude": {
+    "**/.venv/**": true,
+    "**/client-interface/web_client_original/**": true,
+    "**/__pycache__/**": true,
+    "**/build/**": true,
+    "**/dist/**": true
+  },
+
+  // Tell Pylance / Python language server to ignore these folders entirely
+  "python.analysis.exclude": [
+    "**/.venv/**",
+    "**/client-interface/web_client_original/**",
+    "**/build/**",
+    "**/dist/**",
+    "**/__pycache__/**"
+  ],
+
+  // Limit diagnostics to open files only (optional, reduces noise)
+  "python.analysis.diagnosticMode": "openFilesOnly",
+
+  // Use the repository .flake8 config when running flake8
+  "python.linting.flake8Enabled": true,
+  "python.linting.flake8Args": [
+    "--config",
+    "${workspaceFolder}/.flake8"
+  ],
+
+  // If you use other linters, ensure they also respect the same excludes
+  "python.linting.enabled": true
+}
+{
     "cmake.sourceDirectory": "/home/nicolas/project/marlise/mado-audio-host/modhost-bridge"
 }
