@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # pylint: disable=broad-except
 
 
-from ..services.pedalboard_service import PedalboardService
+from .pedalboard_manager import PedalboardManager
 from ..services.connection_service import ConnectionService
 from .session_control_service import SessionControlService
 
@@ -23,7 +23,7 @@ class SessionManager:
     """Main coordinator for pedalboard sessions and audio state management.
 
     Delegates to specialized services:
-    - PedalboardService: handles pedalboard lifecycle (create/load/save/snapshots)
+    - PedalboardManager: handles pedalboard lifecycle (create/load/save/snapshots)
     - ConnectionService: handles audio connections between plugins
     - SessionControlService: handles session-level audio control operations
     """
@@ -34,7 +34,7 @@ class SessionManager:
         self.zmq_service = zmq_service
 
         # Initialize services with bridge client directly
-        self.pedalboard_service = PedalboardService(plugin_manager, bridge_client, zmq_service)
+        self.pedalboard_service = PedalboardManager(plugin_manager, bridge_client, zmq_service)
         self.connection_service = ConnectionService(bridge_client, self.pedalboard_service, plugin_manager, zmq_service)
         self.session_control = SessionControlService(bridge_client, plugin_manager, self.connection_service, zmq_service)
 

@@ -14,7 +14,7 @@ from ..infrastructure.storage import save_pedalboard
 logger = logging.getLogger(__name__)
 
 
-class PedalboardService:
+class PedalboardManager:
     """Manages a pedalboard instance and persistence.
 
     Does not directly interact with the modhost bridge; it uses a provided
