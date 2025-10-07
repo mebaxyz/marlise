@@ -21,7 +21,7 @@ async def test_auto_create_default_pedalboard():
     # Ensure the env var is present so session-manager will auto-create
     os.environ["SESSION_MANAGER_AUTO_CREATE_DEFAULT"] = "1"
 
-    # Start the service (will use the real ServiceBusCompatibleBridgeClient)
+    # Start the service (will use the real BridgeClient)
     await startup()
 
     # Give some time for the create_pedalboard task to run

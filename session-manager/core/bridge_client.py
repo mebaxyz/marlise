@@ -144,5 +144,4 @@ class BridgeClient:
             return {"success": False, "error": f"Bridge communication error: {e}"}
 
 
-# Backward compatibility alias
-ServiceBusCompatibleBridgeClient = BridgeClient
+# Alias removed: ServiceBus compatibility layer no longer used
