@@ -20,14 +20,14 @@ logger = logging.getLogger(__name__)
 
 class BridgeClient:
     """Direct ZeroMQ client for modhost-bridge C++ service"""
-    
+
     def __init__(self, endpoint: Optional[str] = None):
         self.endpoint = endpoint or os.getenv("MODHOST_BRIDGE_ENDPOINT", "tcp://127.0.0.1:6000")
         self.context: Optional[zmq.asyncio.Context] = None
         self.socket: Optional[zmq.asyncio.Socket] = None
         self._connected = False
         self.service_name = "bridge_client"
-        
+
     async def start(self):
         """Connect to the modhost-bridge"""
         try:
@@ -35,11 +35,11 @@ class BridgeClient:
             self.socket = self.context.socket(zmq.REQ)
             self.socket.connect(self.endpoint)
             self._connected = True
-            logger.info(f"Connected to modhost-bridge at {self.endpoint}")
+            logger.info("Connected to modhost-bridge at %s", self.endpoint)
         except Exception as e:
-            logger.error(f"Failed to connect to modhost-bridge: {e}")
+            logger.error("Failed to connect to modhost-bridge: %s", e)
             raise
-        
+
     async def stop(self):
         """Disconnect from the modhost-bridge"""
         self._connected = False
@@ -48,17 +48,36 @@ class BridgeClient:
         if self.context:
             self.context.term()
         logger.info("Disconnected from modhost-bridge")
-    
+
     async def call(self, service_name: str, method: str, timeout: Optional[float] = None, **kwargs) -> Dict[str, Any]:
         """Call method on modhost-bridge service"""
         if service_name != "modhost_bridge":
             raise ValueError(f"This client only supports 'modhost_bridge' service, got '{service_name}'")
-        
+
         # Determine action type based on method name
         # Methods that are handled by the audio subsystem in modhost-bridge
-        if method in {"init_jack", "close_jack", "get_jack_data", "get_jack_buffer_size", "set_jack_buffer_size", "get_jack_sample_rate", "connect_jack_ports", "disconnect_jack_ports", "get_jack_hardware_ports", "connect_jack_midi_output_ports", "disconnect_jack_midi_output_ports"}:
+        if method in {
+            "init_jack",
+            "close_jack",
+            "get_jack_data",
+            "get_jack_buffer_size",
+            "set_jack_buffer_size",
+            "get_jack_sample_rate",
+            "connect_jack_ports",
+            "disconnect_jack_ports",
+            "get_jack_hardware_ports",
+            "connect_jack_midi_output_ports",
+            "disconnect_jack_midi_output_ports",
+        }:
             action = "audio"
-        elif method in {"load_plugin", "unload_plugin", "set_parameter", "get_parameter", "get_available_plugins", "get_plugin_essentials"}:
+        elif method in {
+            "load_plugin",
+            "unload_plugin",
+            "set_parameter",
+            "get_parameter",
+            "get_available_plugins",
+            "get_plugin_essentials",
+        }:
             action = "plugin"
         elif method == "create_connection":
             # Handle connection creation directly
@@ -67,7 +86,10 @@ class BridgeClient:
             tgt = kwargs.get("target_plugin") or kwargs.get("target")
             tgt_port = kwargs.get("target_port")
             if not src or not tgt or src_port is None or tgt_port is None:
-                return {"success": False, "error": "create_connection requires source_plugin, source_port, target_plugin, target_port"}
+                return {
+                    "success": False,
+                    "error": "create_connection requires source_plugin, source_port, target_plugin, target_port",
+                }
             command = f"connect {src}:{src_port} {tgt}:{tgt_port}"
             return await self._send_request({"command": command})
         elif method == "remove_connection":
@@ -88,32 +110,29 @@ class BridgeClient:
             method = "get_jack_sample_rate"
         else:
             return {"success": False, "error": f"Unknown method '{method}' for modhost_bridge service"}
-        
+
         # Send standard request
         request = {"action": action, "method": method}
         request.update(kwargs)
         return await self._send_request(request)
-    
+
     async def _send_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
         """Send request to modhost-bridge and return response"""
         if not self._connected or not self.socket:
             return {"success": False, "error": "Not connected to modhost-bridge"}
-        
+
         try:
             # Send JSON request
             request_json = json.dumps(request)
             await self.socket.send_string(request_json)
-            
+
             # Wait for response with timeout
             timeout_seconds = float(os.getenv("MODHOST_BRIDGE_TIMEOUT", "5.0"))
-            response_json = await asyncio.wait_for(
-                self.socket.recv_string(),
-                timeout=timeout_seconds
-            )
-            
+            response_json = await asyncio.wait_for(self.socket.recv_string(), timeout=timeout_seconds)
+
             # Parse and return response
             return json.loads(response_json)
-            
+
         except asyncio.TimeoutError:
             logger.error("Timeout waiting for modhost-bridge response")
             return {"success": False, "error": "Bridge timeout"}
