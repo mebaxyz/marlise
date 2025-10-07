@@ -9,29 +9,27 @@ import os
 from contextlib import asynccontextmanager
 from typing import Any, Dict, List, Optional
 
-import zmq.asyncio
-from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+
+# from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from .routers import auth as auth_router
+from .routers import banks as banks_router
+from .routers import favorites as favorites_router
+from .routers import files as files_router
+from .routers import health as health_router
+from .routers import jack as jack_router
+from .routers import misc as misc_router
+from .routers import pedalboards as pedalboards_router
+from .routers import plugins as plugins_router
+from .routers import recording as recording_router
+from .routers import snapshots as snapshots_router
+from .routers import system as system_router
+from .routers import updates as updates_router
 from .zmq_client import ZMQClient
-from .routers import (
-    health as health_router,
-    plugins as plugins_router, 
-    pedalboards as pedalboards_router,
-    snapshots as snapshots_router,
-    banks as banks_router,
-    favorites as favorites_router,
-    recording as recording_router,
-    system as system_router,
-    jack as jack_router,
-    files as files_router,
-    auth as auth_router,
-    updates as updates_router,
-    misc as misc_router
-)
 
 # Configuration
 SERVICE_NAME = "client_interface"
@@ -55,9 +53,7 @@ class ConnectionManager:
         self.active_connections.append(websocket)
         if user_id:
             self.user_connections[user_id] = websocket
-        logger.info(
-            f"WebSocket connected: {len(self.active_connections)} active connections"
-        )
+        logger.info("WebSocket connected: %d active connections", len(self.active_connections))
 
     async def disconnect(self, websocket: WebSocket):
         if websocket in self.active_connections:
@@ -67,9 +63,7 @@ class ConnectionManager:
             if user_ws == websocket:
                 del self.user_connections[user_id]
                 break
-        logger.info(
-            f"WebSocket disconnected: {len(self.active_connections)} active connections"
-        )
+        logger.info("WebSocket disconnected: %d active connections", len(self.active_connections))
 
     async def broadcast(self, message: Dict[str, Any]):
         """Broadcast message to all connected clients"""
@@ -81,7 +75,7 @@ class ConnectionManager:
             try:
                 await connection.send_json(message)
             except Exception as e:
-                logger.warning(f"Failed to send to WebSocket: {e}")
+                logger.warning("Failed to send to WebSocket: %s", e)
                 disconnected.append(connection)
 
         # Clean up disconnected clients
@@ -94,7 +88,7 @@ class ConnectionManager:
             try:
                 await self.user_connections[user_id].send_json(message)
             except Exception as e:
-                logger.warning(f"Failed to send to user {user_id}: {e}")
+                logger.warning("Failed to send to user %s: %s", user_id, e)
                 await self.disconnect(self.user_connections[user_id])
 
 
@@ -114,9 +108,11 @@ class ParameterUpdate(BaseModel):
 class PedalboardRequest(BaseModel):
     bundlepath: str
 
+
 class ConfigSettingRequest(BaseModel):
     key: str
     value: Any
+
 
 # Config API Models
 
@@ -132,26 +128,26 @@ async def lifespan(app: FastAPI):
     global zmq_client
 
     # Startup
-    logger.info(f"Starting {SERVICE_NAME} service on port {SERVICE_PORT}")
+    logger.info("Starting %s service on port %d", SERVICE_NAME, SERVICE_PORT)
 
     # Initialize ZMQ client
     zmq_client = ZMQClient(SERVICE_NAME)
     await zmq_client.start()
 
     logger.info("ZMQ client started")
-    logger.info(f"{SERVICE_NAME} service started successfully")
+    logger.info("%s service started successfully", SERVICE_NAME)
 
     try:
         yield
     finally:
         # Cleanup
-        logger.info(f"Shutting down {SERVICE_NAME} service")
+        logger.info("Shutting down %s service", SERVICE_NAME)
 
         # Stop ZMQ client
         if zmq_client:
             await zmq_client.stop()
 
-        logger.info(f"{SERVICE_NAME} service stopped")
+        logger.info("%s service stopped", SERVICE_NAME)
 
 
 # Create FastAPI application
@@ -189,7 +185,7 @@ app.add_middleware(
 # Serve static files
 if os.path.exists(HTML_DIR):
     app.mount("/static", StaticFiles(directory=HTML_DIR), name="static")
-    logger.info(f"Serving static files from {HTML_DIR}")
+    logger.info("Serving static files from %s", HTML_DIR)
 
 
 # Health check endpoint
@@ -201,9 +197,7 @@ async def health_check():
         "status": "healthy",
         "details": {
             "active_connections": len(connection_manager.active_connections),
-            "zmq_client_connected": (
-                zmq_client.is_connected() if zmq_client else False
-            ),
+            "zmq_client_connected": (zmq_client.is_connected() if zmq_client else False),
         },
     }
 
