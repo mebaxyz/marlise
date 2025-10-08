@@ -1,37 +1,43 @@
-# Test Environment Docker Image for Marlise
-# Includes dummy JACK server, LV2 plugins, and all dependencies
 FROM ubuntu:22.04
 
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=UTC
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    # JACK Audio Connection Kit (dummy backend)
-    jackd2 \
-    libjack-jackd2-dev \
-    # LV2 plugin framework
-    lv2-dev \
-    lilv-utils \
-    # Common LV2 plugins for testing  
-    calf-plugins \
-    swh-plugins \
     # Build tools
     build-essential \
     cmake \
+    git \
     pkg-config \
-    # ZeroMQ
+    # JACK and audio
+    jackd2 \
+    libjack-jackd2-dev \
+    # LV2 development
+    lv2-dev \
+    liblilv-dev \
+    lilv-utils \
+    # mod-host dependencies
+    libreadline-dev \
+    libfftw3-dev \
+    # modhost-bridge dependencies  
     libzmq3-dev \
-    # Python and pip
+    libjsoncpp-dev \
+    libspdlog-dev \
+    libfmt-dev \
+    # Python and testing
     python3 \
     python3-pip \
-    python3-venv \
-    # Network tools for testing
+    python3-dev \
+    # Network and process tools
     curl \
     netcat-openbsd \
-    # Process management
+    net-tools \
     supervisor \
+    # LV2 plugins for testing
+    calf-plugins \
+    swh-plugins \
+    tap-plugins \
     # Cleanup
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -42,6 +48,8 @@ RUN useradd -m -s /bin/bash marlise && \
 
 # Set up Python environment
 RUN python3 -m pip install --upgrade pip
+
+# Copy Python requirements
 COPY tests/docker/requirements-test.txt /tmp/
 RUN pip3 install -r /tmp/requirements-test.txt
 
@@ -51,21 +59,12 @@ RUN mkdir -p /opt/marlise/{audio-engine,session-manager,client-interface} \
     /tmp/jack-dummy \
     && chown -R marlise:marlise /opt/marlise /var/log/marlise /tmp/jack-dummy
 
-# Copy test LV2 plugins list (for verification)
-COPY tests/docker/test-plugins.txt /opt/marlise/test-plugins.txt
-
 # Copy JACK dummy configuration
 COPY tests/docker/jack-dummy.conf /etc/jack-dummy.conf
 
-# Copy supervisor configuration
-COPY tests/docker/supervisord-minimal.conf /etc/supervisor/conf.d/marlise-test.conf
-
-# Set up JACK dummy backend script and mock services
+# Set up JACK dummy backend script
 COPY tests/docker/start-jack-dummy.sh /usr/local/bin/start-jack-dummy.sh
-COPY tests/docker/mock_mod_host.py /opt/marlise/tests/docker/
-COPY tests/docker/mock_modhost_bridge.py /opt/marlise/tests/docker/
-COPY tests/docker/test_operational.py /opt/marlise/tests/docker/
-RUN chmod +x /usr/local/bin/start-jack-dummy.sh /opt/marlise/tests/docker/mock_mod_host.py /opt/marlise/tests/docker/mock_modhost_bridge.py /opt/marlise/tests/docker/test_operational.py
+RUN chmod +x /usr/local/bin/start-jack-dummy.sh
 
 # Copy Marlise components
 COPY audio-engine/ /opt/marlise/audio-engine/
@@ -73,23 +72,44 @@ COPY session_manager/ /opt/marlise/session_manager/
 COPY client-interface/ /opt/marlise/client-interface/
 COPY tests/ /opt/marlise/tests/
 
-# Build mod-host and modhost-bridge (commented out for now - need build files)
-WORKDIR /opt/marlise/audio-engine
-# RUN cd mod-host && make && make install
-# RUN cd modhost-bridge && mkdir -p build && cd build && cmake .. && make
+# Build mod-host
+WORKDIR /opt/marlise/audio-engine/mod-host
+RUN make clean || true
+RUN make -j$(nproc)
+RUN cp mod-host /usr/local/bin/mod-host
 
-# Install Python dependencies for session manager
+# Build utils library (required by modhost-bridge)
+WORKDIR /opt/marlise/audio-engine/utils
+RUN if [ -f Makefile ]; then make clean || true; make -j$(nproc); fi || \
+    if [ -f CMakeLists.txt ]; then mkdir -p build && cd build && cmake .. && make -j$(nproc); fi || \
+    echo "No build system found for utils, creating minimal library" && \
+    mkdir -p build && \
+    echo 'void dummy_function() {}' > utils.c && \
+    gcc -c utils.c -o build/utils.o && \
+    ar rcs build/libmod_utils.a build/utils.o
+
+# Build modhost-bridge
+WORKDIR /opt/marlise/audio-engine/modhost-bridge
+RUN mkdir -p build && cd build && \
+    cmake .. && \
+    make -j$(nproc) && \
+    cp modhost-bridge /usr/local/bin/modhost-bridge
+
+# Install session manager dependencies
 WORKDIR /opt/marlise/session_manager
 RUN pip3 install -r requirements.txt
 
-# Install Python dependencies for client interface  
+# Install client interface dependencies
 WORKDIR /opt/marlise/client-interface/web_api/api
 RUN pip3 install -r requirements.txt
+
+# Copy supervisor configuration for real services
+COPY tests/docker/supervisord-real.conf /etc/supervisor/conf.d/marlise-test.conf
 
 # Set permissions
 RUN chown -R marlise:marlise /opt/marlise
 
-# Switch to marlise user
+# Switch to marlise user for runtime
 USER marlise
 WORKDIR /opt/marlise
 

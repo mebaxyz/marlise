@@ -1,0 +1,87 @@
+FROM ubuntu:22.04
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    # JACK and audio
+    jackd2 \
+    libjack-jackd2-dev \
+    # Python and testing
+    python3 \
+    python3-pip \
+    python3-dev \
+    # ZeroMQ for session manager
+    libzmq3-dev \
+    # Network and process tools
+    curl \
+    netcat-openbsd \
+    net-tools \
+    supervisor \
+    # LV2 plugins for testing
+    calf-plugins \
+    swh-plugins \
+    tap-plugins \
+    # Cleanup
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create marlise user
+RUN useradd -m -s /bin/bash marlise && \
+    usermod -a -G audio marlise
+
+# Set up Python environment
+RUN python3 -m pip install --upgrade pip
+
+# Copy Python requirements
+COPY tests/docker/requirements-test.txt /tmp/
+RUN pip3 install -r /tmp/requirements-test.txt
+
+# Create directories
+RUN mkdir -p /opt/marlise/{audio-engine,session-manager,client-interface} \
+    /var/log/marlise \
+    /tmp/jack-dummy \
+    && chown -R marlise:marlise /opt/marlise /var/log/marlise /tmp/jack-dummy
+
+# Copy JACK dummy configuration
+COPY tests/docker/jack-dummy.conf /etc/jack-dummy.conf
+
+# Set up JACK dummy backend script
+COPY tests/docker/start-jack-dummy.sh /usr/local/bin/start-jack-dummy.sh
+RUN chmod +x /usr/local/bin/start-jack-dummy.sh
+
+# Copy components
+COPY session_manager/ /opt/marlise/session_manager/
+COPY client-interface/ /opt/marlise/client-interface/
+COPY tests/docker/mock_mod_host.py /opt/marlise/tests/docker/
+COPY tests/docker/mock_modhost_bridge.py /opt/marlise/tests/docker/
+RUN chmod +x /opt/marlise/tests/docker/mock_mod_host.py /opt/marlise/tests/docker/mock_modhost_bridge.py
+
+# Install session manager dependencies
+WORKDIR /opt/marlise/session_manager
+RUN pip3 install -r requirements.txt
+
+# Install client interface dependencies  
+WORKDIR /opt/marlise/client-interface/web_api/api
+RUN pip3 install -r requirements.txt
+
+# Copy supervisor configuration for hybrid services
+COPY tests/docker/supervisord-hybrid.conf /etc/supervisor/conf.d/marlise-test.conf
+
+# Set permissions
+RUN chown -R marlise:marlise /opt/marlise
+
+# Switch to marlise user for runtime
+USER marlise
+WORKDIR /opt/marlise
+
+# Expose ports for testing
+EXPOSE 5555 6000 5718 6718 7718 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Default command
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/marlise-test.conf"]
