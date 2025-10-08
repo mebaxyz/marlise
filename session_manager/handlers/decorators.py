@@ -1,24 +1,24 @@
 """
 ZMQ handler decorators
 """
-from typing import Callable
+from typing import Callable, Union
 
 
-def zmq_handler(name: str) -> Callable:
-    """Decorator to explicitly mark a method as an RPC handler.
+def zmq_handler(name: Union[str, None]) -> Callable:
+    """Decorator to mark a method as an RPC handler.
 
     Usage:
         @zmq_handler('custom_name')
         async def my_handler(self, **kwargs):
             ...
 
-    The decorator requires a non-empty name. The registrar will use the
-    provided name exactly as the external RPC method name. The decorator
-    sets attributes on the function so the registrar can discover and
-    register only explicitly-marked handlers.
+    The decorator sets attributes on the function so the registrar can
+    discover and register only explicitly-marked handlers. It does NOT
+    alter the method behavior; handlers should return their own
+    "not implemented" response if appropriate (keeps behavior explicit).
     """
 
-    if not name:
+    if not name or not isinstance(name, str):
         raise TypeError("zmq_handler requires a non-empty name")
 
     def decorator(fn: Callable) -> Callable:
