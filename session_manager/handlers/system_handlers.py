@@ -64,8 +64,22 @@ class SystemHandlers:
     async def handle_shutdown(self, **_kwargs) -> Dict[str, Any]:
         """Shutdown system"""
         try:
-            # This would need to be implemented via system control
-            return {"success": False, "error": "Shutdown not implemented"}
+            import subprocess
+            
+            # Execute system shutdown command
+            result = subprocess.run(
+                ["sudo", "shutdown", "-h", "now"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            
+            if result.returncode == 0:
+                return {"success": True, "message": "System shutdown initiated"}
+            else:
+                return {"success": False, "error": f"Shutdown failed: {result.stderr}"}
+        except subprocess.TimeoutExpired:
+            return {"success": True, "message": "Shutdown command sent (timeout expected)"}
         except Exception as e:
             logger.error("Failed to shutdown: %s", e)
             return {"success": False, "error": str(e)}
@@ -74,8 +88,22 @@ class SystemHandlers:
     async def handle_reboot(self, **_kwargs) -> Dict[str, Any]:
         """Reboot system"""
         try:
-            # This would need to be implemented via system control
-            return {"success": False, "error": "Reboot not implemented"}
+            import subprocess
+            
+            # Execute system reboot command
+            result = subprocess.run(
+                ["sudo", "reboot"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            
+            if result.returncode == 0:
+                return {"success": True, "message": "System reboot initiated"}
+            else:
+                return {"success": False, "error": f"Reboot failed: {result.stderr}"}
+        except subprocess.TimeoutExpired:
+            return {"success": True, "message": "Reboot command sent (timeout expected)"}
         except Exception as e:
             logger.error("Failed to reboot: %s", e)
             return {"success": False, "error": str(e)}
@@ -84,8 +112,55 @@ class SystemHandlers:
     async def handle_get_system_info(self, **_kwargs) -> Dict[str, Any]:
         """Get system information"""
         try:
-            # This would need to be implemented via system monitoring
-            return {"success": False, "error": "Get system info not implemented"}
+            import platform
+            import os
+            import subprocess
+            
+            # Gather system information
+            info = {
+                "system": platform.system(),
+                "release": platform.release(),
+                "version": platform.version(),
+                "machine": platform.machine(),
+                "processor": platform.processor(),
+                "hostname": platform.node(),
+                "python_version": platform.python_version()
+            }
+            
+            # Add additional info with fallbacks
+            try:
+                # Get uptime
+                with open('/proc/uptime', 'r') as f:
+                    uptime_seconds = float(f.readline().split()[0])
+                    info["uptime"] = uptime_seconds
+            except:
+                info["uptime"] = None
+                
+            try:
+                # Get memory info
+                with open('/proc/meminfo', 'r') as f:
+                    meminfo = {}
+                    for line in f:
+                        parts = line.split(':')
+                        if len(parts) == 2:
+                            key = parts[0].strip()
+                            value = parts[1].strip()
+                            if key in ["MemTotal", "MemFree", "MemAvailable"]:
+                                meminfo[key] = value
+                    info["memory"] = meminfo
+            except:
+                info["memory"] = None
+                
+            # Add psutil info if available
+            try:
+                import psutil
+                info["cpu_count"] = psutil.cpu_count()
+                info["boot_time"] = psutil.boot_time()
+            except ImportError:
+                info["cpu_count"] = os.cpu_count()
+                info["boot_time"] = None
+                
+            return {"success": True, "system_info": info}
         except Exception as e:
             logger.error("Failed to get system info: %s", e)
             return {"success": False, "error": str(e)}
@@ -472,8 +547,9 @@ class SystemHandlers:
             if not channel or state is None:
                 return {"success": False, "error": "Missing 'channel' or 'state' parameter"}
 
-            # This would need to be implemented via hardware control
-            return {"success": False, "error": "Set truebypass not implemented"}
+            # Forward to bridge client for hardware relay control
+            result = await self.bridge_client.call("set_truebypass", channel=channel, state=state)
+            return result
         except Exception as e:
             logger.error("Failed to set truebypass: %s", e)
             return {"success": False, "error": str(e)}
@@ -509,8 +585,45 @@ class SystemHandlers:
     async def handle_switch_cpu_frequency(self, **_kwargs) -> Dict[str, Any]:
         """Toggle CPU frequency scaling between performance and powersave modes"""
         try:
-            # This would need to be implemented via OS CPU governor control
-            return {"success": False, "error": "Switch CPU frequency not implemented"}
+            import subprocess
+            import glob
+            
+            # Get current governor for CPU 0
+            try:
+                with open('/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor', 'r') as f:
+                    current_governor = f.read().strip()
+            except FileNotFoundError:
+                return {"success": False, "error": "CPU frequency scaling not supported on this system"}
+            
+            # Toggle between performance and powersave
+            new_governor = "performance" if current_governor == "powersave" else "powersave"
+            
+            # Get all CPU cores
+            cpu_paths = glob.glob('/sys/devices/system/cpu/cpu*/cpufreq/scaling_governor')
+            
+            if not cpu_paths:
+                return {"success": False, "error": "No CPU frequency scaling files found"}
+            
+            # Apply new governor to all cores
+            try:
+                for cpu_path in cpu_paths:
+                    subprocess.run(
+                        ["sudo", "tee", cpu_path],
+                        input=new_governor,
+                        text=True,
+                        check=True,
+                        capture_output=True
+                    )
+                
+                return {
+                    "success": True, 
+                    "message": f"CPU governor switched from {current_governor} to {new_governor}",
+                    "previous_governor": current_governor,
+                    "new_governor": new_governor
+                }
+            except subprocess.CalledProcessError as e:
+                return {"success": False, "error": f"Failed to set CPU governor: {e.stderr}"}
+                
         except Exception as e:
             logger.error("Failed to switch CPU frequency: %s", e)
             return {"success": False, "error": str(e)}
