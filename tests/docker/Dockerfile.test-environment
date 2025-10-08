@@ -1,0 +1,102 @@
+# Test Environment Docker Image for Marlise
+# Includes dummy JACK server, LV2 plugins, and all dependencies
+FROM ubuntu:22.04
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    # JACK Audio Connection Kit (dummy backend)
+    jackd2 \
+    libjack-jackd2-dev \
+    # LV2 plugin framework
+    lv2-dev \
+    lilv-utils \
+    # Common LV2 plugins for testing
+    calf-plugins \
+    swh-plugins \
+    tap-plugins \
+    invada-studio-plugins \
+    # Build tools
+    build-essential \
+    cmake \
+    pkg-config \
+    # ZeroMQ
+    libzmq3-dev \
+    # Python and pip
+    python3 \
+    python3-pip \
+    python3-venv \
+    # Network tools for testing
+    curl \
+    netcat-openbsd \
+    # Process management
+    supervisor \
+    # Cleanup
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create marlise user
+RUN useradd -m -s /bin/bash marlise && \
+    usermod -a -G audio marlise
+
+# Set up Python environment
+RUN python3 -m pip install --upgrade pip
+COPY tests/docker/requirements-test.txt /tmp/
+RUN pip3 install -r /tmp/requirements-test.txt
+
+# Create directories
+RUN mkdir -p /opt/marlise/{audio-engine,session-manager,client-interface} \
+    /var/log/marlise \
+    /tmp/jack-dummy \
+    && chown -R marlise:marlise /opt/marlise /var/log/marlise /tmp/jack-dummy
+
+# Copy test LV2 plugins list (for verification)
+COPY tests/docker/test-plugins.txt /opt/marlise/test-plugins.txt
+
+# Copy JACK dummy configuration
+COPY tests/docker/jack-dummy.conf /etc/jack-dummy.conf
+
+# Copy supervisor configuration
+COPY tests/docker/supervisord-test.conf /etc/supervisor/conf.d/marlise-test.conf
+
+# Set up JACK dummy backend script
+COPY tests/docker/start-jack-dummy.sh /usr/local/bin/start-jack-dummy.sh
+RUN chmod +x /usr/local/bin/start-jack-dummy.sh
+
+# Copy Marlise components
+COPY audio-engine/ /opt/marlise/audio-engine/
+COPY session-manager/ /opt/marlise/session-manager/
+COPY client-interface/ /opt/marlise/client-interface/
+
+# Build mod-host and modhost-bridge
+WORKDIR /opt/marlise/audio-engine
+RUN cd mod-host && make && make install
+RUN cd modhost-bridge && mkdir -p build && cd build && cmake .. && make
+
+# Install Python dependencies for session manager
+WORKDIR /opt/marlise/session-manager
+RUN pip3 install -r requirements.txt
+
+# Install Python dependencies for client interface
+WORKDIR /opt/marlise/client-interface/web_api/api
+RUN pip3 install -r requirements.txt
+
+# Set permissions
+RUN chown -R marlise:marlise /opt/marlise
+
+# Switch to marlise user
+USER marlise
+WORKDIR /opt/marlise
+
+# Expose ports for testing
+EXPOSE 5555 5556 6000 5718 6718 7718 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Default command
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/marlise-test.conf"]

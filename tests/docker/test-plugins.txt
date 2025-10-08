@@ -1,0 +1,26 @@
+# Known test LV2 plugins available in the test environment
+# These plugins are guaranteed to be available for testing
+
+# Calf plugins
+http://calf.sourceforge.net/plugins/Reverb
+http://calf.sourceforge.net/plugins/Delay
+http://calf.sourceforge.net/plugins/Compressor
+http://calf.sourceforge.net/plugins/Filter
+http://calf.sourceforge.net/plugins/Equalizer5Band
+http://calf.sourceforge.net/plugins/Flanger
+
+# SWH plugins  
+http://plugin.org.uk/swh-plugins/amp
+http://plugin.org.uk/swh-plugins/lowpass_iir
+http://plugin.org.uk/swh-plugins/highpass_iir
+http://plugin.org.uk/swh-plugins/bandpass_iir
+http://plugin.org.uk/swh-plugins/delay_5s
+
+# TAP plugins
+http://moddevices.com/plugins/tap/reverb
+http://moddevices.com/plugins/tap/chorus
+http://moddevices.com/plugins/tap/eq
+
+# Simple test plugins (usually available)
+http://lv2plug.in/plugins/eg-amp
+http://lv2plug.in/plugins/eg-fifths
