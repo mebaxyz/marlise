@@ -8,6 +8,12 @@ from ..models import (
     AuthTokenRequest, AuthTokenResponse
 )
 
+from ..main import zmq_client
+import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 

@@ -274,761 +274,221 @@ class ZMQHandlers:
             logger.error("Failed to setup system I/O: %s", e)
             return {"success": False, "error": str(e)}
 
-    # Connection management handlers
-    @zmq_handler("create_connection")
-    async def handle_create_connection(self, **kwargs) -> Dict[str, Any]:
-        """Create connection"""
+    @zmq_handler("get_pedalboard_list")
+    async def handle_get_pedalboard_list(self, **_kwargs) -> Dict[str, Any]:
+        """Get list of all available pedalboards"""
         try:
-            source = kwargs.get("source")
-            target = kwargs.get("target")
-
-            if not source or not target:
-                return {"success": False, "error": "Missing 'source' or 'target' parameter"}
-
-            await self.session_manager.create_connection(source, target)
-            return {"success": True}
+            # This would need to be implemented via pedalboard_manager
+            return {"success": False, "error": "Get pedalboard list not implemented"}
         except Exception as e:
-            logger.error("Failed to create connection: %s", e)
+            logger.error("Failed to get pedalboard list: %s", e)
             return {"success": False, "error": str(e)}
 
-    @zmq_handler("remove_connection")
-    async def handle_remove_connection(self, **kwargs) -> Dict[str, Any]:
-        """Remove connection"""
+    @zmq_handler("save_current_pedalboard")
+    async def handle_save_current_pedalboard(self, **kwargs) -> Dict[str, Any]:
+        """Save current pedalboard state"""
         try:
-            source = kwargs.get("source")
-            target = kwargs.get("target")
+            title = kwargs.get("title")
+            as_new = kwargs.get("as_new", 0)
 
-            if not source or not target:
-                return {"success": False, "error": "Missing 'source' or 'target' parameter"}
+            if not title:
+                return {"success": False, "error": "Missing 'title' parameter"}
 
-            await self.session_manager.remove_connection(source, target)
-            return {"success": True}
+            # This would need to be implemented via pedalboard_manager
+            return {"success": False, "error": "Save current pedalboard not implemented"}
         except Exception as e:
-            logger.error("Failed to remove connection: %s", e)
+            logger.error("Failed to save current pedalboard: %s", e)
             return {"success": False, "error": str(e)}
 
-    # Snapshot management handlers
-    @zmq_handler("create_snapshot")
-    async def handle_create_snapshot(self, **kwargs) -> Dict[str, Any]:
-        """Create snapshot"""
+    @zmq_handler("pack_pedalboard_bundle")
+    async def handle_pack_pedalboard_bundle(self, **kwargs) -> Dict[str, Any]:
+        """Pack pedalboard as compressed bundle"""
         try:
+            bundlepath = kwargs.get("bundlepath")
+            if not bundlepath:
+                return {"success": False, "error": "Missing 'bundlepath' parameter"}
+
+            # This would need to be implemented via file_manager
+            return {"success": False, "error": "Pack pedalboard bundle not implemented"}
+        except Exception as e:
+            logger.error("Failed to pack pedalboard bundle: %s", e)
+            return {"success": False, "error": str(e)}
+
+    @zmq_handler("load_pedalboard_bundle")
+    async def handle_load_pedalboard_bundle(self, **kwargs) -> Dict[str, Any]:
+        """Load pedalboard from bundle path"""
+        try:
+            bundlepath = kwargs.get("bundlepath")
+            is_default = kwargs.get("is_default", "0")
+
+            if not bundlepath:
+                return {"success": False, "error": "Missing 'bundlepath' parameter"}
+
+            # This would need to be implemented via pedalboard_manager
+            return {"success": False, "error": "Load pedalboard bundle not implemented"}
+        except Exception as e:
+            logger.error("Failed to load pedalboard bundle: %s", e)
+            return {"success": False, "error": str(e)}
+
+    @zmq_handler("load_pedalboard_web")
+    async def handle_load_pedalboard_web(self, **kwargs) -> Dict[str, Any]:
+        """Load pedalboard from uploaded file"""
+        try:
+            file_data = kwargs.get("file_data")
+            filename = kwargs.get("filename")
+
+            if not file_data or not filename:
+                return {"success": False, "error": "Missing file data or filename"}
+
+            # This would need to be implemented via file_manager and pedalboard_manager
+            return {"success": False, "error": "Load pedalboard web not implemented"}
+        except Exception as e:
+            logger.error("Failed to load pedalboard web: %s", e)
+            return {"success": False, "error": str(e)}
+
+    @zmq_handler("factory_copy_pedalboard")
+    async def handle_factory_copy_pedalboard(self, **kwargs) -> Dict[str, Any]:
+        """Create user copy of factory pedalboard"""
+        try:
+            bundlepath = kwargs.get("bundlepath")
+            title = kwargs.get("title")
+
+            if not bundlepath or not title:
+                return {"success": False, "error": "Missing 'bundlepath' or 'title' parameter"}
+
+            # This would need to be implemented via pedalboard_manager
+            return {"success": False, "error": "Factory copy pedalboard not implemented"}
+        except Exception as e:
+            logger.error("Failed to factory copy pedalboard: %s", e)
+            return {"success": False, "error": str(e)}
+
+    @zmq_handler("get_pedalboard_info")
+    async def handle_get_pedalboard_info(self, **kwargs) -> Dict[str, Any]:
+        """Get pedalboard information without loading"""
+        try:
+            bundlepath = kwargs.get("bundlepath")
+            if not bundlepath:
+                return {"success": False, "error": "Missing 'bundlepath' parameter"}
+
+            # This would need to be implemented via pedalboard_manager
+            return {"success": False, "error": "Get pedalboard info not implemented"}
+        except Exception as e:
+            logger.error("Failed to get pedalboard info: %s", e)
+            return {"success": False, "error": str(e)}
+
+    @zmq_handler("remove_pedalboard")
+    async def handle_remove_pedalboard(self, **kwargs) -> Dict[str, Any]:
+        """Remove/delete pedalboard"""
+        try:
+            bundlepath = kwargs.get("bundlepath")
+            if not bundlepath:
+                return {"success": False, "error": "Missing 'bundlepath' parameter"}
+
+            # This would need to be implemented via pedalboard_manager
+            return {"success": False, "error": "Remove pedalboard not implemented"}
+        except Exception as e:
+            logger.error("Failed to remove pedalboard: %s", e)
+            return {"success": False, "error": str(e)}
+
+    @zmq_handler("get_pedalboard_image")
+    async def handle_get_pedalboard_image(self, **kwargs) -> Dict[str, Any]:
+        """Get pedalboard screenshot or thumbnail image"""
+        try:
+            bundlepath = kwargs.get("bundlepath")
+            image_type = kwargs.get("image_type", "screenshot")  # screenshot or thumbnail
+
+            if not bundlepath:
+                return {"success": False, "error": "Missing 'bundlepath' parameter"}
+
+            # This would need to be implemented via file_manager
+            return {"success": False, "error": "Get pedalboard image not implemented"}
+        except Exception as e:
+            logger.error("Failed to get pedalboard image: %s", e)
+            return {"success": False, "error": str(e)}
+
+    @zmq_handler("generate_pedalboard_image")
+    async def handle_generate_pedalboard_image(self, **kwargs) -> Dict[str, Any]:
+        """Generate pedalboard screenshot"""
+        try:
+            bundlepath = kwargs.get("bundlepath")
+            if not bundlepath:
+                return {"success": False, "error": "Missing 'bundlepath' parameter"}
+
+            # This would need to be implemented via screenshot_manager
+            return {"success": False, "error": "Generate pedalboard image not implemented"}
+        except Exception as e:
+            logger.error("Failed to generate pedalboard image: %s", e)
+            return {"success": False, "error": str(e)}
+
+    @zmq_handler("wait_pedalboard_image")
+    async def handle_wait_pedalboard_image(self, **kwargs) -> Dict[str, Any]:
+        """Wait for pedalboard screenshot generation"""
+        try:
+            bundlepath = kwargs.get("bundlepath")
+            if not bundlepath:
+                return {"success": False, "error": "Missing 'bundlepath' parameter"}
+
+            # This would need to be implemented via screenshot_manager
+            return {"success": False, "error": "Wait pedalboard image not implemented"}
+        except Exception as e:
+            logger.error("Failed to wait pedalboard image: %s", e)
+            return {"success": False, "error": str(e)}
+
+    @zmq_handler("check_pedalboard_image")
+    async def handle_check_pedalboard_image(self, **kwargs) -> Dict[str, Any]:
+        """Check pedalboard screenshot generation status"""
+        try:
+            bundlepath = kwargs.get("bundlepath")
+            if not bundlepath:
+                return {"success": False, "error": "Missing 'bundlepath' parameter"}
+
+            # This would need to be implemented via screenshot_manager
+            return {"success": False, "error": "Check pedalboard image not implemented"}
+        except Exception as e:
+            logger.error("Failed to check pedalboard image: %s", e)
+            return {"success": False, "error": str(e)}
+
+    @zmq_handler("add_cv_addressing_port")
+    async def handle_add_cv_addressing_port(self, **kwargs) -> Dict[str, Any]:
+        """Add CV addressing plugin port"""
+        try:
+            uri = kwargs.get("uri")
             name = kwargs.get("name")
-            if not name:
-                return {"success": False, "error": "Missing 'name' parameter"}
 
-            snapshot = await self.session_manager.create_snapshot(name)
-            return {"success": True, "snapshot": snapshot}
+            if not uri or not name:
+                return {"success": False, "error": "Missing 'uri' or 'name' parameter"}
+
+            # This would need to be implemented via cv_addressing_manager
+            return {"success": False, "error": "Add CV addressing port not implemented"}
         except Exception as e:
-            logger.error("Failed to create snapshot: %s", e)
+            logger.error("Failed to add CV addressing port: %s", e)
             return {"success": False, "error": str(e)}
 
-    @zmq_handler("apply_snapshot")
-    async def handle_apply_snapshot(self, **kwargs) -> Dict[str, Any]:
-        """Apply snapshot"""
-        try:
-            name = kwargs.get("name")
-            if not name:
-                return {"success": False, "error": "Missing 'name' parameter"}
-
-            await self.session_manager.apply_snapshot(name)
-            return {"success": True}
-        except Exception as e:
-            logger.error("Failed to apply snapshot: %s", e)
-            return {"success": False, "error": str(e)}
-
-    # Utility handlers
-    @zmq_handler("health_check")
-    async def handle_health_check(self, **_kwargs) -> Dict[str, Any]:
-        """Health check"""
-        try:
-            # Check modhost bridge
-            result = await self._call_bridge("health_check")
-            modhost_status = result if (result and result.get("success", False)) else {"status": "error"}
-
-            # Check plugin manager
-            plugin_status = self.plugin_manager.get_status()
-
-            # Check session manager
-            session_status = self.session_manager.get_status()
-
-            return {
-                "success": True,
-                "status": "healthy",
-                "components": {
-                    "modhost_bridge": modhost_status,
-                    "plugin_manager": plugin_status,
-                    "session_manager": session_status,
-                },
-            }
-        except Exception as e:
-            logger.error("Health check failed: %s", e)
-            return {"success": False, "error": str(e)}
-    @zmq_handler("ping")
-    async def handle_echo(self, **kwargs) -> Dict[str, Any]:
-        """Echo message (registered on the 'ping' event via @zmq_handler('ping')).
-        """
-        return {"echo": kwargs.get("message", "")}
-
-    # Phase 1 Critical mod-host command handlers
-    @zmq_handler("activate_plugin")
-    async def handle_activate_plugin(self, **kwargs) -> Dict[str, Any]:
-        """Activate plugin"""
-        try:
-            instance_id = kwargs.get("instance_id")
-            if instance_id is None:
-                return {"success": False, "error": "Missing 'instance_id' parameter"}
-
-            result = await self._call_bridge("activate_plugin", instance_id=instance_id)
-            return self._success_or_error(result, err_msg="Failed to activate plugin")
-        except Exception as e:
-            logger.error("Failed to activate plugin: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("preload_plugin")
-    async def handle_preload_plugin(self, **kwargs) -> Dict[str, Any]:
-        """Preload plugin"""
+    @zmq_handler("remove_cv_addressing_port")
+    async def handle_remove_cv_addressing_port(self, **kwargs) -> Dict[str, Any]:
+        """Remove CV addressing plugin port"""
         try:
             uri = kwargs.get("uri")
             if not uri:
                 return {"success": False, "error": "Missing 'uri' parameter"}
 
-            result = await self._call_bridge("preload_plugin", uri=uri)
-            return self._success_or_error(result, err_msg="Failed to preload plugin")
+            # This would need to be implemented via cv_addressing_manager
+            return {"success": False, "error": "Remove CV addressing port not implemented"}
         except Exception as e:
-            logger.error("Failed to preload plugin: %s", e)
+            logger.error("Failed to remove CV addressing port: %s", e)
             return {"success": False, "error": str(e)}
 
-    @zmq_handler("bypass_plugin")
-    async def handle_bypass_plugin(self, **kwargs) -> Dict[str, Any]:
-        """Bypass plugin"""
+    @zmq_handler("set_transport_sync_mode")
+    async def handle_set_transport_sync_mode(self, **kwargs) -> Dict[str, Any]:
+        """Set transport synchronization mode"""
         try:
-            instance_id = kwargs.get("instance_id")
-            bypass = kwargs.get("bypass", True)
+            mode = kwargs.get("mode")
+            if not mode:
+                return {"success": False, "error": "Missing 'mode' parameter"}
 
-            if instance_id is None:
-                return {"success": False, "error": "Missing 'instance_id' parameter"}
-
-            result = await self._call_bridge("bypass_plugin", instance_id=instance_id, bypass=bypass)
-            return self._success_or_error(result, err_msg="Failed to bypass plugin")
+            # This would need to be implemented via transport_manager
+            return {"success": False, "error": "Set transport sync mode not implemented"}
         except Exception as e:
-            logger.error("Failed to bypass plugin: %s", e)
+            logger.error("Failed to set transport sync mode: %s", e)
             return {"success": False, "error": str(e)}
 
-    @zmq_handler("disconnect_all_ports")
-    async def handle_disconnect_all_ports(self, **kwargs) -> Dict[str, Any]:
-        """Disconnect all ports"""
-        try:
-            instance_id = kwargs.get("instance_id")
-            if instance_id is None:
-                return {"success": False, "error": "Missing 'instance_id' parameter"}
-
-            result = await self._call_bridge("disconnect_all_ports", instance_id=instance_id)
-            return self._success_or_error(result, err_msg="Failed to disconnect all ports")
-        except Exception as e:
-            logger.error("Failed to disconnect all ports: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("get_cpu_load")
-    async def handle_get_cpu_load(self, **_kwargs) -> Dict[str, Any]:
-        """Get CPU load"""
-        try:
-            result = await self._call_bridge("get_cpu_load")
-            if result and result.get("success", False):
-                return {"success": True, "cpu_load": result.get("cpu_load")}
-            return {"success": False, "error": "Failed to get CPU load"}
-        except Exception as e:
-            logger.error("Failed to get CPU load: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("get_max_cpu_load")
-    async def handle_get_max_cpu_load(self, **_kwargs) -> Dict[str, Any]:
-        """Get max CPU load"""
-        try:
-            result = await self._call_bridge("get_max_cpu_load")
-            if result and result.get("success", False):
-                return {"success": True, "max_cpu_load": result.get("max_cpu_load")}
-            return {"success": False, "error": "Failed to get max CPU load"}
-        except Exception as e:
-            logger.error("Failed to get max CPU load: %s", e)
-            return {"success": False, "error": str(e)}
-
-    # Phase 2 Preset Management handlers
-    @zmq_handler("load_preset")
-    async def handle_load_preset(self, **kwargs) -> Dict[str, Any]:
-        """Load preset"""
-        try:
-            instance_id = kwargs.get("instance_id")
-            uri = kwargs.get("uri")
-            label = kwargs.get("label")
-
-            if instance_id is None or not uri or not label:
-                return {"success": False, "error": "Missing required parameters"}
-
-            result = await self._call_bridge("load_preset", instance_id=instance_id, uri=uri, label=label)
-            return self._success_or_error(result, err_msg="Failed to load preset")
-        except Exception as e:
-            logger.error("Failed to load preset: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("save_preset")
-    async def handle_save_preset(self, **kwargs) -> Dict[str, Any]:
-        """Save preset"""
-        try:
-            instance_id = kwargs.get("instance_id")
-            uri = kwargs.get("uri")
-            label = kwargs.get("label")
-            directory = kwargs.get("directory")
-
-            if instance_id is None or not uri or not label or not directory:
-                return {"success": False, "error": "Missing required parameters"}
-
-            result = await self._call_bridge("save_preset", instance_id=instance_id, uri=uri, label=label, directory=directory)
-            return self._success_or_error(result, err_msg="Failed to save preset")
-        except Exception as e:
-            logger.error("Failed to save preset: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("show_presets")
-    async def handle_show_presets(self, **kwargs) -> Dict[str, Any]:
-        """Show presets"""
-        try:
-            uri = kwargs.get("uri")
-            if not uri:
-                return {"success": False, "error": "Missing 'uri' parameter"}
-
-            result = await self._call_bridge("show_presets", uri=uri)
-            if result and result.get("success", False):
-                return {"success": True, "presets": result.get("presets", [])}
-            return {"success": False, "error": "Failed to show presets"}
-        except Exception as e:
-            logger.error("Failed to show presets: %s", e)
-            return {"success": False, "error": str(e)}
-
-    # Phase 3 Monitoring handlers
-    @zmq_handler("monitor_parameter")
-    async def handle_monitor_parameter(self, **kwargs) -> Dict[str, Any]:
-        """Monitor parameter"""
-        try:
-            instance_id = kwargs.get("instance_id")
-            port = kwargs.get("port")
-            monitor = kwargs.get("monitor", True)
-
-            if instance_id is None or port is None:
-                return {"success": False, "error": "Missing required parameters"}
-
-            result = await self._call_bridge("monitor_parameter", instance_id=instance_id, port=port, monitor=monitor)
-            return self._success_or_error(result, err_msg="Failed to monitor parameter")
-        except Exception as e:
-            logger.error("Failed to monitor parameter: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("monitor_output")
-    async def handle_monitor_output(self, **kwargs) -> Dict[str, Any]:
-        """Monitor output"""
-        try:
-            instance_id = kwargs.get("instance_id")
-            port = kwargs.get("port")
-            monitor = kwargs.get("monitor", True)
-
-            if instance_id is None or port is None:
-                return {"success": False, "error": "Missing required parameters"}
-
-            result = await self._call_bridge("monitor_output", instance_id=instance_id, port=port, monitor=monitor)
-            return self._success_or_error(result, err_msg="Failed to monitor output")
-        except Exception as e:
-            logger.error("Failed to monitor output: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("get_audio_levels")
-    async def handle_get_audio_levels(self, **_kwargs) -> Dict[str, Any]:
-        """Get audio levels"""
-        try:
-            result = await self._call_bridge("get_audio_levels")
-            if result and result.get("success", False):
-                return {"success": True, "levels": result.get("levels", {})}
-            return {"success": False, "error": "Failed to get audio levels"}
-        except Exception as e:
-            logger.error("Failed to get audio levels: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("flush_parameters")
-    async def handle_flush_parameters(self, **_kwargs) -> Dict[str, Any]:
-        """Flush parameters"""
-        try:
-            result = await self._call_bridge("flush_parameters")
-            return self._success_or_error(result, err_msg="Failed to flush parameters")
-        except Exception as e:
-            logger.error("Failed to flush parameters: %s", e)
-            return {"success": False, "error": str(e)}
-
-    # Phase 4 Patch Management handlers
-    @zmq_handler("set_patch_property")
-    async def handle_set_patch_property(self, **kwargs) -> Dict[str, Any]:
-        """Set patch property"""
-        try:
-            instance_id = kwargs.get("instance_id")
-            property_name = kwargs.get("property")
-            value = kwargs.get("value")
-
-            if instance_id is None or not property_name or value is None:
-                return {"success": False, "error": "Missing required parameters"}
-
-            result = await self._call_bridge("set_patch_property", instance_id=instance_id, property_name=property_name, value=value)
-            return self._success_or_error(result, err_msg="Failed to set patch property")
-        except Exception as e:
-            logger.error("Failed to set patch property: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("get_patch_property")
-    async def handle_get_patch_property(self, **kwargs) -> Dict[str, Any]:
-        """Get patch property"""
-        try:
-            instance_id = kwargs.get("instance_id")
-            property_name = kwargs.get("property")
-
-            if instance_id is None or not property_name:
-                return {"success": False, "error": "Missing required parameters"}
-
-            result = await self._call_bridge("get_patch_property", instance_id=instance_id, property_name=property_name)
-            if result and result.get("success", False):
-                return {"success": True, "value": result.get("value")}
-            return {"success": False, "error": "Failed to get patch property"}
-        except Exception as e:
-            logger.error("Failed to get patch property: %s", e)
-            return {"success": False, "error": str(e)}
-
-    # Phase 5 Bundle Management handlers
-    # Add bundle handlers here if needed
-
-    # Audio System Management handlers
-    @zmq_handler("init_jack")
-    async def handle_init_jack(self, **_kwargs) -> Dict[str, Any]:
-        """Initialize JACK audio system"""
-        try:
-            result = await self._call_bridge("init_jack")
-            return self._success_or_error(result, err_msg="Failed to initialize JACK")
-        except Exception as e:
-            logger.error("Failed to initialize JACK: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("close_jack")
-    async def handle_close_jack(self, **_kwargs) -> Dict[str, Any]:
-        """Close JACK audio system"""
-        try:
-            result = await self._call_bridge("close_jack")
-            return self._success_or_error(result, err_msg="Failed to close JACK")
-        except Exception as e:
-            logger.error("Failed to close JACK: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("get_jack_data")
-    async def handle_get_jack_data(self, **kwargs) -> Dict[str, Any]:
-        """Get JACK audio system data"""
-        try:
-            with_transport = kwargs.get("with_transport", False)
-            result = await self._call_bridge("get_jack_data", with_transport=with_transport)
-            if result and result.get("success", False):
-                return {
-                    "success": True,
-                    "cpu_load": result.get("cpu_load"),
-                    "xruns": result.get("xruns"),
-                    "rolling": result.get("rolling"),
-                    "bpb": result.get("bpb"),
-                    "bpm": result.get("bpm"),
-                }
-            return {"success": False, "error": "Failed to get JACK data"}
-        except Exception as e:
-            logger.error("Failed to get JACK data: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("get_jack_buffer_size")
-    async def handle_get_jack_buffer_size(self, **_kwargs) -> Dict[str, Any]:
-        """Get JACK buffer size"""
-        try:
-            result = await self._call_bridge("get_jack_buffer_size")
-            return self._success_or_error(result, ok_map={"buffer_size": "buffer_size"}, err_msg="Failed to get buffer size")
-        except Exception as e:
-            logger.error("Failed to get JACK buffer size: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("set_jack_buffer_size")
-    async def handle_set_jack_buffer_size(self, **kwargs) -> Dict[str, Any]:
-        """Set JACK buffer size"""
-        try:
-            size = kwargs.get("size")
-            if size is None:
-                return {"success": False, "error": "Missing 'size' parameter"}
-            result = await self._call_bridge("set_jack_buffer_size", size=size)
-            return self._success_or_error(result, ok_map={"buffer_size": "buffer_size"}, err_msg="Failed to set buffer size")
-        except Exception as e:
-            logger.error("Failed to set JACK buffer size: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("get_jack_sample_rate")
-    async def handle_get_jack_sample_rate(self, **_kwargs) -> Dict[str, Any]:
-        """Get JACK sample rate"""
-        try:
-            result = await self._call_bridge("get_jack_sample_rate")
-            return self._success_or_error(result, ok_map={"sample_rate": "sample_rate"}, err_msg="Failed to get sample rate")
-        except Exception as e:
-            logger.error("Failed to get JACK sample rate: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("get_jack_port_alias")
-    async def handle_get_jack_port_alias(self, **kwargs) -> Dict[str, Any]:
-        """Get JACK port alias"""
-        try:
-            port_name = kwargs.get("port_name")
-            if not port_name:
-                return {"success": False, "error": "Missing 'port_name' parameter"}
-
-            result = await self._call_bridge("get_jack_port_alias", port_name=port_name)
-            if result and result.get("success", False):
-                return {"success": True, "alias": result.get("alias")}
-            return {"success": False, "error": "Failed to get port alias"}
-        except Exception as e:
-            logger.error("Failed to get JACK port alias: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("get_jack_hardware_ports")
-    async def handle_get_jack_hardware_ports(self, **kwargs) -> Dict[str, Any]:
-        """Get JACK hardware ports"""
-        try:
-            is_audio = kwargs.get("is_audio", True)
-            is_output = kwargs.get("is_output", False)
-
-            result = await self._call_bridge("get_jack_hardware_ports", is_audio=is_audio, is_output=is_output)
-            if result and result.get("success", False):
-                return {"success": True, "ports": result.get("ports", [])}
-            return {"success": False, "error": "Failed to get hardware ports"}
-        except Exception as e:
-            logger.error("Failed to get JACK hardware ports: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("has_midi_beat_clock_sender_port")
-    async def handle_has_midi_beat_clock_sender_port(self, **_kwargs) -> Dict[str, Any]:
-        """Check if MIDI beat clock sender port exists"""
-        try:
-            result = await self._call_bridge("has_midi_beat_clock_sender_port")
-            if result and result.get("success", False):
-                return {"success": True, "has_port": result.get("has_port", False)}
-            return {"success": False, "error": "Failed to check MIDI beat clock sender port"}
-        except Exception as e:
-            logger.error("Failed to check MIDI beat clock sender port: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("has_serial_midi_input_port")
-    async def handle_has_serial_midi_input_port(self, **_kwargs) -> Dict[str, Any]:
-        """Check if serial MIDI input port exists"""
-        try:
-            result = await self._call_bridge("has_serial_midi_input_port")
-            if result and result.get("success", False):
-                return {"success": True, "has_port": result.get("has_port", False)}
-            return {"success": False, "error": "Failed to check serial MIDI input port"}
-        except Exception as e:
-            logger.error("Failed to check serial MIDI input port: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("has_serial_midi_output_port")
-    async def handle_has_serial_midi_output_port(self, **_kwargs) -> Dict[str, Any]:
-        """Check if serial MIDI output port exists"""
-        try:
-            result = await self._call_bridge("has_serial_midi_output_port")
-            if result and result.get("success", False):
-                return {"success": True, "has_port": result.get("has_port", False)}
-            return {"success": False, "error": "Failed to check serial MIDI output port"}
-        except Exception as e:
-            logger.error("Failed to check serial MIDI output port: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("has_midi_merger_output_port")
-    async def handle_has_midi_merger_output_port(self, **_kwargs) -> Dict[str, Any]:
-        """Check if MIDI merger output port exists"""
-        try:
-            result = await self._call_bridge("has_midi_merger_output_port")
-            if result and result.get("success", False):
-                return {"success": True, "has_port": result.get("has_port", False)}
-            return {"success": False, "error": "Failed to check MIDI merger output port"}
-        except Exception as e:
-            logger.error("Failed to check MIDI merger output port: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("has_midi_broadcaster_input_port")
-    async def handle_has_midi_broadcaster_input_port(self, **_kwargs) -> Dict[str, Any]:
-        """Check if MIDI broadcaster input port exists"""
-        try:
-            result = await self._call_bridge("has_midi_broadcaster_input_port")
-            if result and result.get("success", False):
-                return {"success": True, "has_port": result.get("has_port", False)}
-            return {"success": False, "error": "Failed to check MIDI broadcaster input port"}
-        except Exception as e:
-            logger.error("Failed to check MIDI broadcaster input port: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("has_duox_split_spdif")
-    async def handle_has_duox_split_spdif(self, **_kwargs) -> Dict[str, Any]:
-        """Check if DuoX S/PDIF split feature exists"""
-        try:
-            result = await self._call_bridge("has_duox_split_spdif")
-            if result and result.get("success", False):
-                return {"success": True, "has_feature": result.get("has_feature", False)}
-            return {"success": False, "error": "Failed to check DuoX S/PDIF split feature"}
-        except Exception as e:
-            logger.error("Failed to check DuoX S/PDIF split feature: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("connect_jack_ports")
-    async def handle_connect_jack_ports(self, **kwargs) -> Dict[str, Any]:
-        """Connect JACK ports"""
-        try:
-            port1 = kwargs.get("port1")
-            port2 = kwargs.get("port2")
-
-            if not port1 or not port2:
-                return {"success": False, "error": "Missing 'port1' or 'port2' parameter"}
-            result = await self._call_bridge("connect_jack_ports", port1=port1, port2=port2)
-            return self._success_or_error(result, err_msg="Failed to connect JACK ports")
-        except Exception as e:
-            logger.error("Failed to connect JACK ports: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("connect_jack_midi_output_ports")
-    async def handle_connect_jack_midi_output_ports(self, **kwargs) -> Dict[str, Any]:
-        """Connect JACK MIDI output ports"""
-        try:
-            port = kwargs.get("port")
-            if not port:
-                return {"success": False, "error": "Missing 'port' parameter"}
-
-            result = await self._call_bridge("connect_jack_midi_output_ports", port=port)
-            return self._success_or_error(result, err_msg="Failed to connect JACK MIDI output ports")
-        except Exception as e:
-            logger.error("Failed to connect JACK MIDI output ports: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("disconnect_jack_ports")
-    async def handle_disconnect_jack_ports(self, **kwargs) -> Dict[str, Any]:
-        """Disconnect JACK ports"""
-        try:
-            port1 = kwargs.get("port1")
-            port2 = kwargs.get("port2")
-
-            if not port1 or not port2:
-                return {"success": False, "error": "Missing 'port1' or 'port2' parameter"}
-            result = await self._call_bridge("disconnect_jack_ports", port1=port1, port2=port2)
-            return self._success_or_error(result, err_msg="Failed to disconnect JACK ports")
-        except Exception as e:
-            logger.error("Failed to disconnect JACK ports: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("disconnect_all_jack_ports")
-    async def handle_disconnect_all_jack_ports(self, **kwargs) -> Dict[str, Any]:
-        """Disconnect all JACK ports for a given port"""
-        try:
-            port = kwargs.get("port")
-            if not port:
-                return {"success": False, "error": "Missing 'port' parameter"}
-            result = await self._call_bridge("disconnect_all_jack_ports", port=port)
-            return self._success_or_error(result, err_msg="Failed to disconnect all JACK ports")
-        except Exception as e:
-            logger.error("Failed to disconnect all JACK ports: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("reset_xruns")
-    async def handle_reset_xruns(self, **_kwargs) -> Dict[str, Any]:
-        """Reset JACK xruns counter"""
-        try:
-            result = await self._call_bridge("reset_xruns")
-            return self._success_or_error(result, err_msg="Failed to reset xruns")
-        except Exception as e:
-            logger.error("Failed to reset xruns: %s", e)
-            return {"success": False, "error": str(e)}
-
-    # Missing plugin management methods from MESSAGE_SCHEMAS.md
-
-    @zmq_handler("clear_all")
-    async def handle_clear_all(self, **_kwargs) -> Dict[str, Any]:
-        """Clear all plugins"""
-        try:
-            result = await self._call_bridge("clear_all")
-            return self._success_or_error(result, err_msg="Failed to clear all plugins")
-        except Exception as e:
-            logger.error("Failed to clear all plugins: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("search_plugins")
-    async def handle_search_plugins(self, **kwargs) -> Dict[str, Any]:
-        """Search plugins with criteria"""
-        try:
-            query = kwargs.get("query", "")
-            criteria = kwargs.get("criteria", {})
-            result = await self._call_bridge("search_plugins", query=query, criteria=criteria)
-            if result and result.get("success", False):
-                return {"success": True, "plugins": result.get("plugins", [])}
-            return {"success": False, "error": "Failed to search plugins"}
-        except Exception as e:
-            logger.error("Failed to search plugins: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("get_plugin_presets")
-    async def handle_get_plugin_presets(self, **kwargs) -> Dict[str, Any]:
-        """Get presets for a plugin"""
-        try:
-            plugin_uri = kwargs.get("plugin_uri", "")
-            if not plugin_uri:
-                return {"success": False, "error": "Missing plugin_uri parameter"}
-            
-            result = await self._call_bridge("get_plugin_presets", plugin_uri=plugin_uri)
-            if result and result.get("success", False):
-                return {"success": True, "presets": result.get("presets", [])}
-            return {"success": False, "error": "Failed to get plugin presets"}
-        except Exception as e:
-            logger.error("Failed to get plugin presets: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("validate_preset")
-    async def handle_validate_preset(self, **kwargs) -> Dict[str, Any]:
-        """Validate a preset"""
-        try:
-            plugin_uri = kwargs.get("plugin_uri", "")
-            preset_uri = kwargs.get("preset_uri", "")
-            if not plugin_uri or not preset_uri:
-                return {"success": False, "error": "Missing plugin_uri or preset_uri parameter"}
-            
-            result = await self._call_bridge("validate_preset", plugin_uri=plugin_uri, preset_uri=preset_uri)
-            if result and result.get("success", False):
-                return {"success": True, "valid": result.get("valid", False)}
-            return {"success": False, "error": "Failed to validate preset"}
-        except Exception as e:
-            logger.error("Failed to validate preset: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("rescan_plugins")
-    async def handle_rescan_plugins(self, **_kwargs) -> Dict[str, Any]:
-        """Rescan plugins"""
-        try:
-            result = await self._call_bridge("rescan_plugins")
-            return self._success_or_error(result, err_msg="Failed to rescan plugins")
-        except Exception as e:
-            logger.error("Failed to rescan plugins: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("rescan_presets")
-    async def handle_rescan_presets(self, **kwargs) -> Dict[str, Any]:
-        """Rescan presets for a plugin"""
-        try:
-            plugin_uri = kwargs.get("plugin_uri", "")
-            result = await self._call_bridge("rescan_presets", plugin_uri=plugin_uri)
-            return self._success_or_error(result, err_msg="Failed to rescan presets")
-        except Exception as e:
-            logger.error("Failed to rescan presets: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("get_plugin_gui")
-    async def handle_get_plugin_gui(self, **kwargs) -> Dict[str, Any]:
-        """Get plugin GUI information"""
-        try:
-            plugin_uri = kwargs.get("plugin_uri", "")
-            if not plugin_uri:
-                return {"success": False, "error": "Missing plugin_uri parameter"}
-            
-            result = await self._call_bridge("get_plugin_gui", plugin_uri=plugin_uri)
-            if result and result.get("success", False):
-                return {"success": True, "gui": result.get("gui", {})}
-            return {"success": False, "error": "Failed to get plugin GUI"}
-        except Exception as e:
-            logger.error("Failed to get plugin GUI: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("get_plugin_gui_mini")
-    async def handle_get_plugin_gui_mini(self, **kwargs) -> Dict[str, Any]:
-        """Get plugin GUI mini information"""
-        try:
-            plugin_uri = kwargs.get("plugin_uri", "")
-            if not plugin_uri:
-                return {"success": False, "error": "Missing plugin_uri parameter"}
-            
-            result = await self._call_bridge("get_plugin_gui_mini", plugin_uri=plugin_uri)
-            if result and result.get("success", False):
-                return {"success": True, "gui_mini": result.get("gui_mini", {})}
-            return {"success": False, "error": "Failed to get plugin GUI mini"}
-        except Exception as e:
-            logger.error("Failed to get plugin GUI mini: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("get_plugin_essentials")
-    async def handle_get_plugin_essentials(self, **kwargs) -> Dict[str, Any]:
-        """Get plugin essentials"""
-        try:
-            plugin_uri = kwargs.get("plugin_uri", "")
-            if not plugin_uri:
-                return {"success": False, "error": "Missing plugin_uri parameter"}
-            
-            result = await self._call_bridge("get_plugin_essentials", plugin_uri=plugin_uri)
-            if result and result.get("success", False):
-                return {"success": True, "essentials": result.get("essentials", {})}
-            return {"success": False, "error": "Failed to get plugin essentials"}
-        except Exception as e:
-            logger.error("Failed to get plugin essentials: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("is_bundle_loaded")
-    async def handle_is_bundle_loaded(self, **kwargs) -> Dict[str, Any]:
-        """Check if bundle is loaded"""
-        try:
-            bundle_path = kwargs.get("bundle_path", "")
-            if not bundle_path:
-                return {"success": False, "error": "Missing bundle_path parameter"}
-            
-            result = await self._call_bridge("is_bundle_loaded", bundle_path=bundle_path)
-            if result and result.get("success", False):
-                return {"success": True, "loaded": result.get("loaded", False)}
-            return {"success": False, "error": "Failed to check bundle status"}
-        except Exception as e:
-            logger.error("Failed to check bundle status: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("add_bundle")
-    async def handle_add_bundle(self, **kwargs) -> Dict[str, Any]:
-        """Add a bundle"""
-        try:
-            bundle_path = kwargs.get("bundle_path", "")
-            if not bundle_path:
-                return {"success": False, "error": "Missing bundle_path parameter"}
-            
-            result = await self._call_bridge("add_bundle", bundle_path=bundle_path)
-            return self._success_or_error(result, err_msg="Failed to add bundle")
-        except Exception as e:
-            logger.error("Failed to add bundle: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("remove_bundle")
-    async def handle_remove_bundle(self, **kwargs) -> Dict[str, Any]:
-        """Remove a bundle"""
-        try:
-            bundle_path = kwargs.get("bundle_path", "")
-            resource_path = kwargs.get("resource_path", "")
-            if not bundle_path:
-                return {"success": False, "error": "Missing bundle_path parameter"}
-            
-            result = await self._call_bridge("remove_bundle", bundle_path=bundle_path, resource_path=resource_path)
-            return self._success_or_error(result, err_msg="Failed to remove bundle")
-        except Exception as e:
-            logger.error("Failed to remove bundle: %s", e)
-            return {"success": False, "error": str(e)}
-
-    @zmq_handler("list_bundle_plugins")
-    async def handle_list_bundle_plugins(self, **kwargs) -> Dict[str, Any]:
-        """List plugins in a bundle"""
-        try:
-            bundle_path = kwargs.get("bundle_path", "")
-            if not bundle_path:
-                return {"success": False, "error": "Missing bundle_path parameter"}
-            
-            result = await self._call_bridge("list_bundle_plugins", bundle_path=bundle_path)
-            if result and result.get("success", False):
-                return {"success": True, "plugins": result.get("plugins", [])}
-            return {"success": False, "error": "Failed to list bundle plugins"}
-        except Exception as e:
-            logger.error("Failed to list bundle plugins: %s", e)
-            return {"success": False, "error": str(e)}

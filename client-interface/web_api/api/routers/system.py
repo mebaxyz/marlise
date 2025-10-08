@@ -19,48 +19,46 @@ router = APIRouter(prefix="/system", tags=["system"])
 
 @router.get("/ping", response_model=PingResponse)
 async def ping_device():
-    """NOT IMPLEMENTED: Check HMI (Hardware Machine Interface) connection status and latency.
-
-    TODO: call session manager to test HMI serial communication and measure round-trip time.
-    """
-    # If ZMQ client is available, ask session manager for ping/HMI health
+    """Check HMI (Hardware Machine Interface) connection status and latency."""
     if zmq_client is None:
         logger.debug("zmq_client not available, returning default ping response")
         return PingResponse(ihm_online=False, ihm_time=0.0)
 
     try:
-        # The session manager method name is assumed to be 'ping_hmi'. This is
-        # a safe, best-effort call; adjust the RPC name if your session manager
-        # uses a different method.
         fut = zmq_client.call("session_manager", "ping_hmi")
-        # Wait with timeout to avoid hanging request
         resp = await asyncio.wait_for(fut, timeout=2.0)
 
-        # Expecting a dict-like response with keys 'ihm_online' and 'ihm_time'
-        if isinstance(resp, dict):
+        if isinstance(resp, dict) and resp.get("success"):
             return PingResponse(
                 ihm_online=bool(resp.get("ihm_online", False)),
                 ihm_time=float(resp.get("ihm_time", 0.0)),
             )
-        # Fallback
-        logger.warning("Unexpected ping_hmi response type: %s", type(resp))
-        return PingResponse(ihm_online=False, ihm_time=0.0)
+        else:
+            return PingResponse(ihm_online=False, ihm_time=0.0)
     except asyncio.TimeoutError:
         logger.warning("ping_hmi timed out")
         return PingResponse(ihm_online=False, ihm_time=0.0)
-    except Exception as exc:  # pragma: no cover - defensive
+    except Exception as exc:
         logger.exception("Error calling ping_hmi: %s", exc)
         return PingResponse(ihm_online=False, ihm_time=0.0)
 
 
 @router.get("/reset")
 async def reset_session():
-    """NOT IMPLEMENTED: Reset current session to empty pedalboard state.
+    """Reset current session to empty pedalboard state."""
+    if zmq_client is None:
+        return {"ok": False}
 
-    TODO: instruct session manager to clear plugins/connections and load default pedalboard.
-    """
-    # Call session manager to reset session
-    return {"ok": False}
+    try:
+        fut = zmq_client.call("session_manager", "reset_session")
+        resp = await asyncio.wait_for(fut, timeout=3.0)
+        return {"ok": isinstance(resp, dict) and resp.get("success", False)}
+    except asyncio.TimeoutError:
+        logger.warning("reset_session timed out")
+        return {"ok": False}
+    except Exception as exc:
+        logger.exception("Error calling reset_session: %s", exc)
+        return {"ok": False}
 
 
 @router.get("/truebypass/{channel}/{state}")
@@ -68,51 +66,83 @@ async def set_truebypass(
     channel: str = Path(..., description="Left or Right"),
     state: str = Path(..., description="true or false")
 ):
-    """NOT IMPLEMENTED: Control hardware true bypass relays for direct audio routing.
+    """Control hardware true bypass relays for direct audio routing."""
+    if zmq_client is None:
+        return {"ok": False}
 
-    TODO: call session manager to toggle truebypass and emit websocket event.
-    """
-    enabled = state.lower() == "true"
-    # Call session manager to set truebypass
-    return {"ok": False}
+    try:
+        enabled = state.lower() == "true"
+        fut = zmq_client.call("session_manager", "set_truebypass", channel=channel, state=enabled)
+        resp = await asyncio.wait_for(fut, timeout=3.0)
+        return {"ok": isinstance(resp, dict) and resp.get("success", False)}
+    except asyncio.TimeoutError:
+        logger.warning("set_truebypass timed out")
+        return {"ok": False}
+    except Exception as exc:
+        logger.exception("Error calling set_truebypass: %s", exc)
+        return {"ok": False}
 
 
 @router.post("/set_buffersize/{size}")
 async def set_buffer_size(
     size: int = Path(..., description="Buffer size: 128 or 256")
 ):
-    """NOT IMPLEMENTED: Change JACK audio buffer size for latency vs. stability tradeoff.
-
-    TODO: reconfigure JACK via session manager or host and return new buffer size.
-    """
-    if size not in [128, 256]:
+    """Change JACK audio buffer size for latency vs. stability tradeoff."""
+    if zmq_client is None:
         return BufferSizeResponse(ok=False, size=0)
-    
-    # Call session manager to set buffer size
-    return BufferSizeResponse(
-        ok=False,
-        size=size
-    )
+
+    try:
+        if size not in [128, 256]:
+            return BufferSizeResponse(ok=False, size=0)
+
+        fut = zmq_client.call("session_manager", "set_buffer_size", size=size)
+        resp = await asyncio.wait_for(fut, timeout=3.0)
+        if isinstance(resp, dict) and resp.get("success"):
+            return BufferSizeResponse(ok=True, size=size)
+        else:
+            return BufferSizeResponse(ok=False, size=0)
+    except asyncio.TimeoutError:
+        logger.warning("set_buffer_size timed out")
+        return BufferSizeResponse(ok=False, size=0)
+    except Exception as exc:
+        logger.exception("Error calling set_buffer_size: %s", exc)
+        return BufferSizeResponse(ok=False, size=0)
 
 
 @router.post("/reset_xruns")
 async def reset_xruns():
-    """NOT IMPLEMENTED: Reset JACK audio dropout (xrun) counter to zero.
+    """Reset JACK audio dropout (xrun) counter to zero."""
+    if zmq_client is None:
+        return {"ok": False}
 
-    TODO: call session manager to clear xrun stats and report back.
-    """
-    # Call session manager to reset xruns
-    return {"ok": False}
+    try:
+        fut = zmq_client.call("session_manager", "reset_xruns")
+        resp = await asyncio.wait_for(fut, timeout=3.0)
+        return {"ok": isinstance(resp, dict) and resp.get("success", False)}
+    except asyncio.TimeoutError:
+        logger.warning("reset_xruns timed out")
+        return {"ok": False}
+    except Exception as exc:
+        logger.exception("Error calling reset_xruns: %s", exc)
+        return {"ok": False}
 
 
 @router.post("/switch_cpu_freq")
 async def switch_cpu_frequency():
-    """NOT IMPLEMENTED: Toggle CPU frequency scaling between performance and powersave modes.
+    """Toggle CPU frequency scaling between performance and powersave modes."""
+    if zmq_client is None:
+        return {"ok": False}
 
-    TODO: call session manager to change OS CPU governor and verify state.
-    """
-    # Call session manager to switch CPU frequency
-    return {"ok": False}
+    try:
+        fut = zmq_client.call("session_manager", "switch_cpu_frequency")
+        resp = await asyncio.wait_for(fut, timeout=3.0)
+        return {"ok": isinstance(resp, dict) and resp.get("success", False)}
+    except asyncio.TimeoutError:
+        logger.warning("switch_cpu_frequency timed out")
+        return {"ok": False}
+    except Exception as exc:
+        logger.exception("Error calling switch_cpu_frequency: %s", exc)
+        return {"ok": False}
 
 
 # Configuration endpoints
@@ -121,21 +151,40 @@ async def set_config(
     key: str = Form(...),
     value: str = Form(...)
 ):
-    """NOT IMPLEMENTED: Save user interface configuration settings.
+    """Save user interface configuration settings."""
+    if zmq_client is None:
+        return {"ok": False}
 
-    TODO: persist UI config via session manager/preferences store.
-    """
-    # Call session manager to set config
-    return {"ok": False}
+    try:
+        fut = zmq_client.call("session_manager", "set_config", key=key, value=value)
+        resp = await asyncio.wait_for(fut, timeout=3.0)
+        return {"ok": isinstance(resp, dict) and resp.get("success", False)}
+    except asyncio.TimeoutError:
+        logger.warning("set_config timed out")
+        return {"ok": False}
+    except Exception as exc:
+        logger.exception("Error calling set_config: %s", exc)
+        return {"ok": False}
 
 
 @router.get("/config/get/{key}")
 async def get_config(
     key: str = Path(..., description="Configuration key")
 ):
-    """NOT IMPLEMENTED: Get user interface configuration setting.
+    """Get user interface configuration setting."""
+    if zmq_client is None:
+        return {"value": None}
 
-    TODO: query preferences store via session manager for given key.
-    """
-    # Call session manager to get config
-    return {"value": None}
+    try:
+        fut = zmq_client.call("session_manager", "get_config", key=key)
+        resp = await asyncio.wait_for(fut, timeout=3.0)
+        if isinstance(resp, dict) and resp.get("success"):
+            return {"value": resp.get("value")}
+        else:
+            return {"value": None}
+    except asyncio.TimeoutError:
+        logger.warning("get_config timed out")
+        return {"value": None}
+    except Exception as exc:
+        logger.exception("Error calling get_config: %s", exc)
+        return {"value": None}

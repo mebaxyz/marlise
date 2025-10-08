@@ -78,23 +78,23 @@ class PluginHandlers:
 
     @zmq_handler("get_plugins_bulk")
     async def handle_get_plugins_bulk(self, **kwargs) -> Dict[str, Any]:
-        """Get bulk plugin information for multiple instances"""
+        """Get bulk plugin information for multiple URIs"""
         try:
-            instance_ids = kwargs.get("instance_ids", [])
-            if not instance_ids:
-                return {"success": False, "error": "Missing 'instance_ids' parameter"}
+            uris = kwargs.get("uris", [])
+            if not uris:
+                return {"success": False, "error": "Missing 'uris' parameter"}
 
-            if not isinstance(instance_ids, list):
-                return {"success": False, "error": "'instance_ids' must be a list"}
+            if not isinstance(uris, list):
+                return {"success": False, "error": "'uris' must be a list"}
 
-            plugins = []
-            for instance_id in instance_ids:
+            plugins = {}
+            for uri in uris:
                 try:
-                    info = await self.plugin_manager.get_plugin_info(instance_id)
-                    plugins.append({"instance_id": instance_id, "plugin": info["plugin"]})
+                    essentials = await self.plugin_manager.get_plugin_essentials(uri)
+                    plugins[uri] = essentials
                 except Exception as e:
-                    logger.warning("Failed to get info for instance %s: %s", instance_id, e)
-                    plugins.append({"instance_id": instance_id, "error": str(e)})
+                    logger.warning("Failed to get essentials for plugin %s: %s", uri, e)
+                    plugins[uri] = {"error": str(e)}
 
             return {"success": True, "plugins": plugins}
         except Exception as e:
@@ -113,15 +113,14 @@ class PluginHandlers:
 
     @zmq_handler("get_plugin_info_by_uri")
     async def handle_get_plugin_info_by_uri(self, **kwargs) -> Dict[str, Any]:
-        """Get plugin information by URI (not instance ID)"""
+        """Get plugin information by URI"""
         try:
             uri = kwargs.get("uri")
             if not uri:
                 return {"success": False, "error": "Missing 'uri' parameter"}
 
-            # This would need to be implemented in plugin_manager to get plugin info by URI
-            # For now, return not implemented
-            return {"success": False, "error": "Plugin info by URI not implemented"}
+            essentials = await self.plugin_manager.get_plugin_essentials(uri)
+            return {"success": True, "plugin": essentials}
         except Exception as e:
             logger.error("Failed to get plugin info by URI: %s", e)
             return {"success": False, "error": str(e)}

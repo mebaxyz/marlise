@@ -6,6 +6,12 @@ from fastapi import APIRouter, Query
 
 from ..models import FileListResponse, UserFile
 
+from ..main import zmq_client
+import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/files", tags=["files"])
 
 
@@ -13,7 +19,7 @@ router = APIRouter(prefix="/files", tags=["files"])
 async def list_user_files(
     types: str = Query(..., description="Comma-separated file types: audioloop,audiorecording,audiosample,audiotrack,cabsim,h2drumkit,ir,midiclip,midisong,sf2,sfz,aidadspmodel,nammodel")
 ):
-    """NOT IMPLEMENTED: List user files of specific types for plugin file selectors.
+    """List user files of specific types for plugin file selectors.
 
     TODO: parse requested types and ask session manager to scan user directories for matching files.
     """
@@ -21,7 +27,34 @@ async def list_user_files(
     file_types = [t.strip() for t in types.split(',')]
     
     # Call session manager to scan for user files
-    return FileListResponse(
-        ok=False,
-        files=[]
-    )
+    if zmq_client is None:
+        return FileListResponse(
+            ok=False,
+            files=[]
+        )
+
+    try:
+        fut = zmq_client.call("session_manager", "list_user_files", file_types=file_types)
+        resp = await asyncio.wait_for(fut, timeout=10.0)  # File scanning can take time
+        if isinstance(resp, dict) and resp.get("success", False):
+            return FileListResponse(
+                ok=True,
+                files=resp.get("files", [])
+            )
+        else:
+            return FileListResponse(
+                ok=False,
+                files=[]
+            )
+    except asyncio.TimeoutError:
+        logger.warning("list_user_files timed out")
+        return FileListResponse(
+            ok=False,
+            files=[]
+        )
+    except Exception as exc:
+        logger.exception("Error calling list_user_files: %s", exc)
+        return FileListResponse(
+            ok=False,
+            files=[]
+        )
