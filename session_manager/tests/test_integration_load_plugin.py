@@ -5,7 +5,7 @@ import uuid
 import pytest
 from servicebus import Service
 
-from mod_ui.services.session_manager import main as session_manager_main
+from ..main import SessionManagerService
 
 # Ensure mod-host runs in simulate mode for tests
 os.environ["SIMULATE_MODHOST"] = "true"
@@ -14,7 +14,8 @@ os.environ["SIMULATE_MODHOST"] = "true"
 @pytest.mark.asyncio
 async def test_load_plugin_rpc_and_event():
     # Start the session_manager service in-process
-    await session_manager_main.startup()
+    service = SessionManagerService()
+    await service.startup()
 
     # Give ZeroMQ sockets a moment to bind
     await asyncio.sleep(0.15)
@@ -64,4 +65,4 @@ async def test_load_plugin_rpc_and_event():
     # Cleanup
     await client.stop()
     await sub.stop()
-    await session_manager_main.shutdown()
+    await service.shutdown()

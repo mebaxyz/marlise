@@ -4,8 +4,7 @@ import json
 
 import pytest
 
-import main
-from main import startup, shutdown
+from ..main import SessionManagerService
 
 
 # Run against a real bridge only
@@ -26,18 +25,19 @@ async def test_load_minimal_pedalboard():
         "connections": []
     }
 
-    await startup()
+    service = SessionManagerService()
+    await service.startup()
 
     # Give plugin manager a moment to populate available_plugins
     await asyncio.sleep(0.5)
 
     try:
         # Call load_pedalboard via session manager
-        result = await main.session_manager.load_pedalboard(sample_pb)
+        result = await service.session_manager.load_pedalboard(sample_pb)
         assert result.get("status") == "ok"
         # Check that current_pedalboard is set in memory (we avoid persisting in this test)
-        assert main.session_manager.current_pedalboard is not None
-        assert main.session_manager.current_pedalboard.name == "Integration Test PB"
+        assert service.session_manager.current_pedalboard is not None
+        assert service.session_manager.current_pedalboard.name == "Integration Test PB"
 
     finally:
-        await shutdown()
+        await service.shutdown()

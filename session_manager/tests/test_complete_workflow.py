@@ -4,8 +4,7 @@ import subprocess
 
 import pytest
 
-import main
-from ..core.main import startup, shutdown
+from ..main import SessionManagerService
 
 
 # Run against a real bridge only
@@ -22,14 +21,15 @@ async def test_complete_pedalboard_workflow():
 
     print("\n=== Starting Complete Pedalboard Workflow Test ===")
 
-    await startup()
+    service = SessionManagerService()
+    await service.startup()
     await asyncio.sleep(1.5)  # Give more time for plugin scanning
 
     try:
         # 1. Check initial system state
         print("\n1. Checking initial system state...")
         print("Available plugins:")
-        plugins = await main.plugin_manager.get_available_plugins()
+        plugins = await service.plugin_manager.get_available_plugins()
         print(f"   Found {len(plugins)} plugins")
 
         if plugins:
@@ -42,7 +42,7 @@ async def test_complete_pedalboard_workflow():
 
         # 2. Create a new pedalboard
         print("\n2. Creating pedalboard...")
-        result = await main.session_manager.create_pedalboard(
+        result = await service.session_manager.create_pedalboard(
             "Real World Test Pedalboard",
             "Integration test with real audio routing"
         )
@@ -52,7 +52,7 @@ async def test_complete_pedalboard_workflow():
 
         # 3. Show current session state
         print("\n3. Session state after pedalboard creation:")
-        status = main.session_manager.get_status()
+        status = service.session_manager.get_status()
         print(f"   Current pedalboard: {status['current_pedalboard']}")
         print(f"   Loaded plugins: {status['loaded_plugins']}")
         print(f"   Active connections: {status['active_connections']}")
@@ -110,7 +110,7 @@ async def test_complete_pedalboard_workflow():
         print("\n5. Testing session-manager connection API...")
         try:
             # This should fail gracefully since we don't have loaded plugin instances
-            conn_result = await main.session_manager.create_connection(
+            conn_result = await service.session_manager.create_connection(
                 source_plugin="fake_plugin_1",
                 source_port="output_1",
                 target_plugin="fake_plugin_2",
@@ -122,7 +122,7 @@ async def test_complete_pedalboard_workflow():
 
         # 6. Final state check
         print("\n6. Final state verification...")
-        final_status = main.session_manager.get_status()
+        final_status = service.session_manager.get_status()
         print(f"   Final pedalboard: {final_status['current_pedalboard']}")
         print(f"   Final loaded plugins: {final_status['loaded_plugins']}")
         print(f"   Final connections: {final_status['active_connections']}")
@@ -140,7 +140,7 @@ async def test_complete_pedalboard_workflow():
         print("\n=== Test completed successfully ===")
 
     finally:
-        await shutdown()
+        await service.shutdown()
 
 
 if __name__ == "__main__":

@@ -4,8 +4,7 @@ import subprocess
 
 import pytest
 
-import main
-from main import startup, shutdown
+from ..main import SessionManagerService
 
 
 # Run against a real bridge only
@@ -21,14 +20,15 @@ async def test_create_pedalboard_with_system_connections():
     """
     os.environ["SESSION_MANAGER_AUTO_CREATE_DEFAULT"] = "0"
 
-    await startup()
+    service = SessionManagerService()
+    await service.startup()
 
     # Give services time to initialize
     await asyncio.sleep(1.0)
 
     try:
         # Create a new pedalboard
-        result = await main.session_manager.create_pedalboard(
+        result = await service.session_manager.create_pedalboard(
             "System Passthrough Test",
             "Test pedalboard with direct input to output connections"
         )
@@ -67,7 +67,7 @@ async def test_create_pedalboard_with_system_connections():
         # (This tests the session-manager API even if no real plugins are loaded)
         try:
             # This will fail but tests the API path
-            conn_result = await main.session_manager.create_connection(
+            conn_result = await service.session_manager.create_connection(
                 source_plugin="nonexistent_plugin",
                 source_port="output_1",
                 target_plugin="another_nonexistent_plugin",
@@ -110,7 +110,7 @@ async def test_create_pedalboard_with_system_connections():
                 print(f"Warning: Could not remove connection {source_port} -> {target_port}: {e}")
 
     finally:
-        await shutdown()
+        await service.shutdown()
 
 
 async def verify_pipewire_connections(expected_connections):
@@ -199,12 +199,13 @@ async def test_create_pedalboard_check_jack_connections():
     """
     os.environ["SESSION_MANAGER_AUTO_CREATE_DEFAULT"] = "0"
 
-    await startup()
+    service = SessionManagerService()
+    await service.startup()
     await asyncio.sleep(1.0)
 
     try:
         # Create pedalboard
-        result = await main.session_manager.create_pedalboard("JACK Test Pedalboard")
+        result = await service.session_manager.create_pedalboard("JACK Test Pedalboard")
         assert result.get("pedalboard_id") is not None
 
         # Try to get JACK port information first
@@ -224,9 +225,9 @@ async def test_create_pedalboard_check_jack_connections():
             print("jack_lsp command not available")
 
         # Test basic session manager functionality
-        status = main.session_manager.get_status()
+        status = service.session_manager.get_status()
         print(f"Session status: {status}")
         assert status["current_pedalboard"] == "JACK Test Pedalboard"
 
     finally:
-        await shutdown()
+        await service.shutdown()

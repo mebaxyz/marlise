@@ -1,7 +1,7 @@
 import pytest
 
-from mod_ui.services.session_manager.core.plugin_manager import PluginManager
-from mod_ui.services.session_manager.core.session_manager import SessionManager
+from ..managers.plugin_manager import PluginManager
+from ..managers.session_manager import SessionManager
 
 
 @pytest.mark.asyncio
@@ -25,7 +25,7 @@ async def test_pedalboard_save_load_delete(tmp_path, monkeypatch, mock_bridge_cl
     assert saved_id is not None
 
     # list
-    from mod_ui.services.session_manager.core import storage
+    from ..infrastructure import storage
 
     items = storage.list_pedalboards()
     assert any(x["id"] == saved_id for x in items)
@@ -56,7 +56,7 @@ async def test_export_import_pedalboard(tmp_path, monkeypatch, mock_bridge_clien
     out_file = tmp_path / "exported.json"
 
     # Export via storage
-    from mod_ui.services.session_manager.core import storage
+    from ..infrastructure import storage
 
     ok = storage.export_pedalboard(pb_id, str(out_file))
     assert ok is True

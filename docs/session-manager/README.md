@@ -30,11 +30,11 @@ mod-host (LV2 Plugin Host)
 
 ### Core Components
 
-1. **Main Service (`main.py`)**: Entry point that initializes all components and manages the service lifecycle
-2. **Plugin Manager (`core/plugin_manager.py`)**: Handles plugin loading, unloading, and parameter control
-3. **Session Manager (`core/session_manager.py`)**: Main coordinator delegating to specialized services
-4. **Bridge Client (`core/bridge_client.py`)**: ZeroMQ client for communicating with modhost-bridge
-5. **ZMQ Service (`zmq_service.py`)**: ZeroMQ RPC and pub/sub implementation
+1. **Main Service (`main.py`)**: Entry point with `SessionManagerService` class that initializes all components and manages the service lifecycle
+2. **Plugin Manager (`managers/plugin_manager.py`)**: Handles plugin loading, unloading, and parameter control
+3. **Session Manager (`managers/session_manager.py`)**: Main coordinator delegating to specialized services
+4. **Bridge Client (`infrastructure/bridge_client.py`)**: ZeroMQ client for communicating with modhost-bridge
+5. **ZMQ Service (`services/zmq_service.py`)**: ZeroMQ RPC and pub/sub implementation
 6. **ZMQ Handlers (`handlers/zmq_handlers.py`)**: RPC method handlers for incoming requests
 
 ### Specialized Services
@@ -64,7 +64,7 @@ pip install -r requirements.txt
 ### Running the Service
 
 ```bash
-python -m session-manager.main
+python main.py
 ```
 
 The service will:
@@ -141,6 +141,7 @@ Enable debug logging:
 ```bash
 export PYTHONPATH=/path/to/session-manager
 python -c "import logging; logging.basicConfig(level=logging.DEBUG)"
+python main.py
 ```
 
 ## Related Documentation

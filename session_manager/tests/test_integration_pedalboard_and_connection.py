@@ -5,7 +5,7 @@ import uuid
 import pytest
 from servicebus import Service
 
-from mod_ui.services.session_manager import main as session_main
+from ..main import SessionManagerService
 
 
 @pytest.mark.asyncio
@@ -14,7 +14,8 @@ async def test_pedalboard_create_save_load_and_connection(tmp_path):
     os.environ["SIMULATE_MODHOST"] = "true"
 
     # Start the audio processing service
-    await session_main.startup()
+    service = SessionManagerService()
+    await service.startup()
 
     # give the service time to bind sockets
     await asyncio.sleep(0.1)
@@ -68,4 +69,4 @@ async def test_pedalboard_create_save_load_and_connection(tmp_path):
 
     finally:
         await client.stop()
-        await session_main.shutdown()
+        await service.shutdown()
