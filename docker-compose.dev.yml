@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # Tornado Web Client with integrated API proxy
+  tornado-web-client:
+    build:
+      context: ./client-interface/web_client_original
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8888"
+    volumes:
+      # Bind mount source code for development (hot reload)
+      - ./client-interface/web_client_original:/app:rw
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOG=1
+    depends_on:
+      - fastapi-client-interface
+    networks:
+      - marlise-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/css/dashboard.css"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # FastAPI Client Interface
+  fastapi-client-interface:
+    build:
+      context: ./client-interface/web_api/api
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      # Bind mount source code for development (hot reload)
+      - ./client-interface/web_api/api:/app/api:rw
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CLIENT_INTERFACE_PORT=8080
+      - CLIENT_INTERFACE_ZMQ_HOST=host.docker.internal
+    networks:
+      - marlise-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  marlise-net:
+    driver: bridge
+
+volumes:
+  # Optional: if you want to persist any data
+  marlise-data:

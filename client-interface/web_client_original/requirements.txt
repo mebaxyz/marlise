@@ -1,0 +1,3 @@
+# Python requirements for Tornado web client
+tornado>=6.0
+requests>=2.25.0
