@@ -111,7 +111,7 @@ echo "Logs: mod-host -> $MOD_HOST_LOG ; bridge -> $BRIDGE_LOG"
 
 # Start session-manager (optional: used to test clients)
 # You can override with SESSION_MANAGER_SCRIPT env var.
-SESSION_MANAGER_SCRIPT=${SESSION_MANAGER_SCRIPT:-"$ROOT_DIR/session-manager/start_session_manager.sh"}
+SESSION_MANAGER_SCRIPT=${SESSION_MANAGER_SCRIPT:-"$ROOT_DIR/session_manager/start_session_manager.sh"}
 SESSION_LOG="$LOG_DIR/session-manager.log"
 SESSION_WAIT_TIMEOUT=${SESSION_WAIT_TIMEOUT:-10}
 

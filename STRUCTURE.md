@@ -36,22 +36,31 @@ audio-engine/
 
 ## 🎛️ Session Manager
 
-**Location**: `session-manager/`  
+**Location**: `session_manager/`  
 **Purpose**: Orchestrates plugins, pedalboards, and connections
 
 ```
-session-manager/
-├── src/                      → Python source code
-│   ├── session_manager.py   → Main service
-│   ├── pedalboard.py        → Pedalboard management
-│   ├── plugin_manager.py    → Plugin operations
-│   └── zmq_client.py        → ZeroMQ communication
-└── start_session_manager.sh → Service launcher
+session_manager/
+├── main.py                    → Service entry point
+├── managers/                  → Business logic managers
+│   ├── session_manager.py    → Main coordinator
+│   ├── plugin_manager.py     → Plugin operations
+│   ├── pedalboard_manager.py → Pedalboard management
+│   └── connection_manager.py → Audio connections
+├── handlers/                  → ZMQ RPC handlers
+│   ├── zmq_handlers.py       → Main handler registry
+│   ├── system_handlers.py    → System/advanced features
+│   ├── plugin_handlers.py    → Plugin operations
+│   ├── pedalboard_handlers.py → Pedalboard operations
+│   └── jack_handlers.py      → JACK audio system
+├── services/                  → Infrastructure services
+├── infrastructure/            → Bridge clients, etc.
+└── start_session_manager.sh   → Service launcher
 ```
 
 **Key Files**:
-- `session-manager/README.md` - Component documentation
-- `session-manager/src/` - All Python service code
+- `session_manager/README.md` - Component documentation
+- `session_manager/main.py` - Service entry point
 
 ## 🌐 Client Interface
 

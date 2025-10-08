@@ -117,6 +117,40 @@ curl -X PATCH http://localhost:8080/api/plugins/parameters \
 
 ## Development
 
+### API Integration Status ✅
+
+**All FastAPI client API endpoints are now fully integrated with the session manager ZMQ handlers!**
+
+#### ✅ Fully Integrated Routers (35+ endpoints):
+
+- **Snapshots** (7 endpoints): save, save_as, rename, remove, list, get_name, load
+- **Favorites** (2 endpoints): add, remove  
+- **Recording** (7 endpoints): start, stop, start_playback, wait_playback, stop_playback, download, reset
+- **Updates** (5 endpoints): begin_update, upload_system_image, upload_controlchain_firmware, cancel_controlchain_update, uninstall_package
+- **JACK** (2 endpoints): get_midi_devices, set_midi_device
+- **Banks** (2 endpoints): get_banks, save_banks
+- **Files** (1 endpoint): list_user_files
+- **Auth** (2 endpoints): handle_auth_nonce, handle_auth_token
+- **Pedalboards** (multiple endpoints): save, load, list, pack_bundle, factory_copy, info, remove, image operations
+- **Plugins** (multiple endpoints): list, bulk, get, add, remove, connect, disconnect, parameter operations, presets
+- **System** (multiple endpoints): ping, reset, buffer_size, true_bypass, config operations
+
+#### ❌ Remaining (misc.py - 6 endpoints):
+- `/ping` - Simple ping endpoint
+- `/hello` - Hello endpoint (placeholder)
+- `/save_user_id` - Store user identity
+- `/resources/{path:path}` - Static UI resources
+- `/load_template/{name}.html` - HTML templates
+- `/js/templates.js` - JavaScript templates
+
+#### 🔧 Integration Features:
+- ✅ Proper ZMQ client calls with configurable timeouts (3-30 seconds)
+- ✅ Structured error responses with success/failure status
+- ✅ Parameter validation and logging
+- ✅ Async/await patterns throughout
+- ✅ Modular handler architecture (separate files by functionality)
+- ✅ Removed duplicate/fake session-manager directory
+
 ### Prerequisites
 
 - **Python 3.8+** with asyncio support

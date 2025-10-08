@@ -12,7 +12,7 @@ if [ ! -d "$RUN_DIR" ]; then
     echo "No run directory found ($RUN_DIR). Trying to stop by process name..."
     pkill -f "modhost-bridge" || true
     pkill -f "mod-host" || true
-    pkill -f "session-manager" || true
+    pkill -f "session_manager" || true
     exit 0
 fi
 
