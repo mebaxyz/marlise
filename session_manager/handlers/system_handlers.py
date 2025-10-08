@@ -1140,9 +1140,25 @@ class SystemHandlers:
             if not uri or not label or minimum is None or maximum is None or value is None:
                 return {"success": False, "error": "Missing required addressing parameters"}
 
-            # This would need to be implemented via addressing system
-            # For now, return not implemented
-            return {"success": False, "error": "Address parameter not implemented"}
+            # Forward to bridge client for parameter addressing
+            result = await self.bridge_client.call("address_parameter", 
+                instance_id=instance_id,
+                symbol=symbol,
+                uri=uri,
+                label=label,
+                minimum=minimum,
+                maximum=maximum,
+                value=value,
+                steps=steps,
+                tempo=tempo,
+                dividers=dividers,
+                page=page,
+                subpage=subpage,
+                coloured=coloured,
+                momentary=momentary,
+                operational_mode=operational_mode
+            )
+            return result
         except Exception as e:
             logger.error("Failed to address parameter: %s", e)
             return {"success": False, "error": str(e)}
