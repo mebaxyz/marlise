@@ -99,7 +99,6 @@ class SessionManagerService:
                     )
                     if attempt < retries:
                         await asyncio.sleep(delay)
-                        await asyncio.sleep(delay)
 
             if last_exc:
                 logger.error("Unable to start bridge client after %s attempts", retries)
