@@ -569,16 +569,6 @@ class SystemHandlers:
             return {"success": False, "error": str(e)}
 
     # Snapshot management handlers
-    @zmq_handler("save_snapshot")
-    async def handle_save_snapshot(self, **_kwargs) -> Dict[str, Any]:
-        """Save current plugin parameter states as a snapshot"""
-        try:
-            # This would need to be implemented via snapshot_manager
-            return {"success": False, "error": "Save snapshot not implemented"}
-        except Exception as e:
-            logger.error("Failed to save snapshot: %s", e)
-            return {"success": False, "error": str(e)}
-
     @zmq_handler("save_snapshot_as")
     async def handle_save_snapshot_as(self, **kwargs) -> Dict[str, Any]:
         """Save current state as a new named snapshot"""
