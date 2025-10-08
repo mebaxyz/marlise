@@ -14,11 +14,9 @@ RUN apt-get update && apt-get install -y \
     # LV2 plugin framework
     lv2-dev \
     lilv-utils \
-    # Common LV2 plugins for testing
+    # Common LV2 plugins for testing  
     calf-plugins \
     swh-plugins \
-    tap-plugins \
-    invada-studio-plugins \
     # Build tools
     build-essential \
     cmake \
@@ -68,19 +66,19 @@ RUN chmod +x /usr/local/bin/start-jack-dummy.sh
 
 # Copy Marlise components
 COPY audio-engine/ /opt/marlise/audio-engine/
-COPY session-manager/ /opt/marlise/session-manager/
+COPY session_manager/ /opt/marlise/session_manager/
 COPY client-interface/ /opt/marlise/client-interface/
 
-# Build mod-host and modhost-bridge
+# Build mod-host and modhost-bridge (commented out for now - need build files)
 WORKDIR /opt/marlise/audio-engine
-RUN cd mod-host && make && make install
-RUN cd modhost-bridge && mkdir -p build && cd build && cmake .. && make
+# RUN cd mod-host && make && make install
+# RUN cd modhost-bridge && mkdir -p build && cd build && cmake .. && make
 
 # Install Python dependencies for session manager
-WORKDIR /opt/marlise/session-manager
+WORKDIR /opt/marlise/session_manager
 RUN pip3 install -r requirements.txt
 
-# Install Python dependencies for client interface
+# Install Python dependencies for client interface  
 WORKDIR /opt/marlise/client-interface/web_api/api
 RUN pip3 install -r requirements.txt
 
