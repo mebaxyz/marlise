@@ -28,8 +28,9 @@ class JackHandlers:
     async def handle_get_jack_status(self, **_kwargs) -> Dict[str, Any]:
         """Get JACK server status"""
         try:
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Get JACK status not implemented"}
+            # Forward to bridge client for JACK status
+            result = await self.bridge_client.call("get_jack_status")
+            return result
         except Exception as e:
             logger.error("Failed to get JACK status: %s", e)
             return {"success": False, "error": str(e)}
@@ -38,8 +39,9 @@ class JackHandlers:
     async def handle_get_jack_connections(self, **_kwargs) -> Dict[str, Any]:
         """Get JACK port connections"""
         try:
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Get JACK connections not implemented"}
+            # Forward to bridge client for JACK connections
+            result = await self.bridge_client.call("get_jack_connections")
+            return result
         except Exception as e:
             logger.error("Failed to get JACK connections: %s", e)
             return {"success": False, "error": str(e)}
@@ -54,8 +56,9 @@ class JackHandlers:
             if not port1 or not port2:
                 return {"success": False, "error": "Missing 'port1' or 'port2' parameter"}
 
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Connect JACK ports not implemented"}
+            # Forward to bridge client for JACK port connection
+            result = await self.bridge_client.call("connect_jack_ports", port1=port1, port2=port2)
+            return result
         except Exception as e:
             logger.error("Failed to connect JACK ports: %s", e)
             return {"success": False, "error": str(e)}
@@ -70,8 +73,9 @@ class JackHandlers:
             if not port1 or not port2:
                 return {"success": False, "error": "Missing 'port1' or 'port2' parameter"}
 
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Disconnect JACK ports not implemented"}
+            # Forward to bridge client for JACK port disconnection
+            result = await self.bridge_client.call("disconnect_jack_ports", port1=port1, port2=port2)
+            return result
         except Exception as e:
             logger.error("Failed to disconnect JACK ports: %s", e)
             return {"success": False, "error": str(e)}
@@ -80,8 +84,9 @@ class JackHandlers:
     async def handle_get_jack_ports(self, **_kwargs) -> Dict[str, Any]:
         """Get all JACK ports"""
         try:
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Get JACK ports not implemented"}
+            # Forward to bridge client for JACK ports
+            result = await self.bridge_client.call("get_jack_ports")
+            return result
         except Exception as e:
             logger.error("Failed to get JACK ports: %s", e)
             return {"success": False, "error": str(e)}
@@ -90,8 +95,9 @@ class JackHandlers:
     async def handle_get_jack_audio_ports(self, **_kwargs) -> Dict[str, Any]:
         """Get JACK audio ports"""
         try:
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Get JACK audio ports not implemented"}
+            # Forward to bridge client for JACK audio ports
+            result = await self.bridge_client.call("get_jack_audio_ports")
+            return result
         except Exception as e:
             logger.error("Failed to get JACK audio ports: %s", e)
             return {"success": False, "error": str(e)}
@@ -100,8 +106,9 @@ class JackHandlers:
     async def handle_get_jack_midi_ports(self, **_kwargs) -> Dict[str, Any]:
         """Get JACK MIDI ports"""
         try:
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Get JACK MIDI ports not implemented"}
+            # Forward to bridge client for JACK MIDI ports
+            result = await self.bridge_client.call("get_jack_midi_ports")
+            return result
         except Exception as e:
             logger.error("Failed to get JACK MIDI ports: %s", e)
             return {"success": False, "error": str(e)}
@@ -110,8 +117,9 @@ class JackHandlers:
     async def handle_get_jack_cv_ports(self, **_kwargs) -> Dict[str, Any]:
         """Get JACK CV ports"""
         try:
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Get JACK CV ports not implemented"}
+            # Forward to bridge client for JACK CV ports
+            result = await self.bridge_client.call("get_jack_cv_ports")
+            return result
         except Exception as e:
             logger.error("Failed to get JACK CV ports: %s", e)
             return {"success": False, "error": str(e)}
@@ -124,8 +132,9 @@ class JackHandlers:
             if state is None:
                 return {"success": False, "error": "Missing 'state' parameter"}
 
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Set JACK transport not implemented"}
+            # Forward to bridge client for JACK transport control
+            result = await self.bridge_client.call("set_jack_transport", state=state)
+            return result
         except Exception as e:
             logger.error("Failed to set JACK transport: %s", e)
             return {"success": False, "error": str(e)}
@@ -134,8 +143,9 @@ class JackHandlers:
     async def handle_get_jack_transport(self, **_kwargs) -> Dict[str, Any]:
         """Get JACK transport state"""
         try:
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Get JACK transport not implemented"}
+            # Forward to bridge client for JACK transport state
+            result = await self.bridge_client.call("get_jack_transport")
+            return result
         except Exception as e:
             logger.error("Failed to get JACK transport: %s", e)
             return {"success": False, "error": str(e)}
@@ -144,8 +154,9 @@ class JackHandlers:
     async def handle_get_jack_samplerate(self, **_kwargs) -> Dict[str, Any]:
         """Get JACK sample rate"""
         try:
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Get JACK samplerate not implemented"}
+            # Forward to bridge client for JACK sample rate
+            result = await self.bridge_client.call("get_jack_samplerate")
+            return result
         except Exception as e:
             logger.error("Failed to get JACK samplerate: %s", e)
             return {"success": False, "error": str(e)}
@@ -154,8 +165,9 @@ class JackHandlers:
     async def handle_get_jack_buffersize(self, **_kwargs) -> Dict[str, Any]:
         """Get JACK buffer size"""
         try:
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Get JACK buffersize not implemented"}
+            # Forward to bridge client for JACK buffer size
+            result = await self.bridge_client.call("get_jack_buffersize")
+            return result
         except Exception as e:
             logger.error("Failed to get JACK buffersize: %s", e)
             return {"success": False, "error": str(e)}
@@ -168,8 +180,9 @@ class JackHandlers:
             if buffersize is None:
                 return {"success": False, "error": "Missing 'buffersize' parameter"}
 
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Set JACK buffersize not implemented"}
+            # Forward to bridge client for JACK buffer size control
+            result = await self.bridge_client.call("set_jack_buffersize", buffersize=buffersize)
+            return result
         except Exception as e:
             logger.error("Failed to set JACK buffersize: %s", e)
             return {"success": False, "error": str(e)}
@@ -178,8 +191,9 @@ class JackHandlers:
     async def handle_get_jack_latency(self, **_kwargs) -> Dict[str, Any]:
         """Get JACK latency"""
         try:
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Get JACK latency not implemented"}
+            # Forward to bridge client for JACK latency information
+            result = await self.bridge_client.call("get_jack_latency")
+            return result
         except Exception as e:
             logger.error("Failed to get JACK latency: %s", e)
             return {"success": False, "error": str(e)}
@@ -188,8 +202,9 @@ class JackHandlers:
     async def handle_get_jack_xruns(self, **_kwargs) -> Dict[str, Any]:
         """Get JACK xruns count"""
         try:
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Get JACK xruns not implemented"}
+            # Forward to bridge client for JACK xrun information
+            result = await self.bridge_client.call("get_jack_xruns")
+            return result
         except Exception as e:
             logger.error("Failed to get JACK xruns: %s", e)
             return {"success": False, "error": str(e)}
@@ -198,8 +213,9 @@ class JackHandlers:
     async def handle_reset_jack_xruns(self, **_kwargs) -> Dict[str, Any]:
         """Reset JACK xruns counter"""
         try:
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Reset JACK xruns not implemented"}
+            # Forward to bridge client for JACK xrun reset
+            result = await self.bridge_client.call("reset_jack_xruns")
+            return result
         except Exception as e:
             logger.error("Failed to reset JACK xruns: %s", e)
             return {"success": False, "error": str(e)}
@@ -208,8 +224,9 @@ class JackHandlers:
     async def handle_get_jack_dsp_load(self, **_kwargs) -> Dict[str, Any]:
         """Get JACK DSP load"""
         try:
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Get JACK DSP load not implemented"}
+            # Forward to bridge client for JACK DSP load
+            result = await self.bridge_client.call("get_jack_dsp_load")
+            return result
         except Exception as e:
             logger.error("Failed to get JACK DSP load: %s", e)
             return {"success": False, "error": str(e)}
@@ -218,8 +235,9 @@ class JackHandlers:
     async def handle_get_jack_freewheel(self, **_kwargs) -> Dict[str, Any]:
         """Get JACK freewheel state"""
         try:
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Get JACK freewheel not implemented"}
+            # Forward to bridge client for JACK freewheel state
+            result = await self.bridge_client.call("get_jack_freewheel")
+            return result
         except Exception as e:
             logger.error("Failed to get JACK freewheel: %s", e)
             return {"success": False, "error": str(e)}
@@ -232,8 +250,9 @@ class JackHandlers:
             if enabled is None:
                 return {"success": False, "error": "Missing 'enabled' parameter"}
 
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Set JACK freewheel not implemented"}
+            # Forward to bridge client for JACK freewheel control
+            result = await self.bridge_client.call("set_jack_freewheel", enabled=enabled)
+            return result
         except Exception as e:
             logger.error("Failed to set JACK freewheel: %s", e)
             return {"success": False, "error": str(e)}
@@ -242,8 +261,9 @@ class JackHandlers:
     async def handle_get_jack_timebase(self, **_kwargs) -> Dict[str, Any]:
         """Get JACK timebase state"""
         try:
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Get JACK timebase not implemented"}
+            # Forward to bridge client for JACK timebase
+            result = await self.bridge_client.call("get_jack_timebase")
+            return result
         except Exception as e:
             logger.error("Failed to get JACK timebase: %s", e)
             return {"success": False, "error": str(e)}
@@ -256,8 +276,9 @@ class JackHandlers:
             if enabled is None:
                 return {"success": False, "error": "Missing 'enabled' parameter"}
 
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Set JACK timebase not implemented"}
+            # Forward to bridge client for JACK timebase control
+            result = await self.bridge_client.call("set_jack_timebase", enabled=enabled)
+            return result
         except Exception as e:
             logger.error("Failed to set JACK timebase: %s", e)
             return {"success": False, "error": str(e)}
@@ -266,8 +287,9 @@ class JackHandlers:
     async def handle_get_jack_repl_sync(self, **_kwargs) -> Dict[str, Any]:
         """Get JACK repl sync state"""
         try:
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Get JACK repl sync not implemented"}
+            # Forward to bridge client for JACK repl sync state
+            result = await self.bridge_client.call("get_jack_repl_sync")
+            return result
         except Exception as e:
             logger.error("Failed to get JACK repl sync: %s", e)
             return {"success": False, "error": str(e)}
@@ -280,8 +302,9 @@ class JackHandlers:
             if enabled is None:
                 return {"success": False, "error": "Missing 'enabled' parameter"}
 
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Set JACK repl sync not implemented"}
+            # Forward to bridge client for JACK repl sync control
+            result = await self.bridge_client.call("set_jack_repl_sync", enabled=enabled)
+            return result
         except Exception as e:
             logger.error("Failed to set JACK repl sync: %s", e)
             return {"success": False, "error": str(e)}
@@ -290,8 +313,9 @@ class JackHandlers:
     async def handle_get_jack_repl_latency(self, **_kwargs) -> Dict[str, Any]:
         """Get JACK repl latency"""
         try:
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Get JACK repl latency not implemented"}
+            # Forward to bridge client for JACK repl latency
+            result = await self.bridge_client.call("get_jack_repl_latency")
+            return result
         except Exception as e:
             logger.error("Failed to get JACK repl latency: %s", e)
             return {"success": False, "error": str(e)}
@@ -304,8 +328,9 @@ class JackHandlers:
             if latency is None:
                 return {"success": False, "error": "Missing 'latency' parameter"}
 
-            # This would need to be implemented via bridge_client
-            return {"success": False, "error": "Set JACK repl latency not implemented"}
+            # Forward to bridge client for JACK repl latency control
+            result = await self.bridge_client.call("set_jack_repl_latency", latency=latency)
+            return result
         except Exception as e:
             logger.error("Failed to set JACK repl latency: %s", e)
             return {"success": False, "error": str(e)}
