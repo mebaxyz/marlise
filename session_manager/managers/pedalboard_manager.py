@@ -31,10 +31,10 @@ class PedalboardManager:
 
     async def create_pedalboard(self, name: str, description: str = "") -> Dict[str, Any]:
         pedalboard_id = str(uuid.uuid4())
-        
+
         # Get available system inputs and outputs
         system_inputs, system_outputs = await self._discover_system_ports()
-        
+
         pb = Pedalboard(
             id=pedalboard_id,
             name=name,
@@ -156,18 +156,18 @@ class PedalboardManager:
 
         if self.zmq_service:
             await self.zmq_service.publish_event("pedalboard_loaded", {
-                "id": pedalboard.id, 
-                "name": pedalboard.name, 
-                "plugins_loaded": len(loaded_plugins), 
+                "id": pedalboard.id,
+                "name": pedalboard.name,
+                "plugins_loaded": len(loaded_plugins),
                 "connections_created": len(loaded_connections),
                 "system_io_setup": io_result.get("status", "skipped")
             })
 
         logger.info("Loaded pedalboard: %s (%s) with system I/O: %s", pedalboard.name, pedalboard.id, io_result.get("status", "skipped"))
         return {
-            "status": "ok", 
-            "pedalboard": serialize_pedalboard(pedalboard) if pedalboard else {"pedalboard": None}, 
-            "plugins_loaded": len(loaded_plugins), 
+            "status": "ok",
+            "pedalboard": serialize_pedalboard(pedalboard) if pedalboard else {"pedalboard": None},
+            "plugins_loaded": len(loaded_plugins),
             "connections_created": len(loaded_connections),
             "system_io": io_result
         }
@@ -233,21 +233,24 @@ class PedalboardManager:
         """Discover available system input and output ports."""
         try:
             # Get system input ports (captures)
-            inputs_result = await self.bridge.call("modhost_bridge", "get_jack_hardware_ports", is_audio=True, is_output=False)
+            inputs_result = (
+                await
+                self.bridge.call("modhost_bridge", "get_jack_hardware_ports", is_audio=True, is_output=False)
+            )
             system_inputs = inputs_result.get("ports", []) if inputs_result.get("success") else []
-            
-            # Get system output ports (playbacks)  
+
+            # Get system output ports (playbacks)
             outputs_result = await self.bridge.call("modhost_bridge", "get_jack_hardware_ports", is_audio=True, is_output=True)
             system_outputs = outputs_result.get("ports", []) if outputs_result.get("success") else []
-            
+
             # Default to standard stereo if discovery fails
             if not system_inputs:
                 system_inputs = ["system:capture_1", "system:capture_2"]
             if not system_outputs:
                 system_outputs = ["system:playback_1", "system:playback_2"]
-                
+
             return system_inputs, system_outputs
-            
+
         except Exception as e:
             logger.warning("Failed to discover system ports, using defaults: %s", e)
             return ["system:capture_1", "system:capture_2"], ["system:playback_1", "system:playback_2"]
@@ -256,26 +259,26 @@ class PedalboardManager:
         """Create connections from system inputs to first plugin and last plugin to system outputs."""
         if not self.current_pedalboard:
             return {"status": "error", "message": "No pedalboard loaded"}
-            
+
         if not self.current_pedalboard.plugins:
             return {"status": "ok", "message": "No plugins loaded, no I/O connections needed"}
-        
+
         created_connections = []
         failed_connections = []
-        
+
         # Get first and last plugins in the chain
         first_plugin = self.current_pedalboard.plugins[0]
         last_plugin = self.current_pedalboard.plugins[-1]
-        
+
         system_inputs = self.current_pedalboard.get_system_inputs()
         system_outputs = self.current_pedalboard.get_system_outputs()
-        
+
         # Connect system inputs to first plugin
         for i, system_input in enumerate(system_inputs[:2]):  # Limit to stereo
             try:
                 target_port = f"in_{i+1}" if i < len(system_inputs) else "in_1"
-                result = await self.bridge.call("modhost_bridge", "connect_jack_ports", 
-                                              port1=system_input, 
+                result = await self.bridge.call("modhost_bridge", "connect_jack_ports",
+                                              port1=system_input,
                                               port2=f"{first_plugin['instance_id']}:{target_port}")
                 if result.get("success"):
                     created_connections.append(f"{system_input} -> {first_plugin['instance_id']}:{target_port}")
@@ -284,7 +287,7 @@ class PedalboardManager:
             except Exception as e:
                 logger.error("Failed to connect system input %s: %s", system_input, e)
                 failed_connections.append(f"{system_input} (error: {e})")
-        
+
         # Connect last plugin to system outputs
         for i, system_output in enumerate(system_outputs[:2]):  # Limit to stereo
             try:
@@ -299,9 +302,9 @@ class PedalboardManager:
             except Exception as e:
                 logger.error("Failed to connect system output %s: %s", system_output, e)
                 failed_connections.append(f"{system_output} (error: {e})")
-        
+
         logger.info("System I/O setup: %d connections created, %d failed", len(created_connections), len(failed_connections))
-        
+
         return {
             "status": "ok",
             "created_connections": created_connections,

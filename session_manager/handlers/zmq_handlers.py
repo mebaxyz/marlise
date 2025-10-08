@@ -877,7 +877,7 @@ class ZMQHandlers:
 			plugin_uri = kwargs.get("plugin_uri", "")
 			if not plugin_uri:
 				return {"success": False, "error": "Missing plugin_uri parameter"}
-            
+
 			result = await self._call_bridge("get_plugin_presets", plugin_uri=plugin_uri)
 			if result and result.get("success", False):
 				return {"success": True, "presets": result.get("presets", [])}
@@ -894,7 +894,7 @@ class ZMQHandlers:
 			preset_uri = kwargs.get("preset_uri", "")
 			if not plugin_uri or not preset_uri:
 				return {"success": False, "error": "Missing plugin_uri or preset_uri parameter"}
-            
+
 			result = await self._call_bridge("validate_preset", plugin_uri=plugin_uri, preset_uri=preset_uri)
 			if result and result.get("success", False):
 				return {"success": True, "valid": result.get("valid", False)}
@@ -931,7 +931,7 @@ class ZMQHandlers:
 			plugin_uri = kwargs.get("plugin_uri", "")
 			if not plugin_uri:
 				return {"success": False, "error": "Missing plugin_uri parameter"}
-            
+
 			result = await self._call_bridge("get_plugin_gui", plugin_uri=plugin_uri)
 			if result and result.get("success", False):
 				return {"success": True, "gui": result.get("gui", {})}
@@ -947,7 +947,7 @@ class ZMQHandlers:
 			plugin_uri = kwargs.get("plugin_uri", "")
 			if not plugin_uri:
 				return {"success": False, "error": "Missing plugin_uri parameter"}
-            
+
 			result = await self._call_bridge("get_plugin_gui_mini", plugin_uri=plugin_uri)
 			if result and result.get("success", False):
 				return {"success": True, "gui_mini": result.get("gui_mini", {})}
@@ -963,7 +963,7 @@ class ZMQHandlers:
 			plugin_uri = kwargs.get("plugin_uri", "")
 			if not plugin_uri:
 				return {"success": False, "error": "Missing plugin_uri parameter"}
-            
+
 			result = await self._call_bridge("get_plugin_essentials", plugin_uri=plugin_uri)
 			if result and result.get("success", False):
 				return {"success": True, "essentials": result.get("essentials", {})}
@@ -979,7 +979,7 @@ class ZMQHandlers:
 			bundle_path = kwargs.get("bundle_path", "")
 			if not bundle_path:
 				return {"success": False, "error": "Missing bundle_path parameter"}
-            
+
 			result = await self._call_bridge("is_bundle_loaded", bundle_path=bundle_path)
 			if result and result.get("success", False):
 				return {"success": True, "loaded": result.get("loaded", False)}
@@ -995,7 +995,7 @@ class ZMQHandlers:
 			bundle_path = kwargs.get("bundle_path", "")
 			if not bundle_path:
 				return {"success": False, "error": "Missing bundle_path parameter"}
-            
+
 			result = await self._call_bridge("add_bundle", bundle_path=bundle_path)
 			return self._success_or_error(result, err_msg="Failed to add bundle")
 		except Exception as e:
@@ -1010,7 +1010,7 @@ class ZMQHandlers:
 			resource_path = kwargs.get("resource_path", "")
 			if not bundle_path:
 				return {"success": False, "error": "Missing bundle_path parameter"}
-            
+
 			result = await self._call_bridge("remove_bundle", bundle_path=bundle_path, resource_path=resource_path)
 			return self._success_or_error(result, err_msg="Failed to remove bundle")
 		except Exception as e:
@@ -1024,7 +1024,7 @@ class ZMQHandlers:
 			bundle_path = kwargs.get("bundle_path", "")
 			if not bundle_path:
 				return {"success": False, "error": "Missing bundle_path parameter"}
-            
+
 			result = await self._call_bridge("list_bundle_plugins", bundle_path=bundle_path)
 			if result and result.get("success", False):
 				return {"success": True, "plugins": result.get("plugins", [])}

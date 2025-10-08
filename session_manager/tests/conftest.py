@@ -38,10 +38,10 @@ def mock_bridge_client():
     """Mock bridge client for testing."""
     mock = Mock()
     mock.call = AsyncMock()
-    
+
     # Counter for instance IDs
     instance_counter = [0]
-    
+
     # Configure default response for different bridge methods
     def mock_call(service, method, **kwargs):
         if service == "modhost_bridge":
@@ -104,7 +104,7 @@ def mock_bridge_client():
                     }
                 }
         return {"success": True}
-    
+
     mock.call.side_effect = mock_call
     return mock
 

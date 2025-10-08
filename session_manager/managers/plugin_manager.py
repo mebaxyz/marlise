@@ -77,7 +77,7 @@ class PluginManager:
         try:
             # Get available plugins from bridge service
             result = await self.bridge.call("modhost_bridge", "get_available_plugins")
-            
+
             # Check if we got plugins directly (successful response) or an error
             if "plugins" in result and not result.get("error"):
                 self.available_plugins = result.get("plugins", {})
@@ -335,10 +335,10 @@ class PluginManager:
         """Get plugin essentials (parameters, ports, etc.)"""
         try:
             result = await self.bridge.call("modhost_bridge", "get_plugin_essentials", plugin_uri=plugin_uri)
-            
+
             if "error" in result:
                 raise RuntimeError(f"Failed to get plugin essentials: {result.get('error', 'Unknown error')}")
-            
+
             return result.get("essentials", {})
         except Exception as e:
             logger.error("Error getting plugin essentials for %s: %s", plugin_uri, e)

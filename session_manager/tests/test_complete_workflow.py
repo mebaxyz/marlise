@@ -21,7 +21,7 @@ async def test_complete_pedalboard_workflow():
     os.environ["SESSION_MANAGER_AUTO_CREATE_DEFAULT"] = "0"
 
     print("\n=== Starting Complete Pedalboard Workflow Test ===")
-    
+
     await startup()
     await asyncio.sleep(1.5)  # Give more time for plugin scanning
 
@@ -31,7 +31,7 @@ async def test_complete_pedalboard_workflow():
         print("Available plugins:")
         plugins = await main.plugin_manager.get_available_plugins()
         print(f"   Found {len(plugins)} plugins")
-        
+
         if plugins:
             for i, (uri, info) in enumerate(list(plugins.items())[:3]):
                 print(f"   - {uri}")
@@ -39,11 +39,11 @@ async def test_complete_pedalboard_workflow():
                     break
             if len(plugins) > 3:
                 print(f"   ... and {len(plugins) - 3} more")
-        
+
         # 2. Create a new pedalboard
         print("\n2. Creating pedalboard...")
         result = await main.session_manager.create_pedalboard(
-            "Real World Test Pedalboard", 
+            "Real World Test Pedalboard",
             "Integration test with real audio routing"
         )
         pedalboard_id = result.get("pedalboard_id")
@@ -59,7 +59,7 @@ async def test_complete_pedalboard_workflow():
 
         # 4. Test audio routing with PipeWire (real hardware connections)
         print("\n4. Testing audio routing...")
-        
+
         # Show current PipeWire state
         print("   Current PipeWire connections:")
         try:
@@ -78,21 +78,21 @@ async def test_complete_pedalboard_workflow():
         # Create a test connection: audio input -> mod-monitor
         print("   Creating test audio connection...")
         test_connections = []
-        
+
         try:
             # Connect system audio input to mod-host input
             source = "alsa_input.pci-0000_00_1f.3.analog-stereo:capture_FL"
-            target = "mod-monitor:in_1" 
-            
+            target = "mod-monitor:in_1"
+
             result = subprocess.run(
                 ["pw-link", source, target],
                 capture_output=True, text=True, timeout=5
             )
-            
+
             if result.returncode == 0:
                 test_connections.append((source, target))
                 print(f"   ✓ Connected: {source} -> {target}")
-                
+
                 # Verify connection exists
                 await asyncio.sleep(0.2)
                 verify_result = subprocess.run(["pw-link", "-l"], capture_output=True, text=True)
@@ -102,7 +102,7 @@ async def test_complete_pedalboard_workflow():
                     print("   ⚠ Connection not found in PipeWire output")
             else:
                 print(f"   ⚠ Failed to create connection: {result.stderr}")
-                
+
         except Exception as e:
             print(f"   Error creating test connection: {e}")
 
@@ -113,7 +113,7 @@ async def test_complete_pedalboard_workflow():
             conn_result = await main.session_manager.create_connection(
                 source_plugin="fake_plugin_1",
                 source_port="output_1",
-                target_plugin="fake_plugin_2", 
+                target_plugin="fake_plugin_2",
                 target_port="input_1"
             )
             print("   Unexpected: connection creation succeeded")
@@ -131,7 +131,7 @@ async def test_complete_pedalboard_workflow():
         print("\n7. Cleaning up test connections...")
         for source, target in test_connections:
             try:
-                subprocess.run(["pw-link", "-d", source, target], 
+                subprocess.run(["pw-link", "-d", source, target],
                              capture_output=True, timeout=5)
                 print(f"   ✓ Removed: {source} -> {target}")
             except Exception as e:
