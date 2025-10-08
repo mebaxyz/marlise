@@ -27,11 +27,12 @@ class ZMQHandlers:
     - SystemHandlers: System control, snapshots, banks, etc.
     """
 
-    def __init__(self, bridge_client, plugin_manager, session_manager, zmq_service):
+    def __init__(self, bridge_client, plugin_manager, session_manager, zmq_service, config_manager=None):
         self.bridge_client = bridge_client
         self.plugin_manager = plugin_manager
         self.session_manager = session_manager
         self.zmq_service = zmq_service
+        self.config_manager = config_manager
 
         # Initialize handler modules
         self.plugin_handlers = PluginHandlers(
@@ -44,7 +45,7 @@ class ZMQHandlers:
             bridge_client, plugin_manager, session_manager, zmq_service
         )
         self.system_handlers = SystemHandlers(
-            bridge_client, plugin_manager, session_manager, zmq_service
+            bridge_client, plugin_manager, session_manager, zmq_service, config_manager=self.config_manager
         )
 
         # Register all handlers

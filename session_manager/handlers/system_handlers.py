@@ -12,11 +12,12 @@ logger = logging.getLogger(__name__)
 class SystemHandlers:
     """System control and snapshot ZMQ RPC method handlers"""
 
-    def __init__(self, bridge_client, plugin_manager, session_manager, zmq_service):
+    def __init__(self, bridge_client, plugin_manager, session_manager, zmq_service, config_manager=None):
         self.bridge_client = bridge_client
         self.plugin_manager = plugin_manager
         self.session_manager = session_manager
         self.zmq_service = zmq_service
+        self.config_manager = config_manager
 
     def register_handlers(self):
         """Register all system control and snapshot handlers using decorator discovery"""
@@ -132,9 +133,12 @@ class SystemHandlers:
             key = kwargs.get("key")
             if not key:
                 return {"success": False, "error": "Missing 'key' parameter"}
-
-            # This would need to be implemented via config management
-            return {"success": False, "error": "Get config not implemented"}
+            # Use config_manager if available
+            if self.config_manager:
+                val = await self.config_manager.get_setting(key)
+                return {"success": True, "key": key, "value": val}
+            else:
+                return {"success": False, "error": "Config manager not available"}
         except Exception as e:
             logger.error("Failed to get config: %s", e)
             return {"success": False, "error": str(e)}
@@ -143,10 +147,31 @@ class SystemHandlers:
     async def handle_reset_config(self, **_kwargs) -> Dict[str, Any]:
         """Reset system configuration"""
         try:
-            # This would need to be implemented via config management
-            return {"success": False, "error": "Reset config not implemented"}
+            if self.config_manager:
+                ok = await self.config_manager.reset_config()
+                return {"success": ok}
+            else:
+                return {"success": False, "error": "Config manager not available"}
         except Exception as e:
             logger.error("Failed to reset config: %s", e)
+            return {"success": False, "error": str(e)}
+
+    @zmq_handler("set_config")
+    async def handle_set_config(self, **kwargs) -> Dict[str, Any]:
+        """Set a configuration key to a value"""
+        try:
+            key = kwargs.get("key")
+            value = kwargs.get("value")
+            if not key:
+                return {"success": False, "error": "Missing 'key' parameter"}
+
+            if self.config_manager:
+                ok = await self.config_manager.set_config(key, value)
+                return {"success": ok}
+
+            return {"success": False, "error": "Config manager not available"}
+        except Exception as e:
+            logger.error("Failed to set config: %s", e)
             return {"success": False, "error": str(e)}
 
     @zmq_handler("ping_hmi")

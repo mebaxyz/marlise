@@ -29,6 +29,7 @@ import zmq
 # Local imports
 from .infrastructure.bridge_client import BridgeClient
 from .managers.plugin_manager import PluginManager
+from .managers.config_manager import ConfigManager
 from .managers.session_manager import SessionManager
 from .handlers.zmq_handlers import ZMQHandlers
 from .services.zmq_service import ZMQService
@@ -115,6 +116,9 @@ class SessionManagerService:
                 self.bridge_client,
                 self.zmq_service,
             )
+            # Initialize config manager (thin proxy to external config-service)
+            self.config_manager = ConfigManager(self.zmq_service)
+            logger.info("Config manager initialized")
             logger.info("Session manager initialized")
 
             # Optionally auto-create a default pedalboard on startup.
@@ -129,6 +133,7 @@ class SessionManagerService:
                 self.plugin_manager,
                 self.session_manager,
                 self.zmq_service,
+                self.config_manager,
             )
             handlers.register_service_methods()
 
@@ -156,6 +161,11 @@ class SessionManagerService:
         if self.plugin_manager:
             await self.plugin_manager.shutdown()
             logger.info("Plugin manager shutdown")
+
+        if getattr(self, "config_manager", None):
+            # Nothing to stop locally; clear reference
+            self.config_manager = None
+            logger.info("Config manager cleared")
 
         if self.bridge_client:
             await self.bridge_client.stop()
