@@ -9,8 +9,21 @@ from tornado import iostream, gen
 from tornado.ioloop import IOLoop, PeriodicCallback
 
 from mod import safe_json_load, TextFileFlusher
-from mod.development import FakeHost, FakeHMI
-from mod.hmi import HMI
+
+# Minimal fake classes for development mode (since development.py was removed)
+class FakeHost:
+    def __init__(self):
+        pass
+    
+class FakeHMI:
+    def __init__(self):
+        pass
+
+try:
+    from mod.hmi import HMI
+except ImportError:
+    # If HMI is not available, use FakeHMI
+    HMI = FakeHMI
 from mod.recorder import Recorder, Player
 from mod.screenshot import ScreenshotGenerator
 from mod.settings import (LOG,

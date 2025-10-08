@@ -2,8 +2,7 @@
 # SPDX-FileCopyrightText: 2012-2023 MOD Audio UG
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-# Template server with integrated API proxy to FastAPI client interface
-# Serves templates + static files AND proxies API calls to localhost:8080
+"""Standalone template server with integrated API proxy for Marlise"""
 
 import json
 import logging
@@ -18,46 +17,66 @@ from tornado.ioloop import IOLoop
 from tornado.httputil import HTTPHeaders
 from urllib.parse import urlencode, urlparse
 
-from mod.profile import Profile
-from mod.settings import (DESKTOP, LOG, DEV_API,
-                          HTML_DIR, DEVICE_KEY, DEVICE_WEBSERVER_PORT,
-                          CLOUD_HTTP_ADDRESS, CLOUD_LABS_HTTP_ADDRESS,
-                          PLUGINS_HTTP_ADDRESS, PEDALBOARDS_HTTP_ADDRESS, CONTROLCHAIN_HTTP_ADDRESS,
-                          DEFAULT_ICON_TEMPLATE, DEFAULT_SETTINGS_TEMPLATE,
-                          DEFAULT_PEDALBOARD, UNTITLED_PEDALBOARD_NAME, IMAGE_VERSION,
-                          PREFERENCES_JSON_FILE, USER_ID_JSON_FILE, FAVORITES_JSON_FILE,
-                          LV2_PLUGIN_DIR, PEDALBOARDS_LABS_HTTP_ADDRESS)
+# Configuration constants
+HTML_DIR = os.path.dirname(os.path.abspath(__file__)) + "/html"
+DEVICE_WEBSERVER_PORT = 8888
+LOG = 1
 
-from mod import (
-    check_environment, safe_json_load,
-    get_hardware_descriptor, os_sync,
-)
-try:
-    from mod.session import SESSION
-except ImportError:
-    # Use mock session for template-only mode
-    from mod.session_mock import SESSION
-from modtools.utils import (
-    init as lv2_init, cleanup as lv2_cleanup,
-    get_pedalboard_info, get_jack_buffer_size, get_jack_sample_rate,
-)
+# Minimal mock objects for template rendering
+class MockPreferences:
+    def __init__(self):
+        self.prefs = {}
 
-# Global webserver state
-class GlobalWebServerState(object):
-    __slots__ = ['favorites']
+class MockHost:
+    def __init__(self):
+        self.pedalboard_name = "Untitled Pedalboard"
+        self.pedalboard_path = "/tmp/default.pedalboard" 
+        self.pedalboard_size = [0, 0]
+    
+    def snapshot_name(self):
+        return "Default"
 
-gState = GlobalWebServerState()
-gState.favorites = []
+class MockSession:
+    def __init__(self):
+        self.prefs = MockPreferences()
+        self.host = MockHost()
+    
+    def wait_for_hardware_if_needed(self, callback=None):
+        if callback:
+            callback(True)
+        return True
+    
+    def get_hardware_actuators(self):
+        return []
+
+SESSION = MockSession()
 
 def mod_squeeze(text):
-    from tornado.escape import squeeze
-    return squeeze(text.replace("\\", "\\\\").replace("'", "\\'"))
+    """Simple text escaping for templates"""
+    return text.replace("\\", "\\\\").replace("'", "\\'")
 
-# Base classes for templating
+def safe_json_load(path, default_type):
+    """Safely load JSON file or return default"""
+    try:
+        with open(path, 'r') as f:
+            return json.load(f)
+    except:
+        return default_type()
+
+def get_jack_buffer_size():
+    return 256
+
+def get_jack_sample_rate(): 
+    return 48000
+
+def get_hardware_descriptor():
+    return {}
+
+# Global state
+gState = type('obj', (object,), {'favorites': []})()
+
+# Base handler classes
 class TimelessRequestHandler(web.RequestHandler):
-    def compute_etag(self):
-        return None
-
     def set_default_headers(self):
         self.set_header("Cache-Control", "no-cache, no-store, must-revalidate")
         self.set_header("Pragma", "no-cache")
@@ -203,188 +222,136 @@ class WebSocketProxyHandler(websocket.WebSocketHandler):
             self.proxy_ws = None
 
 # =============================================================================
-# Template serving (the only server functionality we need to keep)
+# Template serving handlers
+
 class TemplateHandler(TimelessRequestHandler):
     @gen.coroutine
     def get(self, path):
-        # Caching strategy
-        curVersion = self.get_version()
+        # Simple versioning
         try:
             version = url_escape(self.get_argument('v'))
         except web.MissingArgumentError:
-            uri  = self.request.uri
+            uri = self.request.uri
             uri += '&' if self.request.query else '?'
-            uri += 'v=%s' % curVersion
-            self.redirect(uri)
-            return
-            
-        if IMAGE_VERSION is not None and version != curVersion:
-            uri = self.request.uri.replace('v=%s' % version, 'v=%s' % curVersion)
+            uri += 'v=%d' % int(time.time())
             self.redirect(uri)
             return
 
-        if not path:
-            path = 'index.html'
-        elif path == 'sdk':
-            self.redirect(self.request.full_url().replace("/sdk", ":9000"), True)
-            return
-        elif path == 'allguis':
-            uri = '/allguis.html?v=%s' % curVersion
-            self.redirect(uri, True)
-            return
-        elif path == 'settings':
-            uri = '/settings.html?v=%s' % curVersion
-            self.redirect(uri, True)
-            return
-        elif not os.path.exists(os.path.join(HTML_DIR, path)):
-            uri = '/?v=%s' % curVersion
-            self.redirect(uri)
-            return
-
-        loader = Loader(HTML_DIR)
-        section = path.split('.',1)[0]
-
-        if section == 'index':
-            yield gen.Task(SESSION.wait_for_hardware_if_needed)
-
-        try:
-            context = getattr(self, section)()
-        except AttributeError:
+        # Route to appropriate template
+        if path in ('', 'index.html'):
+            context = self.index()
+        elif path in ('pedalboard', 'pedalboard.html'):
+            context = self.pedalboard()
+        elif path in ('settings', 'settings.html'):
+            context = self.settings()
+        elif path in ('allguis',):
+            context = self.allguis()
+        else:
+            # Default template
             context = {}
-        self.write(loader.load(path).generate(**context))
+
+        # Add common template variables
+        context.update({
+            'version': version,
+            'using_desktop': False,
+            'using_mod': True,
+            'favorites': json.dumps(gState.favorites),
+            'sampleRate': get_jack_sample_rate(),
+            'bufferSize': get_jack_buffer_size(),
+            'codec_truebypass': True,
+            'hardware_profile': b64encode(json.dumps([]).encode("utf-8")),
+            'preferences': json.dumps({}),
+            'addressing_pages': json.dumps([])
+        })
+
+        # Render template
+        template_path = path if path.endswith('.html') else f"{path}.html"
+        template_file = os.path.join(HTML_DIR, template_path)
+        
+        try:
+            loader = Loader(HTML_DIR)
+            template = loader.load(template_path)
+            html = template.generate(**context)
+            self.write(html)
+        except Exception as e:
+            logging.error(f"Template error: {e}")
+            self.write_error(500)
 
     def get_version(self):
-        if IMAGE_VERSION is not None and len(IMAGE_VERSION) > 1:
-            version = IMAGE_VERSION[1:] if IMAGE_VERSION[0] == "v" else IMAGE_VERSION
-            return url_escape(version)
-        return str(int(time.time()))
+        return int(time.time())
 
     def index(self):
-        user_id = safe_json_load(USER_ID_JSON_FILE, dict)
-
-        with open(DEFAULT_ICON_TEMPLATE, 'r') as fh:
-            default_icon_template = mod_squeeze(fh.read())
-
-        with open(DEFAULT_SETTINGS_TEMPLATE, 'r') as fh:
-            default_settings_template = mod_squeeze(fh.read())
-
-        pbname = SESSION.host.pedalboard_name
-        prname = SESSION.host.snapshot_name()
-
-        fullpbname = pbname or UNTITLED_PEDALBOARD_NAME
-        if prname:
-            fullpbname += " - " + prname
-
-        hwdesc = get_hardware_descriptor()
-
-        context = {
-            'default_icon_template': default_icon_template,
-            'default_settings_template': default_settings_template,
-            'default_pedalboard': mod_squeeze(DEFAULT_PEDALBOARD),
-            'cloud_url': CLOUD_HTTP_ADDRESS,
-            'cloud_labs_url': CLOUD_LABS_HTTP_ADDRESS,
-            'plugins_url': PLUGINS_HTTP_ADDRESS,
-            'pedalboards_url': PEDALBOARDS_HTTP_ADDRESS,
-            'pedalboards_labs_url': PEDALBOARDS_LABS_HTTP_ADDRESS,
-            'controlchain_url': CONTROLCHAIN_HTTP_ADDRESS,
-            'hardware_profile': b64encode(json.dumps(SESSION.get_hardware_actuators()).encode("utf-8")),
-            'version': self.get_argument('v'),
-            'bin_compat': hwdesc.get('bin-compat', "Unknown"),
-            'codec_truebypass': 'true' if hwdesc.get('codec_truebypass', False) else 'false',
-            'factory_pedalboards': hwdesc.get('factory_pedalboards', False),
-            'platform': hwdesc.get('platform', "Unknown"),
-            'addressing_pages': int(hwdesc.get('addressing_pages', 0)),
-            'lv2_plugin_dir': mod_squeeze(LV2_PLUGIN_DIR),
-            'bundlepath': mod_squeeze(SESSION.host.pedalboard_path),
-            'title':  mod_squeeze(pbname),
-            'size': json.dumps(SESSION.host.pedalboard_size),
-            'fulltitle':  xhtml_escape(fullpbname),
-            'titleblend': '' if SESSION.host.pedalboard_name else 'blend',
-            'dev_api_class': 'dev_api' if DEV_API else '',
-            'using_desktop': 'true' if DESKTOP else 'false',
-            'using_mod': 'true' if DEVICE_KEY and hwdesc.get('platform', None) is not None else 'false',
-            'user_name': mod_squeeze(user_id.get("name", "")),
-            'user_email': mod_squeeze(user_id.get("email", "")),
-            'favorites': json.dumps(gState.favorites),
-            'preferences': json.dumps(SESSION.prefs.prefs),
-            'bufferSize': get_jack_buffer_size(),
-            'sampleRate': get_jack_sample_rate(),
+        return {
+            'titleblend': '',
+            'bundlepath': '',
+            'size': json.dumps([0, 0])
         }
-        return context
 
     def pedalboard(self):
-        bundlepath = self.get_argument('bundlepath')
-
-        with open(DEFAULT_ICON_TEMPLATE, 'r') as fh:
-            default_icon_template = mod_squeeze(fh.read())
-
-        with open(DEFAULT_SETTINGS_TEMPLATE, 'r') as fh:
-            default_settings_template = mod_squeeze(fh.read())
-
-        try:
-            pedalboard = get_pedalboard_info(bundlepath)
-        except:
-            print("ERROR: get_pedalboard_info failed")
-            pedalboard = {
-                'height': 0,
-                'width': 0,
-                'title': "",
-                'connections': [],
-                'plugins': [],
-                'hardware': {},
-            }
-
-        context = {
-            'default_icon_template': default_icon_template,
-            'default_settings_template': default_settings_template,
+        pedalboard = {
+            'title': SESSION.host.pedalboard_name,
+            'connections': [],
+            'plugins': [],
+            'hardware': {'audio_ins': 2, 'audio_outs': 2, 'midi_ins': 1, 'midi_outs': 1}
+        }
+        
+        return {
+            'default_icon_template': '',
+            'default_settings_template': '',
             'pedalboard': b64encode(json.dumps(pedalboard).encode("utf-8"))
         }
-        return context
 
     def allguis(self):
         return {'version': self.get_argument('v')}
 
     def settings(self):
-        hwdesc = get_hardware_descriptor()
-        prefs = safe_json_load(PREFERENCES_JSON_FILE, dict)
-
-        context = {
-            'cloud_url': CLOUD_HTTP_ADDRESS,
-            'controlchain_url': CONTROLCHAIN_HTTP_ADDRESS,
+        return {
+            'cloud_url': '',
+            'controlchain_url': '',
             'version': self.get_argument('v'),
-            'hmi_eeprom': 'true' if hwdesc.get('hmi_eeprom', False) else 'false',
-            'preferences': json.dumps(prefs),
+            'hmi_eeprom': 'false',
+            'preferences': json.dumps({}),
             'bufferSize': get_jack_buffer_size(),
             'sampleRate': get_jack_sample_rate(),
         }
-        return context
 
 class TemplateLoader(TimelessRequestHandler):
     def get(self, path):
         self.set_header("Content-Type", "text/plain; charset=UTF-8")
-        with open(os.path.join(HTML_DIR, 'include', path), 'r') as fh:
-            self.write(fh.read())
-        self.finish()
+        try:
+            with open(os.path.join(HTML_DIR, 'include', path), 'r') as fh:
+                self.write(fh.read())
+        except FileNotFoundError:
+            self.write_error(404)
 
 class BulkTemplateLoader(TimelessRequestHandler):
     def get(self):
         self.set_header("Content-Type", "text/javascript; charset=UTF-8")
         basedir = os.path.join(HTML_DIR, 'include')
+        
+        if not os.path.exists(basedir):
+            self.write("// No templates directory found\n")
+            return
+            
         for template in os.listdir(basedir):
             if not re.match(r'^[a-z_]+\.html$', template):
                 continue
-            with open(os.path.join(basedir, template), 'r') as fh:
-                contents = fh.read()
-            self.write("TEMPLATES['%s'] = '%s';\n\n"
-                       % (template[:-5], mod_squeeze(contents)))
-        self.finish()
+            try:
+                with open(os.path.join(basedir, template), 'r') as fh:
+                    contents = fh.read()
+                self.write("TEMPLATES['%s'] = '%s';\n\n"
+                           % (template[:-5], mod_squeeze(contents)))
+            except Exception:
+                continue
 
     def set_default_headers(self):
         TimelessRequestHandler.set_default_headers(self)
         self.set_header("Cache-Control", "public, max-age=31536000")
         self.set_header("Expires", "Mon, 31 Dec 2035 12:00:00 gmt")
 
-# Application with templating support and API proxy
+# =============================================================================
+# Main Application
+
 def create_application():
     settings = {'log_function': lambda handler: None} if not LOG else {}
     
@@ -409,22 +376,8 @@ def create_application():
         (r"/(.*)", TimelessStaticFileHandler, {"path": HTML_DIR}),
     ], debug=bool(LOG >= 2), **settings)
 
-def prepare():
-    """Initialize the template server"""
-    check_environment()
-    lv2_init()
-    
-    # Load favorites for template context
-    gState.favorites = safe_json_load(FAVORITES_JSON_FILE, list)
-    
-    return True
-
 def run():
-    """Start the template server"""
-    if not prepare():
-        print("ERROR: Failed to prepare template server")
-        return False
-        
+    """Start the template server with integrated proxy"""
     application = create_application()
     application.listen(DEVICE_WEBSERVER_PORT)
     
@@ -436,8 +389,7 @@ def run():
     try:
         IOLoop.current().start()
     except KeyboardInterrupt:
-        print("Template server stopped")
-        lv2_cleanup()
+        print("\n🛑 Template server stopped")
         return True
 
 if __name__ == '__main__':
