@@ -8,7 +8,7 @@ from ..models import (
     PackageInstallResponse, StatusResponse
 )
 
-from ..main import zmq_client
+from fastapi import Request
 import asyncio
 import logging
 
@@ -18,12 +18,13 @@ router = APIRouter(tags=["updates"])
 
 
 @router.post("/update/begin")
-async def begin_update():
+async def begin_update(request: Request):
     """Start system update/restore process.
 
     TODO: trigger the system update flow through the session manager and return immediate status.
     """
     # Call session manager to begin update
+    zmq_client = getattr(request.app.state, 'zmq_client', None)
     if zmq_client is None:
         return {"ok": False}
 
@@ -40,12 +41,13 @@ async def begin_update():
 
 
 @router.post("/update/download")
-async def upload_system_image(file: UploadFile = File(...)):
+async def upload_system_image(request: Request, file: UploadFile = File(...)):
     """Upload system image file for firmware update.
 
     TODO: validate image, stage to temp location and pass to update process via session manager.
     """
     # Process uploaded system image
+    zmq_client = getattr(request.app.state, 'zmq_client', None) if request is not None else None
     if zmq_client is None:
         return {
             "ok": False,
@@ -78,12 +80,13 @@ async def upload_system_image(file: UploadFile = File(...)):
 
 
 @router.post("/controlchain/download")
-async def upload_controlchain_firmware(file: UploadFile = File(...)):
+async def upload_controlchain_firmware(request: Request, file: UploadFile = File(...)):
     """Upload firmware for Control Chain hardware devices.
 
     TODO: stage firmware and instruct control chain updater via session manager.
     """
     # Process uploaded Control Chain firmware
+    zmq_client = getattr(request.app.state, 'zmq_client', None) if request is not None else None
     if zmq_client is None:
         return {
             "ok": False,
@@ -116,12 +119,13 @@ async def upload_controlchain_firmware(file: UploadFile = File(...)):
 
 
 @router.post("/controlchain/cancel")
-async def cancel_controlchain_update():
+async def cancel_controlchain_update(request: Request):
     """Cancel ongoing Control Chain firmware update.
 
     TODO: notify session manager to cancel update process safely.
     """
     # Cancel Control Chain update
+    zmq_client = getattr(request.app.state, 'zmq_client', None)
     if zmq_client is None:
         return {"ok": False}
 
@@ -138,12 +142,13 @@ async def cancel_controlchain_update():
 
 
 @router.post("/package/uninstall")
-async def uninstall_package(request: PackageUninstallRequest):
+async def uninstall_package(request: PackageUninstallRequest, http_request: Request):
     """Uninstall plugin packages.
 
     TODO: forward uninstall list to session manager, return removed bundles and errors.
     """
     # Call session manager to uninstall packages
+    zmq_client = getattr(http_request.app.state, 'zmq_client', None)
     if zmq_client is None:
         return PackageUninstallResponse(
             ok=False,

@@ -37,10 +37,35 @@ try:
 except ImportError:
     # Use mock session for template-only mode
     from mod.session_mock import SESSION
-from modtools.utils import (
-    init as lv2_init, cleanup as lv2_cleanup,
-    get_pedalboard_info, get_jack_buffer_size, get_jack_sample_rate,
-)
+try:
+    from modtools.utils import (
+        init as lv2_init, cleanup as lv2_cleanup,
+        get_pedalboard_info, get_jack_buffer_size, get_jack_sample_rate,
+    )
+except Exception:
+    # Running in template-only or dev environment without native libs.
+    # Provide lightweight fallbacks so pages render without LV2/native deps.
+    def lv2_init():
+        return None
+
+    def lv2_cleanup():
+        return None
+
+    def get_pedalboard_info(bundlepath):
+        return {
+            'height': 0,
+            'width': 0,
+            'title': '',
+            'connections': [],
+            'plugins': [],
+            'hardware': {},
+        }
+
+    def get_jack_buffer_size():
+        return 256
+
+    def get_jack_sample_rate():
+        return 48000
 
 # Global webserver state
 class GlobalWebServerState(object):
@@ -48,6 +73,15 @@ class GlobalWebServerState(object):
 
 gState = GlobalWebServerState()
 gState.favorites = []
+
+# Allow configuring the FastAPI target for the integrated proxy via environment
+# variables. This makes the template server usable inside docker-compose where
+# the FastAPI service may be reachable at a different hostname.
+PROXY_HOST = os.environ.get('API_PROXY_HOST') or os.environ.get('FASTAPI_HOST') or os.environ.get('CLIENT_INTERFACE_ZMQ_HOST') or 'localhost'
+try:
+    PROXY_PORT = int(os.environ.get('API_PROXY_PORT') or os.environ.get('FASTAPI_PORT') or os.environ.get('CLIENT_INTERFACE_ZMQ_PORT') or 8080)
+except Exception:
+    PROXY_PORT = 8080
 
 def mod_squeeze(text):
     from tornado.escape import squeeze
@@ -387,17 +421,22 @@ class BulkTemplateLoader(TimelessRequestHandler):
 # Application with templating support and API proxy
 def create_application():
     settings = {'log_function': lambda handler: None} if not LOG else {}
-    
+
+    # Inject proxy host/port into the handler initialize kwargs so they don't
+    # rely on hard-coded defaults. This lets the environment drive where the
+    # proxy forwards requests (useful in docker-compose).
+    proxy_kwargs = dict(proxy_host=PROXY_HOST, proxy_port=PROXY_PORT)
+
     return web.Application([
         # WebSocket proxy (must come first to avoid conflicts)
-        (r"/websocket/?", WebSocketProxyHandler),
-        
+        (r"/websocket/?", WebSocketProxyHandler, proxy_kwargs),
+
         # API proxy for all /api/* routes
-        (r"/api/.*", ApiProxyHandler),
-        
+        (r"/api/.*", ApiProxyHandler, proxy_kwargs),
+
         # Legacy API routes (proxy to FastAPI with /api/ prefix)
-        (r"/(effect|pedalboard|snapshot|bank|login|logout|reset|system|hardware|jack|session|preferences|user|plugins|plugin|bundle|pedalboards|controllers|download|upload|ping)/?.*", ApiProxyHandler),
-        
+        (r"/(effect|pedalboard|snapshot|bank|login|logout|reset|system|hardware|jack|session|preferences|user|plugins|plugin|bundle|pedalboards|controllers|download|upload|ping)/?.*", ApiProxyHandler, proxy_kwargs),
+
         # Template serving (main functionality)
         (r"/(index.html)?$", TemplateHandler),
         (r"/([a-z]+\.html)$", TemplateHandler),
@@ -426,11 +465,40 @@ def run():
         return False
         
     application = create_application()
-    application.listen(DEVICE_WEBSERVER_PORT)
-    
-    print("🚀 Marlise Template Server running on port %d" % DEVICE_WEBSERVER_PORT)
-    print("📡 API proxy active - forwarding calls to FastAPI on port 8080")
-    print("🌐 WebSocket proxy active - forwarding /websocket to /ws on port 8080")
+    bind_port = DEVICE_WEBSERVER_PORT
+    actual_port = None
+    # List of fallback ports to try before using an ephemeral port
+    fallbacks = [int(os.environ.get('DEV_TEMPLATE_PORT', 8888)), 8000, 5173]
+    try:
+        application.listen(bind_port)
+        actual_port = bind_port
+    except Exception as exc_main:
+        # Try fallbacks
+        for fallback in fallbacks:
+            try:
+                application.listen(fallback)
+                actual_port = fallback
+                print(f"Warning: could not bind to port {bind_port} ({exc_main}); bound to fallback {fallback}")
+                break
+            except Exception:
+                continue
+
+    if actual_port is None:
+        # Last resort: bind to an ephemeral port and retrieve the assigned port
+        try:
+            from tornado import httpserver, netutil
+            sockets = netutil.bind_sockets(0)
+            server = httpserver.HTTPServer(application)
+            server.add_sockets(sockets)
+            actual_port = sockets[0].getsockname()[1]
+            print(f"Info: bound to ephemeral port {actual_port}")
+        except Exception as e:
+            print(f"Failed to bind to any port: {e}")
+            raise
+
+    print("🚀 Marlise Template Server running on port %d" % actual_port)
+    print(f"📡 API proxy active - forwarding calls to FastAPI on {PROXY_HOST}:{PROXY_PORT}")
+    print(f"🌐 WebSocket proxy active - forwarding /websocket to /ws on {PROXY_HOST}:{PROXY_PORT}")
     print("📄 Serving templates and static files from %s" % HTML_DIR)
     
     try:

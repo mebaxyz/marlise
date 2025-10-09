@@ -1,14 +1,13 @@
 """
 System, Device, and Performance Control API endpoints
 """
-from fastapi import APIRouter, Path, Form
+from fastapi import APIRouter, Path, Form, Request
 
 from ..models import (
     PingResponse, TrueBypassRequest, BufferSizeRequest, BufferSizeResponse,
     ConfigSetRequest, ConfigGetResponse, StatusResponse
 )
 
-from ..main import zmq_client
 import asyncio
 import logging
 
@@ -18,8 +17,9 @@ router = APIRouter(prefix="/system", tags=["system"])
 
 
 @router.get("/ping", response_model=PingResponse)
-async def ping_device():
+async def ping_device(request: Request):
     """Check HMI (Hardware Machine Interface) connection status and latency."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         logger.debug("zmq_client not available, returning default ping response")
         return PingResponse(ihm_online=False, ihm_time=0.0)
@@ -44,8 +44,9 @@ async def ping_device():
 
 
 @router.get("/reset")
-async def reset_session():
+async def reset_session(request: Request):
     """Reset current session to empty pedalboard state."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"ok": False}
 
@@ -63,10 +64,12 @@ async def reset_session():
 
 @router.get("/truebypass/{channel}/{state}")
 async def set_truebypass(
+    request: Request,
     channel: str = Path(..., description="Left or Right"),
     state: str = Path(..., description="true or false")
 ):
     """Control hardware true bypass relays for direct audio routing."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"ok": False}
 
@@ -85,9 +88,11 @@ async def set_truebypass(
 
 @router.post("/set_buffersize/{size}")
 async def set_buffer_size(
+    request: Request,
     size: int = Path(..., description="Buffer size: 128 or 256")
 ):
     """Change JACK audio buffer size for latency vs. stability tradeoff."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return BufferSizeResponse(ok=False, size=0)
 
@@ -110,8 +115,9 @@ async def set_buffer_size(
 
 
 @router.post("/reset_xruns")
-async def reset_xruns():
+async def reset_xruns(request: Request):
     """Reset JACK audio dropout (xrun) counter to zero."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"ok": False}
 
@@ -128,8 +134,9 @@ async def reset_xruns():
 
 
 @router.post("/switch_cpu_freq")
-async def switch_cpu_frequency():
+async def switch_cpu_frequency(request: Request):
     """Toggle CPU frequency scaling between performance and powersave modes."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"ok": False}
 
@@ -148,10 +155,12 @@ async def switch_cpu_frequency():
 # Configuration endpoints
 @router.post("/config/set")
 async def set_config(
+    request: Request,
     key: str = Form(...),
     value: str = Form(...)
 ):
     """Save user interface configuration settings."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"ok": False}
 
@@ -169,9 +178,11 @@ async def set_config(
 
 @router.get("/config/get/{key}")
 async def get_config(
+    request: Request,
     key: str = Path(..., description="Configuration key")
 ):
     """Get user interface configuration setting."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"value": None}
 

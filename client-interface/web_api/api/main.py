@@ -134,6 +134,15 @@ async def lifespan(app: FastAPI):
     zmq_client = ZMQClient(SERVICE_NAME)
     await zmq_client.start()
 
+    # Export the ZMQ client on the application state to avoid circular imports
+    # from router modules. Routers can access it via `request.app.state.zmq_client`.
+    try:
+        app.state.zmq_client = zmq_client
+    except Exception:
+        # `app` may not be fully initialized in some contexts; routers should
+        # use request.app.state for runtime access.
+        pass
+
     logger.info("ZMQ client started")
     logger.info("%s service started successfully", SERVICE_NAME)
 

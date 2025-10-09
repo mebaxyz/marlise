@@ -14,6 +14,8 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - LOG=1
+      - API_PROXY_HOST=fastapi-client-interface
+      - API_PROXY_PORT=8080
     depends_on:
       - fastapi-client-interface
     networks:

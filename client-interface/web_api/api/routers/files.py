@@ -6,7 +6,7 @@ from fastapi import APIRouter, Query
 
 from ..models import FileListResponse, UserFile
 
-from ..main import zmq_client
+from fastapi import Request
 import asyncio
 import logging
 
@@ -17,7 +17,8 @@ router = APIRouter(prefix="/files", tags=["files"])
 
 @router.get("/list", response_model=FileListResponse)
 async def list_user_files(
-    types: str = Query(..., description="Comma-separated file types: audioloop,audiorecording,audiosample,audiotrack,cabsim,h2drumkit,ir,midiclip,midisong,sf2,sfz,aidadspmodel,nammodel")
+    request: Request,
+    types: str = Query(..., description="Comma-separated file types: audioloop,audiorecording,audiosample,audiotrack,cabsim,h2drumkit,ir,midiclip,midisong,sf2,sfz,aidadspmodel,nammodel"),
 ):
     """List user files of specific types for plugin file selectors.
 
@@ -27,6 +28,8 @@ async def list_user_files(
     file_types = [t.strip() for t in types.split(',')]
     
     # Call session manager to scan for user files
+    # Get zmq_client from app state
+    zmq_client = getattr(request.app.state, 'zmq_client', None) if request is not None else None
     if zmq_client is None:
         return FileListResponse(
             ok=False,

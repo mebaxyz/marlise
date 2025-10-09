@@ -22,6 +22,13 @@ HTML_DIR = os.path.dirname(os.path.abspath(__file__)) + "/html"
 DEVICE_WEBSERVER_PORT = 8888
 LOG = 1
 
+# Proxy target configuration (env overrides useful for docker-compose)
+PROXY_HOST = os.environ.get('API_PROXY_HOST') or os.environ.get('FASTAPI_HOST') or 'localhost'
+try:
+    PROXY_PORT = int(os.environ.get('API_PROXY_PORT') or os.environ.get('FASTAPI_PORT') or 8080)
+except Exception:
+    PROXY_PORT = 8080
+
 # Minimal mock objects for template rendering
 class MockPreferences:
     def __init__(self):
@@ -238,6 +245,9 @@ class TemplateHandler(TimelessRequestHandler):
             return
 
         # Route to appropriate template
+        if path is None:
+            path = ''
+
         if path in ('', 'index.html'):
             context = self.index()
         elif path in ('pedalboard', 'pedalboard.html'):
@@ -353,17 +363,19 @@ class BulkTemplateLoader(TimelessRequestHandler):
 # Main Application
 
 def create_application():
-    settings = {'log_function': lambda handler: None} if not LOG else {}
-    
+    # Ensure tornado's write_error can safely check settings.get('serve_traceback')
+    settings = {'log_function': lambda handler: None, 'serve_traceback': False} if not LOG else {'serve_traceback': False}
+    proxy_kwargs = dict(proxy_host=PROXY_HOST, proxy_port=PROXY_PORT)
+
     return web.Application([
         # WebSocket proxy (must come first to avoid conflicts)
-        (r"/websocket/?", WebSocketProxyHandler),
-        
+        (r"/websocket/?", WebSocketProxyHandler, proxy_kwargs),
+
         # API proxy for all /api/* routes
-        (r"/api/.*", ApiProxyHandler),
-        
+        (r"/api/.*", ApiProxyHandler, proxy_kwargs),
+
         # Legacy API routes (proxy to FastAPI with /api/ prefix)
-        (r"/(effect|pedalboard|snapshot|bank|login|logout|reset|system|hardware|jack|session|preferences|user|plugins|plugin|bundle|pedalboards|controllers|download|upload|ping)/?.*", ApiProxyHandler),
+        (r"/(effect|pedalboard|snapshot|bank|login|logout|reset|system|hardware|jack|session|preferences|user|plugins|plugin|bundle|pedalboards|controllers|download|upload|ping)/?.*", ApiProxyHandler, proxy_kwargs),
         
         # Template serving (main functionality)
         (r"/(index.html)?$", TemplateHandler),
@@ -379,11 +391,26 @@ def create_application():
 def run():
     """Start the template server with integrated proxy"""
     application = create_application()
-    application.listen(DEVICE_WEBSERVER_PORT)
-    
-    print("🚀 Marlise Template Server running on port %d" % DEVICE_WEBSERVER_PORT)
-    print("📡 API proxy active - forwarding calls to FastAPI on port 8080")
-    print("🌐 WebSocket proxy active - forwarding /websocket to /ws on port 8080")
+    actual_port = None
+    try:
+        application.listen(DEVICE_WEBSERVER_PORT)
+        actual_port = DEVICE_WEBSERVER_PORT
+    except Exception:
+        fallback = int(os.environ.get('DEV_TEMPLATE_PORT', 8888))
+        try:
+            application.listen(fallback)
+            actual_port = fallback
+            print(f"Warning: bound to fallback port {fallback}")
+        except Exception:
+            from tornado import httpserver, netutil
+            sockets = netutil.bind_sockets(0)
+            server = httpserver.HTTPServer(application)
+            server.add_sockets(sockets)
+            actual_port = sockets[0].getsockname()[1]
+
+    print("🚀 Marlise Template Server running on port %d" % actual_port)
+    print(f"📡 API proxy active - forwarding calls to FastAPI on {PROXY_HOST}:{PROXY_PORT}")
+    print(f"🌐 WebSocket proxy active - forwarding /websocket to /ws on {PROXY_HOST}:{PROXY_PORT}")
     print("📄 Serving templates and static files from %s" % HTML_DIR)
     
     try:

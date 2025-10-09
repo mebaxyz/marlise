@@ -8,7 +8,7 @@ from ..models import (
     MidiDevicesResponse, MidiDevicesRequest, StatusResponse
 )
 
-from ..main import zmq_client
+from fastapi import Request
 import asyncio
 import logging
 
@@ -18,12 +18,13 @@ router = APIRouter(prefix="/jack", tags=["jack", "midi"])
 
 
 @router.get("/get_midi_devices", response_model=MidiDevicesResponse)
-async def get_midi_devices():
+async def get_midi_devices(request: Request):
     """Get list of available MIDI devices and current configuration.
 
     TODO: query session manager for JACK MIDI ports and aggregated mode.
     """
     # Call session manager for MIDI device info
+    zmq_client = getattr(request.app.state, 'zmq_client', None)
     if zmq_client is None:
         return MidiDevicesResponse(
             devsInUse=[],
@@ -68,19 +69,20 @@ async def get_midi_devices():
 
 
 @router.post("/set_midi_devices")
-async def set_midi_devices(request: MidiDevicesRequest):
+async def set_midi_devices(request: Request, payload: MidiDevicesRequest):
     """Configure which MIDI devices are active and their routing mode.
 
     TODO: forward configuration to session manager which will create/remove JACK ports.
     """
     # Call session manager to configure MIDI devices
+    zmq_client = getattr(request.app.state, 'zmq_client', None)
     if zmq_client is None:
         return {"ok": False}
 
     try:
         fut = zmq_client.call("session_manager", "set_midi_devices",
-                             devs_in_use=request.devs,
-                             midi_aggregated_mode=request.midiAggregatedMode)
+                     devs_in_use=payload.devs,
+                     midi_aggregated_mode=payload.midiAggregatedMode)
         resp = await asyncio.wait_for(fut, timeout=10.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
