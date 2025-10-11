@@ -1,6 +1,6 @@
 """Service for managing audio connections between plugins."""
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from dataclasses import asdict
 
 from ..models.connection import Connection

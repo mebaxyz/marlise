@@ -1,0 +1,35 @@
+version: "3.8"
+services:
+  marlise-audio:
+    image: your-dockerhub-username/marlise-audio:latest
+    container_name: marlise-audio
+    restart: unless-stopped
+    network_mode: "host" # Use host networking to access ALSA/JACK devices directly
+    environment:
+      JACK_DEVICE: "hw:0"
+      JACK_CLIENT_NAME: "marlise-jack"
+      MODHOST_BRIDGE_PORT: "6000"
+      # Optionally override commands or paths
+      # MOD_HOST_CMD: "/opt/marlise/bin/mod-host"
+      # MODHOST_BRIDGE_CMD: "/opt/marlise/bin/modhost-bridge"
+    volumes:
+      - /dev/snd:/dev/snd # ALSA devices
+      - /run/udev:/run/udev:ro
+      - /etc/locale:/etc/locale:ro
+      # Optional: persistent storage for logs
+      - ./logs:/var/log/marlise
+    cap_add:
+      - SYS_NICE
+      - SYS_RESOURCE
+    devices:
+      - "/dev/snd:/dev/snd"
+    # ensure JACK can use realtime scheduling
+    tmpfs: /tmp
+    tty: true
+    stdin_open: true
+    # healthcheck can be added to validate bridge port
+    healthcheck:
+      test: ["CMD-SHELL", "ss -lnt | grep -q ':6000' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

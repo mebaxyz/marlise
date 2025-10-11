@@ -256,13 +256,6 @@ void protocol_response(const char *response, proto_t *proto)
     proto->response_size = strlen(response);
     proto->response = MALLOC(proto->response_size + 1);
     strcpy(proto->response, response);
-    {
-        const char *dbg = getenv("MOD_HOST_DEBUG");
-        if (dbg && atoi(dbg))
-        {
-            fprintf(stderr, "PROTOCOL: built response '%s' (size=%u)\n", response, proto->response_size);
-        }
-    }
 }
 
 

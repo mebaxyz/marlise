@@ -4,7 +4,6 @@ Miscellaneous API endpoints
 from fastapi import APIRouter, Form
 from fastapi.responses import Response
 
-from ..models import UserIdSaveRequest, StatusResponse
 
 router = APIRouter(tags=["misc"])
 

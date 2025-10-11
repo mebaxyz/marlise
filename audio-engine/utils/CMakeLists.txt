@@ -1,7 +1,7 @@
 # CMakeLists.txt for MOD utils library
 
 cmake_minimum_required(VERSION 3.16)
-project(mod-utils VERSION 1.0.0 LANGUAGES CXX)
+project(mod-utils VERSION 1.0.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -33,8 +33,8 @@ set(SOURCES
     sha1/sha1.c
 )
 
-# Create static library
-add_library(mod_utils STATIC ${SOURCES})
+# Create shared library (so consumers don't need to re-link JACK/LILV symbols)
+add_library(mod_utils SHARED ${SOURCES})
 
 # Link libraries
 target_link_libraries(mod_utils
@@ -58,7 +58,7 @@ target_compile_options(mod_utils PRIVATE
 
 # Installation
 install(TARGETS mod_utils
-    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
 )
 
 install(FILES utils.h

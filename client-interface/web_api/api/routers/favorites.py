@@ -3,9 +3,8 @@ Favorites related API endpoints
 """
 from fastapi import APIRouter, Form
 
-from ..models import FavoriteRequest, StatusResponse
 
-from ..main import zmq_client
+from fastapi import Request
 import asyncio
 import logging
 
@@ -16,6 +15,7 @@ router = APIRouter(prefix="/favorites", tags=["favorites"])
 
 @router.post("/add")
 async def add_favorite(
+    request: Request,
     uri: str = Form(..., description="Plugin URI")
 ):
     """Add a plugin to user's favorites list.
@@ -23,11 +23,12 @@ async def add_favorite(
     TODO: forward the favorite add request to the session manager and persist in preferences.
     """
     # Call session manager to add favorite
+    zmq_client = getattr(request.app.state, 'zmq_client', None)
     if zmq_client is None:
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "add_favorite", uri=uri)
+        fut = zmq_client.call("session_manager", "add_favorite", uri=uri, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -40,18 +41,19 @@ async def add_favorite(
 
 @router.post("/remove")
 async def remove_favorite(
+    request: Request,
     uri: str = Form(..., description="Plugin URI")
 ):
     """Remove a plugin from user's favorites list.
 
     TODO: forward the favorite removal to the session manager and update stored preferences.
     """
-    # Call session manager to remove favorite
+    zmq_client = getattr(request.app.state, 'zmq_client', None)
     if zmq_client is None:
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "remove_favorite", uri=uri)
+        fut = zmq_client.call("session_manager", "remove_favorite", uri=uri, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:

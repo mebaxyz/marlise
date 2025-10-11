@@ -4,7 +4,6 @@ Integration test for audio system management handlers in session manager.
 Tests the audio system commands that communicate with modhost-bridge service.
 """
 
-import asyncio
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 

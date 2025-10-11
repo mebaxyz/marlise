@@ -103,8 +103,7 @@
 #define OUTPUT_DATA_READY    "output_data_ready"
 #define HELP                 "help"
 #define QUIT                 "quit"
-/* Simple ping that replies on the socket — safe liveness check */
-#define PING                 "ping"
+#define PING                "ping"
 
 
 /*

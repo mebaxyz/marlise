@@ -3,11 +3,10 @@ Banks (Pedalboard Collections) related API endpoints
 """
 from typing import List
 from fastapi import APIRouter
-from fastapi.responses import JSONResponse
 
-from ..models import Bank, BankSaveRequest, StatusResponse
+from ..models import Bank, BankSaveRequest
 
-from ..main import zmq_client
+from fastapi import Request
 import asyncio
 import logging
 
@@ -17,17 +16,18 @@ router = APIRouter(prefix="/banks", tags=["banks"])
 
 
 @router.get("", response_model=List[Bank])
-async def get_banks():
+async def get_banks(request: Request):
     """Get organized collections of pedalboards grouped into banks"""
     """NOT IMPLEMENTED: Get organized collections of pedalboards grouped into banks.
 
     TODO: return bank structure sourced from session manager or user preferences.
     """
+    zmq_client = getattr(request.app.state, 'zmq_client', None)
     if zmq_client is None:
         return []
 
     try:
-        fut = zmq_client.call("session_manager", "get_banks")
+        fut = zmq_client.call("session_manager", "get_banks", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=5.0)
         if isinstance(resp, dict) and resp.get("success", False):
             return resp.get("banks", [])
@@ -42,17 +42,18 @@ async def get_banks():
 
 
 @router.post("/save")
-async def save_banks(request: BankSaveRequest):
+async def save_banks(payload: BankSaveRequest, request: Request):
     """Save bank organization and pedalboard groupings"""
     """NOT IMPLEMENTED: Save bank organization and pedalboard groupings.
 
     TODO: delegate to session manager or preferences store to persist bank config.
     """
+    zmq_client = getattr(request.app.state, 'zmq_client', None)
     if zmq_client is None:
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "save_banks", banks=request.banks)
+        fut = zmq_client.call("session_manager", "save_banks", banks=payload.banks, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=10.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:

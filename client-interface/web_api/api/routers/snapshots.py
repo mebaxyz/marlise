@@ -1,37 +1,33 @@
 """
 Snapshot (Pedalboard Presets) related API endpoints
 """
-from typing import Dict
-from fastapi import APIRouter, Query, Path
+from fastapi import APIRouter, Query, Request
 
 from ..models import (
-    SnapshotSaveAsRequest, SnapshotSaveAsResponse,
-    SnapshotRenameRequest, SnapshotRenameResponse,
-    SnapshotNameResponse, SnapshotListResponse,
-    StatusResponse
+    SnapshotSaveAsResponse,
+    SnapshotRenameResponse,
+    SnapshotNameResponse
 )
-
-from ..main import zmq_client
 import asyncio
 import logging
-
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/snapshot", tags=["snapshots"])
 
 
 @router.post("/save")
-async def save_snapshot():
+async def save_snapshot(request: Request):
     """Save current plugin parameter states as a snapshot.
 
     TODO: ask session manager to capture current parameter values and persist snapshot data.
     """
     # Call session manager to save current state as snapshot
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "save_snapshot")
+        fut = zmq_client.call("session_manager", "save_snapshot", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -44,6 +40,7 @@ async def save_snapshot():
 
 @router.get("/saveas")
 async def save_snapshot_as(
+    request: Request,
     title: str = Query(..., description="Snapshot title")
 ):
     """Save current state as a new named snapshot.
@@ -51,11 +48,12 @@ async def save_snapshot_as(
     TODO: delegate to session manager snapshot_saveas and return id/title.
     """
     # Call session manager to save as new snapshot
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return SnapshotSaveAsResponse(ok=False, id=0, title=title)
 
     try:
-        fut = zmq_client.call("session_manager", "save_snapshot_as", title=title)
+        fut = zmq_client.call("session_manager", "save_snapshot_as", title=title, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return SnapshotSaveAsResponse(
@@ -75,6 +73,7 @@ async def save_snapshot_as(
 
 @router.get("/rename")
 async def rename_snapshot(
+    request: Request,
     snapshot_id: int = Query(..., description="Snapshot ID"),
     title: str = Query(..., description="New snapshot title")
 ):
@@ -83,11 +82,12 @@ async def rename_snapshot(
     TODO: call session manager to update snapshot TTL metadata.
     """
     # Call session manager to rename snapshot
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return SnapshotRenameResponse(ok=False, title=title)
 
     try:
-        fut = zmq_client.call("session_manager", "rename_snapshot", id=snapshot_id, title=title)
+        fut = zmq_client.call("session_manager", "rename_snapshot", id=snapshot_id, title=title, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return SnapshotRenameResponse(ok=True, title=title)
@@ -103,6 +103,7 @@ async def rename_snapshot(
 
 @router.get("/remove")
 async def remove_snapshot(
+    request: Request,
     snapshot_id: int = Query(..., description="Snapshot ID")
 ):
     """Delete a snapshot.
@@ -110,11 +111,12 @@ async def remove_snapshot(
     TODO: instruct session manager to remove snapshot data from the pedalboard bundle.
     """
     # Call session manager to remove snapshot
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "remove_snapshot", id=snapshot_id)
+        fut = zmq_client.call("session_manager", "remove_snapshot", id=snapshot_id, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -126,17 +128,18 @@ async def remove_snapshot(
 
 
 @router.get("/list")
-async def list_snapshots():
+async def list_snapshots(request: Request):
     """Get all snapshots for current pedalboard.
 
     TODO: request snapshot list from session manager and return id->name mapping.
     """
     # Call session manager for snapshot list
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"0": "Default"}
 
     try:
-        fut = zmq_client.call("session_manager", "list_snapshots")
+        fut = zmq_client.call("session_manager", "list_snapshots", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return resp.get("snapshots", {"0": "Default"})
@@ -152,6 +155,7 @@ async def list_snapshots():
 
 @router.get("/name")
 async def get_snapshot_name(
+    request: Request,
     snapshot_id: int = Query(..., description="Snapshot ID")
 ):
     """Get the name of a specific snapshot.
@@ -159,11 +163,12 @@ async def get_snapshot_name(
     TODO: use session manager to lookup the snapshot name by ID.
     """
     # Call session manager for snapshot name
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return SnapshotNameResponse(ok=False, name="")
 
     try:
-        fut = zmq_client.call("session_manager", "get_snapshot_name", id=snapshot_id)
+        fut = zmq_client.call("session_manager", "get_snapshot_name", id=snapshot_id, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return SnapshotNameResponse(ok=True, name=resp.get("name", ""))
@@ -179,6 +184,7 @@ async def get_snapshot_name(
 
 @router.get("/load")
 async def load_snapshot(
+    request: Request,
     snapshot_id: int = Query(..., description="Snapshot ID")
 ):
     """Load a snapshot, restoring all parameter values.
@@ -186,11 +192,12 @@ async def load_snapshot(
     TODO: instruct session manager to apply saved parameter values and broadcast param_set messages.
     """
     # Call session manager to load snapshot
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "load_snapshot", id=snapshot_id)
+        fut = zmq_client.call("session_manager", "load_snapshot", id=snapshot_id, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:

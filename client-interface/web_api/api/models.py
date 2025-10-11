@@ -2,7 +2,7 @@
 Request and Response models for the MOD UI API
 """
 from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 # Common Models

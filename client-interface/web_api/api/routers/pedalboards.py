@@ -2,18 +2,15 @@
 Pedalboard related API endpoints
 """
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Query, Form, File, UploadFile
+from fastapi import APIRouter, HTTPException, Query, Form, File, UploadFile, Request
 from fastapi.responses import Response
 
 from ..models import (
-    PedalboardInfo, PedalboardSaveRequest, PedalboardSaveResponse,
-    PedalboardLoadRequest, PedalboardLoadResponse, PedalboardCopyRequest,
-    PedalboardRemoveRequest, PedalboardImageResponse, PedalboardDetailInfo,
-    CVPortAddRequest, CVPortAddResponse, CVPortRemoveRequest,
-    TransportSyncModeRequest, StatusResponse
+    PedalboardInfo, PedalboardSaveResponse,
+    PedalboardLoadResponse, PedalboardImageResponse, PedalboardDetailInfo,
+    CVPortAddResponse
 )
 
-from ..main import zmq_client
 import asyncio
 import logging
 
@@ -23,17 +20,18 @@ router = APIRouter(prefix="/pedalboard", tags=["pedalboards"])
 
 
 @router.get("/list", response_model=List[PedalboardInfo])
-async def get_pedalboard_list():
+async def get_pedalboard_list(request: Request):
     """Get list of all available pedalboards.
 
     TODO: integrate with session manager to return pedalboard metadata and include default PB.
     """
     # Call session manager for pedalboard list
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return []
 
     try:
-        fut = zmq_client.call("session_manager", "get_pedalboard_list")
+        fut = zmq_client.call("session_manager", "get_pedalboard_list", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return resp.get("pedalboards", [])
@@ -49,6 +47,7 @@ async def get_pedalboard_list():
 
 @router.post("/save", response_model=PedalboardSaveResponse)
 async def save_pedalboard(
+    request: Request,
     title: str = Form(...),
     asNew: int = Form(0)
 ):
@@ -57,11 +56,12 @@ async def save_pedalboard(
     TODO: forward save request to session manager which will persist the .pedalboard bundle.
     """
     # Call session manager to save pedalboard
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return PedalboardSaveResponse(ok=False, bundlepath=None, title=title)
 
     try:
-        fut = zmq_client.call("session_manager", "save_current_pedalboard", title=title, as_new=asNew)
+        fut = zmq_client.call("session_manager", "save_current_pedalboard", title=title, as_new=asNew, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return PedalboardSaveResponse(
@@ -81,6 +81,7 @@ async def save_pedalboard(
 
 @router.get("/pack_bundle")
 async def pack_pedalboard_bundle(
+    request: Request,
     bundlepath: str = Query(..., description="Absolute path to pedalboard bundle")
 ):
     """Download pedalboard as compressed bundle for sharing.
@@ -88,11 +89,12 @@ async def pack_pedalboard_bundle(
     TODO: stream tar.gz created by session manager or filesystem compressor.
     """
     # Return tar.gz file
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return Response(content=b"", media_type="application/gzip", headers={"Content-Disposition": "attachment; filename=pedalboard.tar.gz"})
 
     try:
-        fut = zmq_client.call("session_manager", "pack_pedalboard_bundle", bundlepath=bundlepath)
+        fut = zmq_client.call("session_manager", "pack_pedalboard_bundle", bundlepath=bundlepath, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=10.0)  # Longer timeout for file operations
         if isinstance(resp, dict) and resp.get("success"):
             # Assume the handler returns file data
@@ -115,6 +117,7 @@ async def pack_pedalboard_bundle(
 
 @router.post("/load_bundle", response_model=PedalboardLoadResponse)
 async def load_pedalboard_bundle(
+    request: Request,
     bundlepath: str = Form(...),
     isDefault: str = Form("0")
 ):
@@ -123,11 +126,12 @@ async def load_pedalboard_bundle(
     TODO: pass bundlepath to session manager to perform the load and emit websocket events.
     """
     # Call session manager to load pedalboard
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return PedalboardLoadResponse(ok=False, name="")
 
     try:
-        fut = zmq_client.call("session_manager", "load_pedalboard_bundle", bundlepath=bundlepath, is_default=isDefault)
+        fut = zmq_client.call("session_manager", "load_pedalboard_bundle", bundlepath=bundlepath, is_default=isDefault, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=10.0)  # Longer timeout for file operations
         if isinstance(resp, dict) and resp.get("success"):
             return PedalboardLoadResponse(ok=True, name=resp.get("name", ""))
@@ -142,12 +146,13 @@ async def load_pedalboard_bundle(
 
 
 @router.post("/load_web", response_model=PedalboardLoadResponse)
-async def load_pedalboard_web(file: UploadFile = File(...)):
+async def load_pedalboard_web(request: Request, file: UploadFile = File(...)):
     """Upload and load a pedalboard bundle from file upload.
 
     TODO: accept multipart upload, store temp file, ask session manager to extract and load.
     """
     # Process uploaded pedalboard file
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return PedalboardLoadResponse(ok=False, name="")
 
@@ -156,7 +161,7 @@ async def load_pedalboard_web(file: UploadFile = File(...)):
         file_data = await file.read()
         filename = file.filename
 
-        fut = zmq_client.call("session_manager", "load_pedalboard_web", file_data=file_data, filename=filename)
+        fut = zmq_client.call("session_manager", "load_pedalboard_web", file_data=file_data, filename=filename, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=10.0)  # Longer timeout for file operations
         if isinstance(resp, dict) and resp.get("success"):
             return PedalboardLoadResponse(ok=True, name=resp.get("name", ""))
@@ -172,6 +177,7 @@ async def load_pedalboard_web(file: UploadFile = File(...)):
 
 @router.get("/factorycopy")
 async def factory_copy_pedalboard(
+    request: Request,
     bundlepath: str = Query(..., description="Factory pedalboard path"),
     title: str = Query(..., description="New pedalboard title")
 ):
@@ -180,11 +186,12 @@ async def factory_copy_pedalboard(
     TODO: instruct session manager to copy factory PB into user's pedalboards dir.
     """
     # Call session manager to copy factory pedalboard
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"ok": False, "bundlepath": "", "title": title, "plugins": [], "connections": []}
 
     try:
-        fut = zmq_client.call("session_manager", "factory_copy_pedalboard", bundlepath=bundlepath, title=title)
+        fut = zmq_client.call("session_manager", "factory_copy_pedalboard", bundlepath=bundlepath, title=title, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=5.0)
         if isinstance(resp, dict) and resp.get("success"):
             return {
@@ -206,6 +213,7 @@ async def factory_copy_pedalboard(
 
 @router.get("/info")
 async def get_pedalboard_info(
+    request: Request,
     bundlepath: str = Query(..., description="Pedalboard bundle path")
 ):
     """Get detailed pedalboard information without loading it.
@@ -213,11 +221,12 @@ async def get_pedalboard_info(
     TODO: parse the .pedalboard TTL files (or request session manager helper) and return metadata.
     """
     # Call session manager for pedalboard info
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return PedalboardDetailInfo(title="", plugins=[], connections=[], hardware={})
 
     try:
-        fut = zmq_client.call("session_manager", "get_pedalboard_info", bundlepath=bundlepath)
+        fut = zmq_client.call("session_manager", "get_pedalboard_info", bundlepath=bundlepath, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return PedalboardDetailInfo(
@@ -238,6 +247,7 @@ async def get_pedalboard_info(
 
 @router.get("/remove")
 async def remove_pedalboard(
+    request: Request,
     bundlepath: str = Query(..., description="Pedalboard bundle path")
 ):
     """Delete a pedalboard from the filesystem.
@@ -245,11 +255,12 @@ async def remove_pedalboard(
     TODO: delegate deletion to session manager to ensure safe removal and notify clients.
     """
     # Call session manager to remove pedalboard
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "remove_pedalboard", bundlepath=bundlepath)
+        fut = zmq_client.call("session_manager", "remove_pedalboard", bundlepath=bundlepath, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -262,6 +273,7 @@ async def remove_pedalboard(
 
 @router.get("/image/{image_type}.png")
 async def get_pedalboard_image(
+    request: Request,
     image_type: str,  # screenshot or thumbnail
     bundlepath: str = Query(..., description="Pedalboard bundle path"),
     tstamp: Optional[str] = Query(None, description="Timestamp for cache busting"),
@@ -272,11 +284,12 @@ async def get_pedalboard_image(
     TODO: serve screenshot.png/thumbnail.png from bundle or return default image.
     """
     # Return pedalboard image
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return Response(content=b"", media_type="image/png")
 
     try:
-        fut = zmq_client.call("session_manager", "get_pedalboard_image", bundlepath=bundlepath, image_type=image_type)
+        fut = zmq_client.call("session_manager", "get_pedalboard_image", bundlepath=bundlepath, image_type=image_type, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=5.0)
         if isinstance(resp, dict) and resp.get("success"):
             image_data = resp.get("image_data", b"")
@@ -293,6 +306,7 @@ async def get_pedalboard_image(
 
 @router.get("/image/generate")
 async def generate_pedalboard_image(
+    request: Request,
     bundlepath: str = Query(..., description="Pedalboard bundle path")
 ):
     """Trigger asynchronous generation of pedalboard screenshot.
@@ -300,11 +314,12 @@ async def generate_pedalboard_image(
     TODO: schedule screenshot generation via session manager and return immediate status.
     """
     # Start screenshot generation
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return PedalboardImageResponse(ok=False, ctime="0")
 
     try:
-        fut = zmq_client.call("session_manager", "generate_pedalboard_image", bundlepath=bundlepath)
+        fut = zmq_client.call("session_manager", "generate_pedalboard_image", bundlepath=bundlepath, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return PedalboardImageResponse(ok=True, ctime=resp.get("ctime", "0"))
@@ -320,6 +335,7 @@ async def generate_pedalboard_image(
 
 @router.get("/image/wait")
 async def wait_pedalboard_image(
+    request: Request,
     bundlepath: str = Query(..., description="Pedalboard bundle path")
 ):
     """Wait for screenshot generation to complete.
@@ -327,11 +343,12 @@ async def wait_pedalboard_image(
     TODO: poll session manager for generation completion and return final ctime.
     """
     # Wait for screenshot completion
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return PedalboardImageResponse(ok=False, ctime="0")
 
     try:
-        fut = zmq_client.call("session_manager", "wait_pedalboard_image", bundlepath=bundlepath)
+        fut = zmq_client.call("session_manager", "wait_pedalboard_image", bundlepath=bundlepath, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=30.0)  # Longer timeout for waiting
         if isinstance(resp, dict) and resp.get("success"):
             return PedalboardImageResponse(ok=True, ctime=resp.get("ctime", "0"))
@@ -347,6 +364,7 @@ async def wait_pedalboard_image(
 
 @router.get("/image/check")
 async def check_pedalboard_image(
+    request: Request,
     bundlepath: str = Query(..., description="Pedalboard bundle path"),
     v: Optional[str] = Query(None, description="Version parameter")
 ):
@@ -355,11 +373,12 @@ async def check_pedalboard_image(
     TODO: return {status, ctime} by querying generation state.
     """
     # Check screenshot status
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"status": 0, "ctime": "0"}
 
     try:
-        fut = zmq_client.call("session_manager", "check_pedalboard_image", bundlepath=bundlepath)
+        fut = zmq_client.call("session_manager", "check_pedalboard_image", bundlepath=bundlepath, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return {"status": resp.get("status", 0), "ctime": resp.get("ctime", "0")}
@@ -375,6 +394,7 @@ async def check_pedalboard_image(
 
 @router.post("/cv_addressing_plugin_port/add")
 async def add_cv_addressing_port(
+    request: Request,
     uri: str = Form(...),
     name: str = Form(...)
 ):
@@ -383,11 +403,12 @@ async def add_cv_addressing_port(
     TODO: call session manager to register CV addressing plugin port.
     """
     # Call session manager to add CV port
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return CVPortAddResponse(ok=False, operational_mode="=")
 
     try:
-        fut = zmq_client.call("session_manager", "add_cv_addressing_port", uri=uri, name=name)
+        fut = zmq_client.call("session_manager", "add_cv_addressing_port", uri=uri, name=name, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return CVPortAddResponse(ok=True, operational_mode=resp.get("operational_mode", "="))
@@ -403,6 +424,7 @@ async def add_cv_addressing_port(
 
 @router.post("/cv_addressing_plugin_port/remove")
 async def remove_cv_addressing_port(
+    request: Request,
     uri: str = Form(...)
 ):
     """Remove CV addressing plugin port.
@@ -410,11 +432,12 @@ async def remove_cv_addressing_port(
     TODO: instruct session manager to remove CV addressing port mapping.
     """
     # Call session manager to remove CV port
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "remove_cv_addressing_port", uri=uri)
+        fut = zmq_client.call("session_manager", "remove_cv_addressing_port", uri=uri, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -427,6 +450,7 @@ async def remove_cv_addressing_port(
 
 @router.post("/transport/set_sync_mode/{mode}")
 async def set_transport_sync_mode(
+    request: Request,
     mode: str  # none, midi_clock_slave, link
 ):
     """Set transport synchronization mode.
@@ -434,11 +458,12 @@ async def set_transport_sync_mode(
     TODO: call session manager to change transport sync mode (JACK/midi/link).
     """
     # Call session manager to set sync mode
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "set_transport_sync_mode", mode=mode)
+        fut = zmq_client.call("session_manager", "set_transport_sync_mode", mode=mode, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:

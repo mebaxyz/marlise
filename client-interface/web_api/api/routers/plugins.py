@@ -2,17 +2,14 @@
 Plugin/Effect related API endpoints
 """
 from typing import Dict, List, Optional
-from fastapi import APIRouter, HTTPException, Query, Path, Form, File, UploadFile, Body
+from fastapi import APIRouter, Query, Path, Form, File, UploadFile, Body, Request
 from fastapi.responses import Response
-import json
 
 from ..models import (
-    PluginInfo, PluginDetailInfo, PluginAddRequest, PluginBulkRequest,
-    PluginConnectionRequest, ParameterSetRequest, ParameterAddressRequest,
-    PresetRequest, PresetDeleteRequest, StatusResponse
+    PluginInfo, PluginDetailInfo, PluginBulkRequest,
+    ParameterAddressRequest
 )
 
-from ..main import zmq_client
 import asyncio
 import logging
 
@@ -22,14 +19,15 @@ router = APIRouter(prefix="/effect", tags=["plugins"])
 
 
 @router.get("/list", response_model=List[PluginInfo])
-async def get_plugin_list():
+async def get_plugin_list(request: Request):
     """Get list of all available plugins."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         logger.debug("zmq_client not available, returning empty plugin list")
         return []
 
     try:
-        fut = zmq_client.call("session_manager", "list_plugins")
+        fut = zmq_client.call("session_manager", "list_plugins", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
 
         # Expecting resp to be an iterable of dict-like plugin info objects
@@ -67,13 +65,14 @@ async def get_plugin_list():
 
 
 @router.post("/bulk", response_model=Dict[str, PluginDetailInfo])
-async def get_plugins_bulk(request: PluginBulkRequest):
+async def get_plugins_bulk(request_http: Request, request: PluginBulkRequest):
     """Get detailed info for multiple plugins at once."""
+    zmq_client = getattr(request_http.app.state, "zmq_client", None)
     if zmq_client is None:
         return {}
 
     try:
-        fut = zmq_client.call("session_manager", "get_plugins_bulk", uris=request.uris)
+        fut = zmq_client.call("session_manager", "get_plugins_bulk", uris=request.uris, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return resp.get("plugins", {}) if isinstance(resp, dict) else {}
     except asyncio.TimeoutError:
@@ -86,16 +85,18 @@ async def get_plugins_bulk(request: PluginBulkRequest):
 
 @router.get("/get")
 async def get_plugin_info(
+    request: Request,
     uri: str = Query(..., description="Plugin URI"),
     version: Optional[str] = Query(None, description="Plugin version (ignored)"),
     plugin_version: Optional[str] = Query(None, description="Plugin version (ignored)")
 ):
     """Get detailed information about a specific plugin."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {}
 
     try:
-        fut = zmq_client.call("session_manager", "get_plugin_info_by_uri", uri=uri)
+        fut = zmq_client.call("session_manager", "get_plugin_info_by_uri", uri=uri, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return resp.get("plugin", {}) if isinstance(resp, dict) and resp.get("success") else {}
     except asyncio.TimeoutError:
@@ -120,17 +121,19 @@ async def get_plugin_info_non_cached(
 
 @router.get("/add/{instance_id}")
 async def add_plugin(
+    request: Request,
     instance_id: str = Path(..., description="Plugin instance ID"),
     uri: str = Query(..., description="Plugin URI"),
     x: float = Query(0.0, description="X coordinate"),
     y: float = Query(0.0, description="Y coordinate")
 ):
     """Add a plugin to the current pedalboard."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"ok": False, "message": "ZMQ client not available"}
 
     try:
-        fut = zmq_client.call("session_manager", "add_plugin", uri=uri, x=x, y=y)
+        fut = zmq_client.call("session_manager", "add_plugin", uri=uri, x=x, y=y, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return resp.get("plugin", {})
@@ -146,14 +149,16 @@ async def add_plugin(
 
 @router.get("/remove/{instance_id}")
 async def remove_plugin(
+    request: Request,
     instance_id: str = Path(..., description="Plugin instance ID")
 ):
     """Remove a plugin from the current pedalboard."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "remove_plugin", instance_id=instance_id)
+        fut = zmq_client.call("session_manager", "remove_plugin", instance_id=instance_id, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -166,15 +171,17 @@ async def remove_plugin(
 
 @router.get("/connect/{from_port},{to_port}")
 async def connect_ports(
+    request: Request,
     from_port: str = Path(..., description="Source port"),
     to_port: str = Path(..., description="Destination port")
 ):
     """Create an audio/MIDI connection between two ports."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "connect_jack_ports", port1=from_port, port2=to_port)
+        fut = zmq_client.call("session_manager", "connect_jack_ports", port1=from_port, port2=to_port, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -187,15 +194,17 @@ async def connect_ports(
 
 @router.get("/disconnect/{from_port},{to_port}")
 async def disconnect_ports(
+    request: Request,
     from_port: str = Path(..., description="Source port"),
     to_port: str = Path(..., description="Destination port")
 ):
     """Remove an audio/MIDI connection between two ports."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "disconnect_jack_ports", port1=from_port, port2=to_port)
+        fut = zmq_client.call("session_manager", "disconnect_jack_ports", port1=from_port, port2=to_port, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -208,11 +217,13 @@ async def disconnect_ports(
 
 @router.post("/parameter/address/{instance_id}/{symbol}")
 async def address_parameter(
+    request: Request,
     instance_id: str = Path(..., description="Plugin instance ID"),
     symbol: str = Path(..., description="Parameter symbol"),
-    request: ParameterAddressRequest = Body(...)
+    body: ParameterAddressRequest = Body(...)
 ):
     """Map a plugin parameter to a hardware control or MIDI CC."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"ok": False}
 
@@ -221,9 +232,9 @@ async def address_parameter(
         params = {
             "instance_id": instance_id,
             "symbol": symbol,
-            **request.dict()
+            **body.dict()
         }
-        fut = zmq_client.call("session_manager", "address_parameter", **params)
+        fut = zmq_client.call("session_manager", "address_parameter", **params, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -235,7 +246,7 @@ async def address_parameter(
 
 
 @router.post("/parameter/set")
-async def set_parameter(data: str = Form(...)):
+async def set_parameter(request: Request, data: str = Form(...)):
     """Set plugin parameter value (legacy endpoint with JSON string)."""
     try:
         # Parse the JSON string format: "symbol/instance/portsymbol/value"
@@ -246,10 +257,11 @@ async def set_parameter(data: str = Form(...)):
         symbol, instance, port_symbol, value_str = parts
         value = float(value_str)
         
+        zmq_client = getattr(request.app.state, "zmq_client", None)
         if zmq_client is None:
             return False
 
-        fut = zmq_client.call("session_manager", "set_parameter", instance_id=instance, parameter=port_symbol, value=value)
+        fut = zmq_client.call("session_manager", "set_parameter", instance_id=instance, parameter=port_symbol, value=value, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return isinstance(resp, dict) and resp.get("success", False)
     except asyncio.TimeoutError:
@@ -262,18 +274,17 @@ async def set_parameter(data: str = Form(...)):
 
 @router.get("/preset/load/{instance_id}")
 async def load_preset(
+    request: Request,
     instance_id: str = Path(..., description="Plugin instance ID"),
     uri: str = Query(..., description="Preset URI")
 ):
     """Load a preset for a plugin instance."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"ok": False}
 
     try:
-        # For load_preset, we need uri and label, but the API only provides uri
-        # The uri parameter is actually the preset URI, and we need to extract label from it
-        # For now, assume uri contains both or use uri as label
-        fut = zmq_client.call("session_manager", "load_preset", instance_id=instance_id, uri=uri, label=uri)
+        fut = zmq_client.call("session_manager", "load_preset", instance_id=instance_id, uri=uri, label=uri, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -286,18 +297,18 @@ async def load_preset(
 
 @router.get("/preset/save_new/{instance_id}")
 async def save_new_preset(
+    request: Request,
     instance_id: str = Path(..., description="Plugin instance ID"),
     name: str = Query(..., description="Preset name")
 ):
     """Create a new preset from current plugin state."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"ok": False}
 
     try:
-        # For save_preset, we need instance_id, uri, label, directory
-        # Generate a URI for the new preset, use name as label, use default directory
         uri = f"preset://{instance_id}/{name}"
-        fut = zmq_client.call("session_manager", "save_preset", instance_id=instance_id, uri=uri, label=name, directory="")
+        fut = zmq_client.call("session_manager", "save_preset", instance_id=instance_id, uri=uri, label=name, directory="", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -310,17 +321,19 @@ async def save_new_preset(
 
 @router.get("/preset/save_replace/{instance_id}")
 async def save_replace_preset(
+    request: Request,
     instance_id: str = Path(..., description="Plugin instance ID"),
     uri: str = Query(..., description="Preset URI"),
     bundle: str = Query(..., description="Bundle path"),
     name: str = Query(..., description="Preset name")
 ):
     """Overwrite an existing preset with current plugin state."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "save_preset", instance_id=instance_id, uri=uri, label=name, directory=bundle)
+        fut = zmq_client.call("session_manager", "save_preset", instance_id=instance_id, uri=uri, label=name, directory=bundle, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -347,16 +360,18 @@ async def delete_preset(
 
 @router.get("/image/{image_type}.png")
 async def get_plugin_image(
+    request: Request,
     image_type: str = Path(..., description="Image type: screenshot or thumbnail"),
     uri: str = Query(..., description="Plugin URI"),
     v: Optional[str] = Query(None, description="Version parameter")
 ):
     """Get plugin GUI screenshot or thumbnail image."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return Response(content=b"", media_type="image/png")
 
     try:
-        fut = zmq_client.call("session_manager", "get_plugin_image", plugin_uri=uri, image_type=image_type)
+        fut = zmq_client.call("session_manager", "get_plugin_image", plugin_uri=uri, image_type=image_type, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             # Assume the response contains base64 encoded image data
@@ -374,15 +389,17 @@ async def get_plugin_image(
 
 @router.get("/file/{file_type}")
 async def get_plugin_file(
+    request: Request,
     file_type: str = Path(..., description="File type: iconTemplate, settingsTemplate, stylesheet, javascript"),
     uri: str = Query(..., description="Plugin URI")
 ):
     """Get plugin GUI template files and resources."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return Response(content="", media_type="text/plain")
 
     try:
-        fut = zmq_client.call("session_manager", "get_plugin_file", plugin_uri=uri, file_type=file_type)
+        fut = zmq_client.call("session_manager", "get_plugin_file", plugin_uri=uri, file_type=file_type, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             # Assume the response contains file content
@@ -400,15 +417,17 @@ async def get_plugin_file(
 
 @router.get("/file/custom")
 async def get_plugin_custom_file(
+    request: Request,
     filename: str = Query(..., description="Relative filename"),
     uri: str = Query(..., description="Plugin URI")
 ):
     """Get custom plugin GUI assets (images, WASM, etc.)."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return Response(content=b"", media_type="application/octet-stream")
 
     try:
-        fut = zmq_client.call("session_manager", "get_plugin_custom_file", plugin_uri=uri, filename=filename)
+        fut = zmq_client.call("session_manager", "get_plugin_custom_file", plugin_uri=uri, filename=filename, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             # Assume the response contains file content
@@ -425,8 +444,9 @@ async def get_plugin_custom_file(
 
 
 @router.post("/install")
-async def install_plugin(file: UploadFile = File(...)):
+async def install_plugin(request: Request, file: UploadFile = File(...)):
     """Install a plugin package from uploaded bundle file."""
+    zmq_client = getattr(request.app.state, "zmq_client", None)
     if zmq_client is None:
         return {
             "ok": False,

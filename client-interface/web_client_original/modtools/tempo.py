@@ -157,7 +157,7 @@ def get_port_value(b, s, port_unit_symbol):
         float: control port value in seconds
     """
     if port_unit_symbol == "BPM":
-        return b / s;
+        return b / s
     return 240 / (b * s)
 
 def convert_equivalent(value, conversion_factor, port_unit_symbol):

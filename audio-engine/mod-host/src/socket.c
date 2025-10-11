@@ -26,7 +26,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -85,13 +84,6 @@ static SOCKET g_fbclientfd = INVALID_SOCKET;
 
 static int g_buffer_size;
 static void (*g_receive_cb)(msg_t *msg);
-
-/* helper to check debug env var at runtime */
-static int socket_debug_enabled(void)
-{
-    const char *v = getenv("MOD_HOST_DEBUG");
-    return (v && atoi(v));
-}
 
 /*
 ************************************************************************************************************************
@@ -217,9 +209,6 @@ int socket_start(int socket_port, int feedback_port, int buffer_size)
         return -1;
     }
 
-    if (socket_debug_enabled())
-        fprintf(stderr, "SOCKET: listening on port %d (serverfd=%d)\n", socket_port, (int)g_serverfd);
-
     if (feedback_port != 0 && listen(g_fbserverfd, -1) < 0)
     {
         perror("listen error");
@@ -277,20 +266,10 @@ int socket_send(int destination, const char *buffer, int size)
     while (size > 0)
     {
         ret = send(destination, buffer, size, 0);
-        if (socket_debug_enabled())
-        {
-            if (ret < 0)
-                fprintf(stderr, "SOCKET: send fd=%d ret=%d errno=%d\n", (int)destination, ret, errno);
-            else
-                fprintf(stderr, "SOCKET: send fd=%d ret=%d\n", (int)destination, ret);
-        }
-
         if (ret < 0)
         {
             perror("send error");
-            return ret;
         }
-
         size -= ret;
         buffer += ret;
     }
@@ -339,9 +318,6 @@ void socket_run(int exit_on_failure)
         exit(EXIT_FAILURE);
     }
 
-    if (socket_debug_enabled())
-        fprintf(stderr, "SOCKET: accepted client fd=%d\n", (int)clientfd);
-
     if (g_fbserverfd != INVALID_SOCKET)
     {
         fbclientfd = accept(g_fbserverfd, NULL, NULL);
@@ -372,15 +348,6 @@ void socket_run(int exit_on_failure)
 
         if (count > 0) /* Data received */
         {
-            if (socket_debug_enabled())
-            {
-                /* print an excerpt of the received data for debugging */
-                int excerpt = count < 64 ? count : 64;
-                char hex[excerpt*2+1];
-                for (int i = 0; i < excerpt; ++i) sprintf(hex + i*2, "%02x", (unsigned char)buffer[i]);
-                hex[excerpt*2] = '\0';
-                fprintf(stderr, "SOCKET: recv fd=%d count=%d excerpt=%s...\n", (int)clientfd, count, hex);
-            }
             if (count == g_buffer_size && buffer[count - 1] != '\0')
             {
                 /* if message is bigger than our buffer, dynamically allocate more data until we receive it all */

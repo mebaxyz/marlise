@@ -2,7 +2,6 @@
 Tests for PluginManager component.
 """
 
-from unittest.mock import AsyncMock
 
 import pytest
 
