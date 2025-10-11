@@ -16,9 +16,7 @@ from tornado.escape import url_escape, xhtml_escape
 from tornado.template import Loader
 from tornado.ioloop import IOLoop
 from tornado.httputil import HTTPHeaders
-from urllib.parse import urlencode, urlparse
 
-from mod.profile import Profile
 from mod.settings import (DESKTOP, LOG, DEV_API,
                           HTML_DIR, DEVICE_KEY, DEVICE_WEBSERVER_PORT,
                           CLOUD_HTTP_ADDRESS, CLOUD_LABS_HTTP_ADDRESS,
@@ -30,7 +28,7 @@ from mod.settings import (DESKTOP, LOG, DEV_API,
 
 from mod import (
     check_environment, safe_json_load,
-    get_hardware_descriptor, os_sync,
+    get_hardware_descriptor,
 )
 try:
     from mod.session import SESSION

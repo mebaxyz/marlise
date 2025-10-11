@@ -3,9 +3,8 @@ Banks (Pedalboard Collections) related API endpoints
 """
 from typing import List
 from fastapi import APIRouter
-from fastapi.responses import JSONResponse
 
-from ..models import Bank, BankSaveRequest, StatusResponse
+from ..models import Bank, BankSaveRequest
 
 from fastapi import Request
 import asyncio
@@ -28,7 +27,7 @@ async def get_banks(request: Request):
         return []
 
     try:
-        fut = zmq_client.call("session_manager", "get_banks")
+        fut = zmq_client.call("session_manager", "get_banks", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=5.0)
         if isinstance(resp, dict) and resp.get("success", False):
             return resp.get("banks", [])
@@ -54,7 +53,7 @@ async def save_banks(payload: BankSaveRequest, request: Request):
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "save_banks", banks=payload.banks)
+        fut = zmq_client.call("session_manager", "save_banks", banks=payload.banks, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=10.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:

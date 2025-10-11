@@ -6,11 +6,9 @@ from fastapi import APIRouter, HTTPException, Query, Form, File, UploadFile, Req
 from fastapi.responses import Response
 
 from ..models import (
-    PedalboardInfo, PedalboardSaveRequest, PedalboardSaveResponse,
-    PedalboardLoadRequest, PedalboardLoadResponse, PedalboardCopyRequest,
-    PedalboardRemoveRequest, PedalboardImageResponse, PedalboardDetailInfo,
-    CVPortAddRequest, CVPortAddResponse, CVPortRemoveRequest,
-    TransportSyncModeRequest, StatusResponse
+    PedalboardInfo, PedalboardSaveResponse,
+    PedalboardLoadResponse, PedalboardImageResponse, PedalboardDetailInfo,
+    CVPortAddResponse
 )
 
 import asyncio
@@ -33,7 +31,7 @@ async def get_pedalboard_list(request: Request):
         return []
 
     try:
-        fut = zmq_client.call("session_manager", "get_pedalboard_list")
+        fut = zmq_client.call("session_manager", "get_pedalboard_list", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return resp.get("pedalboards", [])
@@ -63,7 +61,7 @@ async def save_pedalboard(
         return PedalboardSaveResponse(ok=False, bundlepath=None, title=title)
 
     try:
-        fut = zmq_client.call("session_manager", "save_current_pedalboard", title=title, as_new=asNew)
+        fut = zmq_client.call("session_manager", "save_current_pedalboard", title=title, as_new=asNew, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return PedalboardSaveResponse(
@@ -96,7 +94,7 @@ async def pack_pedalboard_bundle(
         return Response(content=b"", media_type="application/gzip", headers={"Content-Disposition": "attachment; filename=pedalboard.tar.gz"})
 
     try:
-        fut = zmq_client.call("session_manager", "pack_pedalboard_bundle", bundlepath=bundlepath)
+        fut = zmq_client.call("session_manager", "pack_pedalboard_bundle", bundlepath=bundlepath, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=10.0)  # Longer timeout for file operations
         if isinstance(resp, dict) and resp.get("success"):
             # Assume the handler returns file data
@@ -133,7 +131,7 @@ async def load_pedalboard_bundle(
         return PedalboardLoadResponse(ok=False, name="")
 
     try:
-        fut = zmq_client.call("session_manager", "load_pedalboard_bundle", bundlepath=bundlepath, is_default=isDefault)
+        fut = zmq_client.call("session_manager", "load_pedalboard_bundle", bundlepath=bundlepath, is_default=isDefault, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=10.0)  # Longer timeout for file operations
         if isinstance(resp, dict) and resp.get("success"):
             return PedalboardLoadResponse(ok=True, name=resp.get("name", ""))
@@ -163,7 +161,7 @@ async def load_pedalboard_web(request: Request, file: UploadFile = File(...)):
         file_data = await file.read()
         filename = file.filename
 
-        fut = zmq_client.call("session_manager", "load_pedalboard_web", file_data=file_data, filename=filename)
+        fut = zmq_client.call("session_manager", "load_pedalboard_web", file_data=file_data, filename=filename, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=10.0)  # Longer timeout for file operations
         if isinstance(resp, dict) and resp.get("success"):
             return PedalboardLoadResponse(ok=True, name=resp.get("name", ""))
@@ -193,7 +191,7 @@ async def factory_copy_pedalboard(
         return {"ok": False, "bundlepath": "", "title": title, "plugins": [], "connections": []}
 
     try:
-        fut = zmq_client.call("session_manager", "factory_copy_pedalboard", bundlepath=bundlepath, title=title)
+        fut = zmq_client.call("session_manager", "factory_copy_pedalboard", bundlepath=bundlepath, title=title, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=5.0)
         if isinstance(resp, dict) and resp.get("success"):
             return {
@@ -228,7 +226,7 @@ async def get_pedalboard_info(
         return PedalboardDetailInfo(title="", plugins=[], connections=[], hardware={})
 
     try:
-        fut = zmq_client.call("session_manager", "get_pedalboard_info", bundlepath=bundlepath)
+        fut = zmq_client.call("session_manager", "get_pedalboard_info", bundlepath=bundlepath, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return PedalboardDetailInfo(
@@ -262,7 +260,7 @@ async def remove_pedalboard(
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "remove_pedalboard", bundlepath=bundlepath)
+        fut = zmq_client.call("session_manager", "remove_pedalboard", bundlepath=bundlepath, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -291,7 +289,7 @@ async def get_pedalboard_image(
         return Response(content=b"", media_type="image/png")
 
     try:
-        fut = zmq_client.call("session_manager", "get_pedalboard_image", bundlepath=bundlepath, image_type=image_type)
+        fut = zmq_client.call("session_manager", "get_pedalboard_image", bundlepath=bundlepath, image_type=image_type, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=5.0)
         if isinstance(resp, dict) and resp.get("success"):
             image_data = resp.get("image_data", b"")
@@ -321,7 +319,7 @@ async def generate_pedalboard_image(
         return PedalboardImageResponse(ok=False, ctime="0")
 
     try:
-        fut = zmq_client.call("session_manager", "generate_pedalboard_image", bundlepath=bundlepath)
+        fut = zmq_client.call("session_manager", "generate_pedalboard_image", bundlepath=bundlepath, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return PedalboardImageResponse(ok=True, ctime=resp.get("ctime", "0"))
@@ -350,7 +348,7 @@ async def wait_pedalboard_image(
         return PedalboardImageResponse(ok=False, ctime="0")
 
     try:
-        fut = zmq_client.call("session_manager", "wait_pedalboard_image", bundlepath=bundlepath)
+        fut = zmq_client.call("session_manager", "wait_pedalboard_image", bundlepath=bundlepath, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=30.0)  # Longer timeout for waiting
         if isinstance(resp, dict) and resp.get("success"):
             return PedalboardImageResponse(ok=True, ctime=resp.get("ctime", "0"))
@@ -380,7 +378,7 @@ async def check_pedalboard_image(
         return {"status": 0, "ctime": "0"}
 
     try:
-        fut = zmq_client.call("session_manager", "check_pedalboard_image", bundlepath=bundlepath)
+        fut = zmq_client.call("session_manager", "check_pedalboard_image", bundlepath=bundlepath, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return {"status": resp.get("status", 0), "ctime": resp.get("ctime", "0")}
@@ -410,7 +408,7 @@ async def add_cv_addressing_port(
         return CVPortAddResponse(ok=False, operational_mode="=")
 
     try:
-        fut = zmq_client.call("session_manager", "add_cv_addressing_port", uri=uri, name=name)
+        fut = zmq_client.call("session_manager", "add_cv_addressing_port", uri=uri, name=name, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return CVPortAddResponse(ok=True, operational_mode=resp.get("operational_mode", "="))
@@ -439,7 +437,7 @@ async def remove_cv_addressing_port(
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "remove_cv_addressing_port", uri=uri)
+        fut = zmq_client.call("session_manager", "remove_cv_addressing_port", uri=uri, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -465,7 +463,7 @@ async def set_transport_sync_mode(
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "set_transport_sync_mode", mode=mode)
+        fut = zmq_client.call("session_manager", "set_transport_sync_mode", mode=mode, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:

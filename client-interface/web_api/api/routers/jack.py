@@ -1,11 +1,10 @@
 """
 MIDI Devices and JACK related API endpoints
 """
-from typing import List
 from fastapi import APIRouter
 
 from ..models import (
-    MidiDevicesResponse, MidiDevicesRequest, StatusResponse
+    MidiDevicesResponse, MidiDevicesRequest
 )
 
 from fastapi import Request
@@ -34,7 +33,7 @@ async def get_midi_devices(request: Request):
         )
 
     try:
-        fut = zmq_client.call("session_manager", "get_midi_devices")
+        fut = zmq_client.call("session_manager", "get_midi_devices", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=5.0)
         if isinstance(resp, dict) and resp.get("success", False):
             return MidiDevicesResponse(
@@ -82,7 +81,7 @@ async def set_midi_devices(request: Request, payload: MidiDevicesRequest):
     try:
         fut = zmq_client.call("session_manager", "set_midi_devices",
                      devs_in_use=payload.devs,
-                     midi_aggregated_mode=payload.midiAggregatedMode)
+                     midi_aggregated_mode=payload.midiAggregatedMode, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=10.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:

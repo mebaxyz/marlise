@@ -4,8 +4,7 @@ System Updates and Package Management API endpoints
 from fastapi import APIRouter, File, UploadFile
 
 from ..models import (
-    PackageUninstallRequest, PackageUninstallResponse,
-    PackageInstallResponse, StatusResponse
+    PackageUninstallRequest, PackageUninstallResponse
 )
 
 from fastapi import Request
@@ -29,7 +28,7 @@ async def begin_update(request: Request):
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "begin_update")
+        fut = zmq_client.call("session_manager", "begin_update", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=10.0)  # Longer timeout for update process
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -59,7 +58,7 @@ async def upload_system_image(request: Request, file: UploadFile = File(...)):
         file_data = await file.read()
         filename = file.filename
 
-        fut = zmq_client.call("session_manager", "upload_system_image", file_data=file_data, filename=filename)
+        fut = zmq_client.call("session_manager", "upload_system_image", file_data=file_data, filename=filename, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=30.0)  # Longer timeout for file upload
         return {
             "ok": isinstance(resp, dict) and resp.get("success", False),
@@ -98,7 +97,7 @@ async def upload_controlchain_firmware(request: Request, file: UploadFile = File
         file_data = await file.read()
         filename = file.filename
 
-        fut = zmq_client.call("session_manager", "upload_controlchain_firmware", file_data=file_data, filename=filename)
+        fut = zmq_client.call("session_manager", "upload_controlchain_firmware", file_data=file_data, filename=filename, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=30.0)  # Longer timeout for file upload
         return {
             "ok": isinstance(resp, dict) and resp.get("success", False),
@@ -130,7 +129,7 @@ async def cancel_controlchain_update(request: Request):
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "cancel_controlchain_update")
+        fut = zmq_client.call("session_manager", "cancel_controlchain_update", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=10.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -157,7 +156,7 @@ async def uninstall_package(request: PackageUninstallRequest, http_request: Requ
         )
 
     try:
-        fut = zmq_client.call("session_manager", "uninstall_package", packages=request.bundles)
+        fut = zmq_client.call("session_manager", "uninstall_package", packages=request.bundles, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=30.0)  # Longer timeout for package operations
         if isinstance(resp, dict) and resp.get("success", False):
             return PackageUninstallResponse(

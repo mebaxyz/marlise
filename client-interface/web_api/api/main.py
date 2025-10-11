@@ -4,6 +4,10 @@ Moved Client Interface main app (copied from previous location).
 
 # ...existing code...
 
+# Install uvloop for better performance (before other imports)
+import uvloop
+uvloop.install()
+
 import logging
 import os
 from contextlib import asynccontextmanager

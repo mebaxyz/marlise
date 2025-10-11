@@ -2,7 +2,8 @@
 # SPDX-FileCopyrightText: 2012-2023 MOD Audio UG
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-import os, sys
+import os
+import sys
 from os.path import join
 
 DEV_ENVIRONMENT = bool(int(os.environ.get('MOD_DEV_ENVIRONMENT', False)))

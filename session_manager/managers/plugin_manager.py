@@ -6,7 +6,6 @@ Manages plugin instances, parameters, and state.
 
 import asyncio
 import logging
-import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any, Dict, Optional

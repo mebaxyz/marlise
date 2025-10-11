@@ -114,7 +114,6 @@ class SystemHandlers:
         try:
             import platform
             import os
-            import subprocess
             
             # Gather system information
             info = {
@@ -133,7 +132,7 @@ class SystemHandlers:
                 with open('/proc/uptime', 'r') as f:
                     uptime_seconds = float(f.readline().split()[0])
                     info["uptime"] = uptime_seconds
-            except:
+            except Exception:
                 info["uptime"] = None
                 
             try:
@@ -148,7 +147,7 @@ class SystemHandlers:
                             if key in ["MemTotal", "MemFree", "MemAvailable"]:
                                 meminfo[key] = value
                     info["memory"] = meminfo
-            except:
+            except Exception:
                 info["memory"] = None
                 
             # Add psutil info if available
@@ -460,7 +459,7 @@ class SystemHandlers:
                 return {"success": False, "error": f"Invalid log type: {log_type}. Use 'session', 'mod-host', or 'all'"}
             
             if cleared:
-                return {"success": True, "message": f"Cleared logs", "cleared_files": cleared}
+                return {"success": True, "message": "Cleared logs", "cleared_files": cleared}
             else:
                 return {"success": False, "error": "No log files found or accessible"}
                 
@@ -531,7 +530,7 @@ class SystemHandlers:
         """Reset current session to empty pedalboard state"""
         try:
             # Use session manager to reset the session
-            result = await self.session_manager.reset_session()
+            await self.session_manager.reset_session()
             return {"success": True, "message": "Session reset to empty state"}
         except Exception as e:
             logger.error("Failed to reset session: %s", e)

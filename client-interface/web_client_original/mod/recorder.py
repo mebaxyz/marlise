@@ -2,7 +2,9 @@
 # SPDX-FileCopyrightText: 2012-2023 MOD Audio UG
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-import os, subprocess, time
+import os
+import subprocess
+import time
 from signal import SIGINT
 from tornado.ioloop import IOLoop
 from mod.settings import CAPTURE_PATH, PLAYBACK_PATH, DEVICE_KEY

@@ -1,0 +1,33 @@
+[Unit]
+Description=Marlise mod-host (LV2 Plugin Host)
+Documentation=https://github.com/mebaxyz/marlise
+After=network.target sound.target
+Wants=pipewire.service
+PartOf=marlise.target
+
+[Service]
+Type=simple
+User=%i
+WorkingDirectory=/home/%i/marlise
+Environment="LV2_PATH=/usr/lib/lv2:/usr/local/lib/lv2:/home/%i/.lv2"
+Environment="MOD_HOST_PORT=5555"
+Environment="MOD_HOST_FEEDBACK_PORT=5556"
+ExecStart=/usr/bin/pw-jack /home/%i/marlise/audio-engine/mod-host/mod-host -n -p 5555 -f 5556 -v
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# Resource limits
+MemoryMax=256M
+CPUQuota=50%
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/%i/marlise/logs /home/%i/marlise/run
+
+[Install]
+WantedBy=marlise.target

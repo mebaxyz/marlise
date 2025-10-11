@@ -2,10 +2,12 @@
 # SPDX-FileCopyrightText: 2012-2023 MOD Audio UG
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-import os, time, logging, json
+import os
+import logging
+import json
 
 from datetime import timedelta
-from tornado import iostream, gen
+from tornado import gen
 from tornado.ioloop import IOLoop, PeriodicCallback
 
 from mod import safe_json_load, TextFileFlusher
@@ -27,7 +29,7 @@ except ImportError:
 from mod.recorder import Recorder, Player
 from mod.screenshot import ScreenshotGenerator
 from mod.settings import (LOG,
-                          DEV_ENVIRONMENT, DEV_HMI, DEV_HOST,
+                          DEV_HMI, DEV_HOST,
                           HMI_SERIAL_PORT, HMI_BAUD_RATE, HMI_TIMEOUT,
                           PREFERENCES_JSON_FILE, DEFAULT_SNAPSHOT_NAME, UNTITLED_PEDALBOARD_NAME)
 
@@ -483,7 +485,7 @@ class Session(object):
     # host commands
 
     def format_port(self, port):
-        if not 'system' in port and not 'effect' in port:
+        if 'system' not in port and 'effect' not in port:
             port = "effect_%s" % port
         return port
 

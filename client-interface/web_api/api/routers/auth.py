@@ -8,7 +8,6 @@ from ..models import (
     AuthTokenRequest, AuthTokenResponse
 )
 
-import asyncio
 import logging
 from fastapi import Request
 

@@ -1,14 +1,24 @@
-INFO:__main__:Starting session_manager service
-INFO:zmq_service:Service 'session_manager' ports: RPC=5718, PUB=6718, SUB=7718
-ERROR:zmq_service:Failed to start ZMQ service 'session_manager': Address already in use (addr='tcp://127.0.0.1:5718')
-INFO:zmq_service:ZMQ Service 'session_manager' stopped
-INFO:__main__:ZeroMQ service started
-INFO:core.bridge_client:Connected to modhost-bridge at tcp://127.0.0.1:6000
-INFO:__main__:Bridge client started (attempt 1)
-INFO:core.plugin_manager:Initializing plugin manager
-INFO:core.plugin_manager:Loaded 5 available plugins from bridge service
-INFO:core.plugin_manager:Plugin manager initialized with 5 available plugins
-INFO:__main__:Plugin manager initialized
-INFO:__main__:Session manager initialized
-INFO:handlers.zmq_handlers:ZeroMQ methods registered
-INFO:__main__:session_manager service started successfully
+INFO:session_manager.main:Starting session_manager service
+INFO:session_manager.services.zmq_service:Service 'session_manager' ports: RPC=5718, PUB=6718, SUB=7718
+INFO:session_manager.services.zmq_service:Starting RPC handler for service 'session_manager'
+INFO:session_manager.services.zmq_service:ZMQ Service 'session_manager' started successfully
+INFO:session_manager.main:ZeroMQ service started
+INFO:session_manager.infrastructure.bridge_client:Connected to modhost-bridge at tcp://127.0.0.1:6000
+INFO:session_manager.main:Bridge client started (attempt 1)
+INFO:session_manager.managers.plugin_manager:Initializing plugin manager
+ERROR:session_manager.infrastructure.bridge_client:Timeout waiting for modhost-bridge response
+WARNING:session_manager.managers.plugin_manager:Failed to get available plugins from bridge: Bridge timeout
+INFO:session_manager.managers.plugin_manager:Plugin manager initialized with 0 available plugins
+INFO:session_manager.main:Plugin manager initialized
+INFO:session_manager.main:Config manager initialized
+INFO:session_manager.main:Session manager initialized
+INFO:session_manager.handlers.zmq_handlers:Registering ZMQ handlers via decorator discovery...
+INFO:session_manager.handlers.zmq_handlers:Registering service methods with @zmq_handler decorator...
+INFO:session_manager.handlers.zmq_handlers:Service methods registration complete
+INFO:session_manager.handlers.zmq_handlers:All ZMQ handlers registered successfully
+INFO:session_manager.handlers.zmq_handlers:Registering service methods with @zmq_handler decorator...
+INFO:session_manager.handlers.zmq_handlers:Service methods registration complete
+INFO:session_manager.main:session_manager service started successfully
+ERROR:session_manager.infrastructure.bridge_client:Error communicating with bridge: Operation cannot be accomplished in current state
+INFO:session_manager.infrastructure.bridge_client:Bridge disconnected, attempting reconnect...
+INFO:session_manager.infrastructure.bridge_client:Bridge reconnected successfully

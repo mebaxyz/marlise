@@ -25,7 +25,6 @@ from mod.control_chain import (
   CC_MODE_COLOURED,
   CC_MODE_MOMENTARY,
   CC_MODE_REVERSE,
-  CC_MODE_GROUP,
   ControlChainDeviceListener,
 )
 from mod.settings import PEDALBOARD_INSTANCE_ID
@@ -289,7 +288,7 @@ class Addressings(object):
                 else:
                     continue
 
-                if not instance in ret:
+                if instance not in ret:
                     ret[instance] = {}
                 ret[instance][portsymbol] = target
 

@@ -1,14 +1,12 @@
 """
 Snapshot (Pedalboard Presets) related API endpoints
 """
-from typing import Dict
-from fastapi import APIRouter, Query, Path, Request
+from fastapi import APIRouter, Query, Request
 
 from ..models import (
-    SnapshotSaveAsRequest, SnapshotSaveAsResponse,
-    SnapshotRenameRequest, SnapshotRenameResponse,
-    SnapshotNameResponse, SnapshotListResponse,
-    StatusResponse
+    SnapshotSaveAsResponse,
+    SnapshotRenameResponse,
+    SnapshotNameResponse
 )
 import asyncio
 import logging
@@ -29,7 +27,7 @@ async def save_snapshot(request: Request):
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "save_snapshot")
+        fut = zmq_client.call("session_manager", "save_snapshot", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -55,7 +53,7 @@ async def save_snapshot_as(
         return SnapshotSaveAsResponse(ok=False, id=0, title=title)
 
     try:
-        fut = zmq_client.call("session_manager", "save_snapshot_as", title=title)
+        fut = zmq_client.call("session_manager", "save_snapshot_as", title=title, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return SnapshotSaveAsResponse(
@@ -89,7 +87,7 @@ async def rename_snapshot(
         return SnapshotRenameResponse(ok=False, title=title)
 
     try:
-        fut = zmq_client.call("session_manager", "rename_snapshot", id=snapshot_id, title=title)
+        fut = zmq_client.call("session_manager", "rename_snapshot", id=snapshot_id, title=title, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return SnapshotRenameResponse(ok=True, title=title)
@@ -118,7 +116,7 @@ async def remove_snapshot(
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "remove_snapshot", id=snapshot_id)
+        fut = zmq_client.call("session_manager", "remove_snapshot", id=snapshot_id, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -141,7 +139,7 @@ async def list_snapshots(request: Request):
         return {"0": "Default"}
 
     try:
-        fut = zmq_client.call("session_manager", "list_snapshots")
+        fut = zmq_client.call("session_manager", "list_snapshots", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return resp.get("snapshots", {"0": "Default"})
@@ -170,7 +168,7 @@ async def get_snapshot_name(
         return SnapshotNameResponse(ok=False, name="")
 
     try:
-        fut = zmq_client.call("session_manager", "get_snapshot_name", id=snapshot_id)
+        fut = zmq_client.call("session_manager", "get_snapshot_name", id=snapshot_id, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return SnapshotNameResponse(ok=True, name=resp.get("name", ""))
@@ -199,7 +197,7 @@ async def load_snapshot(
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "load_snapshot", id=snapshot_id)
+        fut = zmq_client.call("session_manager", "load_snapshot", id=snapshot_id, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:

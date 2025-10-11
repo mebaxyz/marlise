@@ -3,8 +3,7 @@ Test configuration and fixtures for audio processing service tests.
 """
 
 import asyncio
-import os
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 import pytest_asyncio

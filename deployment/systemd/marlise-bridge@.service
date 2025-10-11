@@ -1,0 +1,36 @@
+[Unit]
+Description=Marlise Modhost Bridge (C++ JSON-RPC Bridge)
+Documentation=https://github.com/mebaxyz/marlise
+After=marlise-mod-host@%i.service
+Requires=marlise-mod-host@%i.service
+PartOf=marlise.target
+
+[Service]
+Type=simple
+User=%i
+WorkingDirectory=/home/%i/marlise
+Environment="MOD_HOST_HOST=127.0.0.1"
+Environment="MOD_HOST_PORT=5555"
+Environment="MODHOST_BRIDGE_PORT=6000"
+ExecStart=/home/%i/marlise/audio-engine/modhost-bridge/build/modhost-bridge
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+# Wait for mod-host to be ready
+ExecStartPre=/bin/bash -c 'for i in {1..30}; do nc -z 127.0.0.1 5555 && break || sleep 1; done'
+
+# Resource limits
+MemoryMax=128M
+CPUQuota=30%
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/%i/marlise/logs /home/%i/marlise/run
+
+[Install]
+WantedBy=marlise.target

@@ -13,16 +13,13 @@ Environment:
 Ensure the modhost-bridge service is running before launching.
 """
 
-import argparse
 import asyncio
 import logging
 import sys
-from typing import List
 
 from core.plugin_manager import PluginManager
 from core.session_manager import SessionManager
 from core.bridge_client import BridgeClient
-from core.utils import serialize_pedalboard
 
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 logger = logging.getLogger("pedalboard_demo")

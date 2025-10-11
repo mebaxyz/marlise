@@ -1,9 +1,9 @@
 """
 Recording and Sharing related API endpoints
 """
-from fastapi import APIRouter, Form, Request
+from fastapi import APIRouter, Request
 
-from ..models import RecordingDownloadResponse, UserIdSaveRequest, StatusResponse
+from ..models import RecordingDownloadResponse
 
 import asyncio
 import logging
@@ -25,7 +25,7 @@ async def start_recording(request: Request):
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "start_recording")
+        fut = zmq_client.call("session_manager", "start_recording", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -48,7 +48,7 @@ async def stop_recording(request: Request):
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "stop_recording")
+        fut = zmq_client.call("session_manager", "stop_recording", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -71,7 +71,7 @@ async def start_playback(request: Request):
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "start_playback")
+        fut = zmq_client.call("session_manager", "start_playback", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -94,7 +94,7 @@ async def wait_playback(request: Request):
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "wait_playback")
+        fut = zmq_client.call("session_manager", "wait_playback", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=30.0)  # Longer timeout for playback
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -117,7 +117,7 @@ async def stop_playback(request: Request):
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "stop_playback")
+        fut = zmq_client.call("session_manager", "stop_playback", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -140,7 +140,7 @@ async def download_recording(request: Request):
         return RecordingDownloadResponse(ok=False, audio="")
 
     try:
-        fut = zmq_client.call("session_manager", "download_recording")
+        fut = zmq_client.call("session_manager", "download_recording", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=10.0)  # Longer timeout for file transfer
         if isinstance(resp, dict) and resp.get("success", False):
             return RecordingDownloadResponse(ok=True, audio=resp.get("audio", ""))
@@ -166,7 +166,7 @@ async def reset_recording(request: Request):
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "reset_recording")
+        fut = zmq_client.call("session_manager", "reset_recording", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:

@@ -131,8 +131,9 @@ class PluginHandlers:
         try:
             instance_id = kwargs.get("instance_id")
             uri = kwargs.get("uri")
-            x = kwargs.get("x", 0.0)
-            y = kwargs.get("y", 0.0)
+            # x and y coordinates for UI positioning (not used in backend)
+            # x = kwargs.get("x", 0.0)
+            # y = kwargs.get("y", 0.0)
 
             if not instance_id or not uri:
                 return {"success": False, "error": "Missing 'instance_id' or 'uri' parameter"}

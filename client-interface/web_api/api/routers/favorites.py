@@ -3,7 +3,6 @@ Favorites related API endpoints
 """
 from fastapi import APIRouter, Form
 
-from ..models import FavoriteRequest, StatusResponse
 
 from fastapi import Request
 import asyncio
@@ -29,7 +28,7 @@ async def add_favorite(
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "add_favorite", uri=uri)
+        fut = zmq_client.call("session_manager", "add_favorite", uri=uri, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -54,7 +53,7 @@ async def remove_favorite(
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "remove_favorite", uri=uri)
+        fut = zmq_client.call("session_manager", "remove_favorite", uri=uri, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:

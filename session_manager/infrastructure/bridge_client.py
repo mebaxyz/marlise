@@ -26,6 +26,8 @@ class BridgeClient:
         self.context: Optional[zmq.asyncio.Context] = None
         self.socket: Optional[zmq.asyncio.Socket] = None
         self._connected = False
+        self._running = False
+        self._reconnect_task: Optional[asyncio.Task] = None
         self.service_name = "bridge_client"
 
     async def start(self):
@@ -35,7 +37,13 @@ class BridgeClient:
             self.socket = self.context.socket(zmq.REQ)
             self.socket.connect(self.endpoint)
             self._connected = True
+            self._running = True
             logger.info("Connected to modhost-bridge at %s", self.endpoint)
+            
+            # Start auto-reconnect task
+            if not self._reconnect_task or self._reconnect_task.done():
+                self._reconnect_task = asyncio.create_task(self._auto_reconnect_loop())
+                
         except Exception as e:
             logger.error("Failed to connect to modhost-bridge: %s", e)
             raise
@@ -43,6 +51,16 @@ class BridgeClient:
     async def stop(self):
         """Disconnect from the modhost-bridge"""
         self._connected = False
+        self._running = False
+        
+        # Cancel reconnect task
+        if self._reconnect_task and not self._reconnect_task.done():
+            self._reconnect_task.cancel()
+            try:
+                await self._reconnect_task
+            except asyncio.CancelledError:
+                pass
+                
         if self.socket:
             self.socket.close()
         if self.context:
@@ -141,7 +159,43 @@ class BridgeClient:
             return {"success": False, "error": "Invalid bridge response"}
         except Exception as e:
             logger.error("Error communicating with bridge: %s", e)
+            self._connected = False  # Mark as disconnected to trigger reconnect
             return {"success": False, "error": f"Bridge communication error: {e}"}
+
+    async def _auto_reconnect_loop(self):
+        """Background task that monitors connection and reconnects if needed"""
+        reconnect_delay = float(os.getenv("BRIDGE_RECONNECT_DELAY", "2.0"))
+        health_check_interval = float(os.getenv("BRIDGE_HEALTH_CHECK_INTERVAL", "5.0"))
+        
+        while self._running:
+            try:
+                if not self._connected:
+                    logger.info("Bridge disconnected, attempting reconnect...")
+                    try:
+                        # Close old socket if exists
+                        if self.socket:
+                            self.socket.close()
+                        
+                        # Create new socket
+                        self.socket = self.context.socket(zmq.REQ)
+                        self.socket.connect(self.endpoint)
+                        self._connected = True
+                        logger.info("Bridge reconnected successfully")
+                        
+                    except Exception as e:
+                        logger.warning("Reconnect attempt failed: %s (retrying in %.1fs)", e, reconnect_delay)
+                        await asyncio.sleep(reconnect_delay)
+                        continue
+                
+                # Wait before next health check
+                await asyncio.sleep(health_check_interval)
+                
+            except asyncio.CancelledError:
+                logger.info("Auto-reconnect loop cancelled")
+                break
+            except Exception as e:
+                logger.error("Unexpected error in reconnect loop: %s", e)
+                await asyncio.sleep(reconnect_delay)
 
 
 # Alias removed: ServiceBus compatibility layer no longer used

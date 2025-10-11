@@ -4,7 +4,6 @@
 
 """Minimal session object for template rendering only"""
 
-import json
 from mod.settings import PREFERENCES_JSON_FILE, DEFAULT_SNAPSHOT_NAME, UNTITLED_PEDALBOARD_NAME
 from mod import safe_json_load
 

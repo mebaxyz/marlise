@@ -14,7 +14,6 @@ from PIL import Image
 
 from modtools.utils import (
     init as lv2_init,
-    cleanup as lv2_cleanup,
     get_pedalboard_info,
     get_plugin_info,
     get_plugin_gui,

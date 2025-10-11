@@ -4,10 +4,8 @@
 import requests
 import time
 import subprocess
-import signal
 import os
 import sys
-from threading import Thread
 
 def test_proxy_functionality():
     """Test that the integrated proxy works correctly"""

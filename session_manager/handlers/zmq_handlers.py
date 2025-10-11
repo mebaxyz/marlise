@@ -5,7 +5,7 @@ This file maintains backward compatibility while delegating to the new modular s
 """
 
 import logging
-from typing import Any, Dict, Callable, Optional
+from typing import Any, Dict
 
 from .decorators import zmq_handler
 from .plugin_handlers import PluginHandlers
@@ -111,3 +111,66 @@ class ZMQHandlers:
     async def handle_reset_pedalboard(self, **kwargs) -> Dict[str, Any]:
         """Legacy method - delegates to PedalboardHandlers"""
         return await self.pedalboard_handlers.handle_reset_pedalboard(**kwargs)
+
+    @zmq_handler("health_check")
+    async def handle_health_check(self, **kwargs) -> Dict[str, Any]:
+        """
+        Health check endpoint to verify service chain status
+        
+        Returns bridge and mod-host connection status
+        """
+        bridge_connected = self.bridge_client._connected if self.bridge_client else False
+        
+        # Try a quick ping to verify bridge is actually responsive
+        mod_host_connected = False
+        if bridge_connected:
+            try:
+                # Quick timeout test
+                import asyncio
+                resp = await asyncio.wait_for(
+                    self.bridge_client.call("modhost_bridge", "get_jack_sample_rate", timeout=1.0),
+                    timeout=2.0
+                )
+                mod_host_connected = resp.get("success", False)
+            except Exception:
+                pass
+        
+        return {
+            "success": True,
+            "healthy": bridge_connected,
+            "bridge_connected": bridge_connected,
+            "mod_host_connected": mod_host_connected,
+        }
+
+    @zmq_handler("get_metrics")
+    async def handle_get_metrics(self, **kwargs) -> Dict[str, Any]:
+        """
+        Get service metrics for monitoring
+        
+        Returns performance and resource usage metrics
+        """
+        import psutil
+        from datetime import datetime
+        
+        try:
+            process = psutil.Process()
+            create_time = datetime.fromtimestamp(process.create_time())
+            
+            metrics = {
+                "success": True,
+                "uptime_seconds": (datetime.now() - create_time).total_seconds(),
+                "memory_mb": round(process.memory_info().rss / 1024 / 1024, 2),
+                "cpu_percent": round(process.cpu_percent(interval=0.1), 2),
+                "num_threads": process.num_threads(),
+                "bridge_connected": self.bridge_client._connected if self.bridge_client else False,
+                "active_plugins": len(self.plugin_manager.plugins) if hasattr(self.plugin_manager, 'plugins') else 0,
+            }
+            
+            return metrics
+            
+        except Exception as e:
+            logger.error("Failed to get metrics: %s", e)
+            return {
+                "success": False,
+                "error": str(e)
+            }

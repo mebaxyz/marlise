@@ -4,8 +4,7 @@ System, Device, and Performance Control API endpoints
 from fastapi import APIRouter, Path, Form, Request
 
 from ..models import (
-    PingResponse, TrueBypassRequest, BufferSizeRequest, BufferSizeResponse,
-    ConfigSetRequest, ConfigGetResponse, StatusResponse
+    PingResponse, BufferSizeResponse
 )
 
 import asyncio
@@ -25,7 +24,7 @@ async def ping_device(request: Request):
         return PingResponse(ihm_online=False, ihm_time=0.0)
 
     try:
-        fut = zmq_client.call("session_manager", "ping_hmi")
+        fut = zmq_client.call("session_manager", "ping_hmi", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=2.0)
 
         if isinstance(resp, dict) and resp.get("success"):
@@ -51,7 +50,7 @@ async def reset_session(request: Request):
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "reset_session")
+        fut = zmq_client.call("session_manager", "reset_session", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -75,7 +74,7 @@ async def set_truebypass(
 
     try:
         enabled = state.lower() == "true"
-        fut = zmq_client.call("session_manager", "set_truebypass", channel=channel, state=enabled)
+        fut = zmq_client.call("session_manager", "set_truebypass", channel=channel, state=enabled, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -100,7 +99,7 @@ async def set_buffer_size(
         if size not in [128, 256]:
             return BufferSizeResponse(ok=False, size=0)
 
-        fut = zmq_client.call("session_manager", "set_buffer_size", size=size)
+        fut = zmq_client.call("session_manager", "set_buffer_size", size=size, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return BufferSizeResponse(ok=True, size=size)
@@ -122,7 +121,7 @@ async def reset_xruns(request: Request):
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "reset_xruns")
+        fut = zmq_client.call("session_manager", "reset_xruns", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -141,7 +140,7 @@ async def switch_cpu_frequency(request: Request):
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "switch_cpu_frequency")
+        fut = zmq_client.call("session_manager", "switch_cpu_frequency", timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -165,7 +164,7 @@ async def set_config(
         return {"ok": False}
 
     try:
-        fut = zmq_client.call("session_manager", "set_config", key=key, value=value)
+        fut = zmq_client.call("session_manager", "set_config", key=key, value=value, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         return {"ok": isinstance(resp, dict) and resp.get("success", False)}
     except asyncio.TimeoutError:
@@ -187,7 +186,7 @@ async def get_config(
         return {"value": None}
 
     try:
-        fut = zmq_client.call("session_manager", "get_config", key=key)
+        fut = zmq_client.call("session_manager", "get_config", key=key, timeout=5.0)
         resp = await asyncio.wait_for(fut, timeout=3.0)
         if isinstance(resp, dict) and resp.get("success"):
             return {"value": resp.get("value")}

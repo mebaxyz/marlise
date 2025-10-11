@@ -11,11 +11,10 @@ import re
 import time
 from base64 import b64encode
 from tornado import gen, web, httpclient, websocket
-from tornado.escape import url_escape, xhtml_escape
+from tornado.escape import url_escape
 from tornado.template import Loader
 from tornado.ioloop import IOLoop
 from tornado.httputil import HTTPHeaders
-from urllib.parse import urlencode, urlparse
 
 # Configuration constants
 HTML_DIR = os.path.dirname(os.path.abspath(__file__)) + "/html"
