@@ -1,6 +1,4 @@
-# Multi-stage Dockerfile for building and running mod-host + modhost-bridge
-# Builder stage compiles both projects. Runtime stage ships the minimal runtime
-
+# Copied from deployment/docker/Dockerfile
 FROM debian:trixie-slim AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 
