@@ -661,6 +661,15 @@ static void output_data_ready(proto_t *proto)
     protocol_response("resp 0", proto);
 }
 
+/* Always reply on socket so clients can use this as a liveness probe */
+static void ping_cb(proto_t *proto)
+{
+    (void)proto;
+    printf("PROTOCOL: ping command invoked\n");
+    fflush(stdout);
+    protocol_response("resp 0", proto);
+}
+
 static void help_cb(proto_t *proto)
 {
     proto->response = 0;
@@ -679,14 +688,6 @@ static void quit_cb(proto_t *proto)
     socket_finish();
     effects_finish(1);
     exit(EXIT_SUCCESS);
-}
-
-static void ping_cb(proto_t *proto)
-{
-    /* Always reply on socket so clients can use this as a liveness probe */
-    printf("PROTOCOL: ping command invoked\n");
-    fflush(stdout);
-    protocol_response("resp 0", proto);
 }
 
 static void self_test_effects_set_property_cb(proto_t *proto)
@@ -806,7 +807,6 @@ static int mod_host_init(jack_client_t* client, int socket_port, int feedback_po
     protocol_add_command(HMI_UNMAP, hmi_unmap_cb);
     protocol_add_command(CPU_LOAD, cpu_load_cb);
     protocol_add_command(MAX_CPU_LOAD, max_cpu_load_cb);
-    protocol_add_command(PING, ping_cb);
 #ifndef SKIP_READLINE
     protocol_add_command(LOAD_COMMANDS, load_cb);
     protocol_add_command(SAVE_COMMANDS, save_cb);
@@ -821,6 +821,8 @@ static int mod_host_init(jack_client_t* client, int socket_port, int feedback_po
     protocol_add_command(TRANSPORT_SYNC, transport_sync);
     protocol_add_command(SHOW_EXTERNAL_UI, show_external_ui);
     protocol_add_command(OUTPUT_DATA_READY, output_data_ready);
+    /* Add ping command for health checks */
+    protocol_add_command("ping", ping_cb);
 
     /* skip help and quit for internal client */
     if (client == NULL)
@@ -1015,19 +1017,7 @@ int main(int argc, char **argv)
     }
 
     /* Verbose */
-    /* If MOD_HOST_DEBUG env var is set, enable verbose protocol and socket debug */
-    {
-        const char *dbg = getenv("MOD_HOST_DEBUG");
-        if (dbg && atoi(dbg))
-        {
-            fprintf(stderr, "MOD_HOST_DEBUG enabled\n");
-            protocol_verbose(1);
-        }
-        else
-        {
-            protocol_verbose(verbose);
-        }
-    }
+    protocol_verbose(verbose);
 
     /* Report ready */
     printf("mod-host ready!\n");
