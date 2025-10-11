@@ -2,7 +2,7 @@
 FROM debian:trixie-slim AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build dependencies
+# Install build dependencies (include LV2 and plugin host headers)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
@@ -19,6 +19,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libjsoncpp-dev \
     libboost-system-dev \
     libboost-thread-dev \
+    libreadline-dev \
+    liblilv-dev \
+    lv2-dev \
+    libserd-dev \
+    libsord-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
@@ -69,8 +74,8 @@ RUN groupadd -g ${MARLISE_GID} ${MARLISE_USER} || true && \
 # Copy built artifacts from builder
 COPY --from=builder /opt/marlise /opt/marlise
 
-# Add start script
-COPY deployment/docker/start.sh /opt/marlise/start.sh
+# Add start script (moved to audio-engine directory)
+COPY deployment/audio-engine/start.sh /opt/marlise/start.sh
 RUN chmod +x /opt/marlise/start.sh
 
 WORKDIR /opt/marlise
