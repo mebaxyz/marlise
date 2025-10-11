@@ -1,7 +1,0 @@
-[Unit]
-Description=Marlise Audio Processing Platform
-Documentation=https://github.com/mebaxyz/marlise
-After=network.target sound.target
-
-[Install]
-WantedBy=multi-user.target

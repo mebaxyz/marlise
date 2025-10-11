@@ -16,7 +16,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsamplerate0-dev \
     libfftw3-dev \
     libzmq3-dev \
+    cppzmq-dev \
     libjsoncpp-dev \
+    libspdlog-dev \
+    libfmt-dev \
     libboost-system-dev \
     libboost-thread-dev \
     libreadline-dev \
@@ -31,6 +34,7 @@ WORKDIR /src
 # Copy only required source folders to keep context small (expects repo at build context root)
 COPY audio-engine/mod-host /src/mod-host
 COPY audio-engine/modhost-bridge /src/modhost-bridge
+COPY audio-engine/utils /src/utils
 
 # Build mod-host (classic make-based host)
 WORKDIR /src/mod-host
@@ -40,6 +44,14 @@ RUN if [ -f Makefile ]; then \
       echo "No Makefile found in mod-host; skipping mod-host build"; \
     fi
 
+# Build utils library required by modhost-bridge
+WORKDIR /src/utils
+RUN if [ -f CMakeLists.txt ]; then \
+            mkdir -p build && cd build && cmake .. && make -j$(nproc) && cp libmod_utils.* .. || true; \
+        else \
+            echo "No CMakeLists.txt found in utils; skipping utils build"; \
+        fi
+
 # Build modhost-bridge (cmake)
 WORKDIR /src/modhost-bridge
 RUN mkdir -p build && cd build && cmake .. && make -j$(nproc)
@@ -48,19 +60,24 @@ RUN mkdir -p build && cd build && cmake .. && make -j$(nproc)
 RUN mkdir -p /opt/marlise/bin
 RUN if [ -f /src/mod-host/mod-host ]; then cp /src/mod-host/mod-host /opt/marlise/bin/ || true; fi
 RUN if [ -f /src/modhost-bridge/build/modhost-bridge ]; then cp /src/modhost-bridge/build/modhost-bridge /opt/marlise/bin/ || true; fi
+RUN mkdir -p /opt/marlise/lib
+RUN cp /src/utils/libmod_utils.* /opt/marlise/lib/ || true
 
 
 FROM debian:trixie-slim AS runtime
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Runtime dependencies (minimal for JACK + audio)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     jackd2 \
     libjack-jackd2-0 \
+    libzmq5 \
+    libjsoncpp26 \
+    liblilv-0-0 \
+    libfmt10 \
+    libfftw3-double3 \
     alsa-utils \
     socat \
-    tini \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
@@ -75,13 +92,25 @@ RUN groupadd -g ${MARLISE_GID} ${MARLISE_USER} || true && \
 COPY --from=builder /opt/marlise /opt/marlise
 
 # Add start script (moved to audio-engine directory)
-COPY deployment/audio-engine/start.sh /opt/marlise/start.sh
+# Use the repository's start-service.sh which has the known working startup sequence
+COPY scripts/start-service.sh /opt/marlise/start.sh
 RUN chmod +x /opt/marlise/start.sh
+
+# Ensure the start script uses the binaries we installed into /opt/marlise/bin
+ENV MOD_HOST_BIN=/opt/marlise/bin/mod-host
+ENV MODHOST_BRIDGE_BIN=/opt/marlise/bin/modhost-bridge
 
 WORKDIR /opt/marlise
 
 EXPOSE 5555 5556 6000
 
-# Default entrypoint runs the start script as non-root user (will use su-exec-like pattern)
-ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["/opt/marlise/start.sh"]
+# Copy entrypoint that can start jackd if requested then exec start-service.sh
+COPY docker/audio-engine/entrypoint.sh /opt/marlise/entrypoint.sh
+RUN chmod +x /opt/marlise/entrypoint.sh
+
+# Copy supervisord config
+RUN mkdir -p /opt/logs || true
+
+# Default entrypoint uses tini and our entrypoint wrapper to start jackd, bridge, and exec mod-host
+ENTRYPOINT ["/bin/bash", "/opt/marlise/entrypoint.sh"]
+CMD []

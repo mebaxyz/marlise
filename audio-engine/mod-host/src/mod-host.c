@@ -664,7 +664,6 @@ static void output_data_ready(proto_t *proto)
 /* Always reply on socket so clients can use this as a liveness probe */
 static void ping_cb(proto_t *proto)
 {
-    (void)proto;
     printf("PROTOCOL: ping command invoked\n");
     fflush(stdout);
     protocol_response("resp 0", proto);
@@ -822,7 +821,7 @@ static int mod_host_init(jack_client_t* client, int socket_port, int feedback_po
     protocol_add_command(SHOW_EXTERNAL_UI, show_external_ui);
     protocol_add_command(OUTPUT_DATA_READY, output_data_ready);
     /* Add ping command for health checks */
-    protocol_add_command("ping", ping_cb);
+    protocol_add_command(PING, ping_cb);
 
     /* skip help and quit for internal client */
     if (client == NULL)
