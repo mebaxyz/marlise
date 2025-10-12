@@ -6,6 +6,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
+    python3 \
+    python3-pip \
     git \
     pkg-config \
     wget \
@@ -39,17 +41,21 @@ COPY audio-engine/utils /src/utils
 # Build mod-host (classic make-based host)
 WORKDIR /src/mod-host
 RUN if [ -f Makefile ]; then \
-      make -j$(nproc); \
-    else \
-      echo "No Makefile found in mod-host; skipping mod-host build"; \
-    fi
+            echo "Found Makefile in mod-host; building..."; \
+            make -j$(nproc); \
+        else \
+            echo "ERROR: No Makefile found in mod-host; aborting Docker build"; \
+            exit 1; \
+        fi
 
 # Build utils library required by modhost-bridge
 WORKDIR /src/utils
 RUN if [ -f CMakeLists.txt ]; then \
-            mkdir -p build && cd build && cmake .. && make -j$(nproc) && cp libmod_utils.* .. || true; \
+            echo "Found CMakeLists.txt in utils; building..."; \
+            mkdir -p build && cd build && cmake .. && make -j$(nproc) && cp libmod_utils.* ..; \
         else \
-            echo "No CMakeLists.txt found in utils; skipping utils build"; \
+            echo "ERROR: No CMakeLists.txt found in utils; aborting Docker build"; \
+            exit 1; \
         fi
 
 # Build modhost-bridge (cmake)
@@ -58,10 +64,20 @@ RUN mkdir -p build && cd build && cmake .. && make -j$(nproc)
 
 # Install stage: copy built binaries into a single prefix
 RUN mkdir -p /opt/marlise/bin
-RUN if [ -f /src/mod-host/mod-host ]; then cp /src/mod-host/mod-host /opt/marlise/bin/ || true; fi
-RUN if [ -f /src/modhost-bridge/build/modhost-bridge ]; then cp /src/modhost-bridge/build/modhost-bridge /opt/marlise/bin/ || true; fi
+RUN if [ -f /src/mod-host/mod-host ]; then \
+            cp /src/mod-host/mod-host /opt/marlise/bin/; \
+        else \
+            echo "ERROR: mod-host binary not found after build; aborting Docker build"; \
+            exit 1; \
+        fi
+RUN if [ -f /src/modhost-bridge/build/modhost-bridge ]; then \
+            cp /src/modhost-bridge/build/modhost-bridge /opt/marlise/bin/; \
+        else \
+            echo "ERROR: modhost-bridge binary not found after build; aborting Docker build"; \
+            exit 1; \
+        fi
 RUN mkdir -p /opt/marlise/lib
-RUN cp /src/utils/libmod_utils.* /opt/marlise/lib/ || true
+RUN cp /src/utils/libmod_utils.* /opt/marlise/lib/
 
 
 FROM debian:trixie-slim AS runtime

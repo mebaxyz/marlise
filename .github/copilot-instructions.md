@@ -618,3 +618,12 @@ When working with this repository:
 7. **Use existing patterns**: Look at similar endpoints/handlers for consistency
 8. **Test the full chain**: Changes may affect multiple layers - test end-to-end
 9. **Check component READMEs**: Each major component has its own README.md with specific details
+
+## Integration test helpers (note for Copilot)
+
+- Tests now provide a session-scoped fixture `modhost_container` which starts a single detached runtime container for the whole pytest session. Helpers are in `tests/integration/docker_helpers.py` and include:
+    - `start_runtime_container(tag)` — starts a runtime container with `JACK_DUMMY=1`, discovers host ports for `5555` and `5556`, and waits for mod-host readiness.
+    - `stop_container(container_id)` — forcibly removes the container.
+    - `run_container_with_modhost(tag, stage)` — runs `/opt/marlise/bin/mod-host -V` inside the image (ephemeral smoke check).
+
+When adding or changing integration tests, prefer using `modhost_container` for socket-based tests to avoid starting/stopping containers per test. Use `run_container_with_modhost` for quick exec-style binary/version checks.
