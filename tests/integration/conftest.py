@@ -34,8 +34,10 @@ def modhost_image_tag():
     tag = os.environ.get("MODHOST_TEST_TAG", "marlise-audio:local")
 
     # Build the image (builder or runtime/final). Use the same Dockerfile as README.
-    # Always build without cache in CI/test runs to ensure clean images.
-    no_cache = ["--no-cache"]
+    # Optionally disable docker build cache when DOCKER_BUILD_NO_CACHE is set.
+    # Accepts truthy values: '1', 'true', 'yes' (case-insensitive).
+    env_val = os.environ.get("DOCKER_BUILD_NO_CACHE", "").strip().lower()
+    no_cache = ["--no-cache"] if env_val in ("1", "true", "yes") else []
     if stage == "builder":
         build_cmd = [
             "docker",
