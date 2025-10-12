@@ -3,6 +3,10 @@ import shutil
 import subprocess
 import uuid
 import pytest
+import time
+import re
+
+from . import docker_helpers
 
 
 def _docker_available() -> bool:
@@ -21,12 +25,15 @@ def modhost_image_tag():
 
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     dockerfile = os.path.join(repo_root, "docker", "audio-engine", "Dockerfile")
-    stage = os.environ.get("MODHOST_TEST_STAGE", "builder").lower()
+    # Default to runtime to match README smoke-test usage
+    stage = os.environ.get("MODHOST_TEST_STAGE", "runtime").lower()
     if stage not in ("builder", "runtime", "final"):
         stage = "builder"
 
-    tag = f"marlise-modhost-{stage}:test-{uuid.uuid4().hex[:8]}"
+    # Use a stable local image tag that matches the README smoke test
+    tag = os.environ.get("MODHOST_TEST_TAG", "marlise-audio:local")
 
+    # Build the image (builder or runtime/final). Use the same Dockerfile as README.
     if stage == "builder":
         build_cmd = [
             "docker",
@@ -60,6 +67,27 @@ def modhost_image_tag():
         subprocess.run(["docker", "rmi", "-f", tag], check=False)
     except Exception:
         pass
+
+
+@pytest.fixture(scope="session")
+def modhost_container(modhost_image_tag):
+    """Start a single runtime container for the whole test session and
+    yield (container_id, host_port, host_port_fb).
+
+    This avoids repeatedly starting/stopping containers for each test and
+    speeds up the test suite. The container is torn down at session end.
+    """
+    tag, stage = modhost_image_tag
+    # We only support runtime containers for the session fixture
+    if stage != "runtime":
+        pytest.skip("modhost_container requires MODHOST_TEST_STAGE=runtime")
+
+    # Use centralized helper to start and wait for runtime container readiness
+    container_id, host_port, host_port_fb = docker_helpers.start_runtime_container(tag)
+    try:
+        yield container_id, host_port, host_port_fb
+    finally:
+        docker_helpers.stop_container(container_id)
 
 
 @pytest.fixture(scope="session")
