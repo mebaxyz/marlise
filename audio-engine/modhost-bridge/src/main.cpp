@@ -27,7 +27,7 @@
 namespace {
 
 // Default configuration constants
-const std::string DEFAULT_MOD_HOST_HOST = "localhost";
+const std::string DEFAULT_MOD_HOST_HOST = "127.0.0.1";
 const uint16_t DEFAULT_MOD_HOST_PORT = 5555;
 const uint16_t DEFAULT_MOD_HOST_FEEDBACK_PORT = 5556;
 const std::string DEFAULT_ZMQ_REP_ADDR = "tcp://127.0.0.1:6000";
@@ -183,6 +183,10 @@ int main(int argc, char* argv[]) {
         // Create ZeroMQ context
         zmq::context_t zmq_context(1);
 
+        // Create and start health monitor BEFORE waiting for mod-host
+        modhost_bridge::HealthMonitor health_monitor(zmq_context, zmq_health_addr, health_state);
+        health_monitor.start();
+
         // Auto-build and auto-start behavior has been removed. The bridge expects
         // mod-host to be started (and JACK available) by orchestration or manually.
         spdlog::info("Auto-build/auto-start of mod-host is disabled. Ensure mod-host is started separately.");
@@ -202,14 +206,12 @@ int main(int argc, char* argv[]) {
         auto command_service = std::make_shared<modhost_bridge::CommandService>(
             zmq_context, zmq_rep_addr, mod_host_host, mod_host_port,
             plugin_manager, audio_system_manager, health_state);
-        modhost_bridge::HealthMonitor health_monitor(zmq_context, zmq_health_addr, health_state);
 
         // Initialize plugin manager
         plugin_manager->initialize();
 
         feedback_reader.start();
         command_service->start();
-        health_monitor.start();
 
         spdlog::info("All services started successfully");
 

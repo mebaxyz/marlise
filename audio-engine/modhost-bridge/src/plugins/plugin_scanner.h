@@ -6,8 +6,9 @@
 #include <vector>
 #include <memory>
 
+// Include MOD utils header
 extern "C" {
-#include "utils.h"
+#include "../../../utils/utils.h"
 }
 
 namespace modhost_bridge {

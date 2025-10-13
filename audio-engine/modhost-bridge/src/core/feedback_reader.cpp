@@ -162,7 +162,8 @@ bool FeedbackReader::connect_to_modhost() {
     struct addrinfo hints;
     struct addrinfo* res = nullptr;
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;
+    // Prefer IPv4 to avoid IPv6/localhost resolution issues in Docker host-networked tests
+    hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
 
     std::string port_str = std::to_string(mod_host_feedback_port_);
@@ -171,6 +172,17 @@ bool FeedbackReader::connect_to_modhost() {
         for (struct addrinfo* ai = res; ai != nullptr; ai = ai->ai_next) {
             int s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
             if (s < 0) continue;
+
+            // Log attempted address for diagnostics
+            char addrbuf[INET6_ADDRSTRLEN] = {0};
+            if (ai->ai_family == AF_INET) {
+                struct sockaddr_in* sa = reinterpret_cast<struct sockaddr_in*>(ai->ai_addr);
+                inet_ntop(AF_INET, &sa->sin_addr, addrbuf, sizeof(addrbuf));
+            } else if (ai->ai_family == AF_INET6) {
+                struct sockaddr_in6* sa6 = reinterpret_cast<struct sockaddr_in6*>(ai->ai_addr);
+                inet_ntop(AF_INET6, &sa6->sin6_addr, addrbuf, sizeof(addrbuf));
+            }
+            spdlog::debug("FeedbackReader trying connect to %s:%s", addrbuf, port_str.c_str());
 
             // Set receive timeout to allow checking shutdown flag
             struct timeval timeout;

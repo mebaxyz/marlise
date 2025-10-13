@@ -89,9 +89,10 @@ def modhost_container(modhost_image_tag):
         pytest.skip("modhost_container requires MODHOST_TEST_STAGE=runtime")
 
     # Use centralized helper to start and wait for runtime container readiness
-    container_id, host_port, host_port_fb = docker_helpers.start_runtime_container(tag)
+    container_id, host_port, host_port_fb, host_port_zmq, host_port_pub, host_port_health = docker_helpers.start_runtime_container(tag)
     try:
-        yield container_id, host_port, host_port_fb
+        # Yield both TCP ports and the ZeroMQ bridge ports for downstream tests
+        yield container_id, host_port, host_port_fb, host_port_zmq, host_port_pub, host_port_health
     finally:
         docker_helpers.stop_container(container_id)
 

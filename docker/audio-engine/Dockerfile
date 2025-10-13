@@ -1,5 +1,5 @@
 # Copied from deployment/docker/Dockerfile
-FROM debian:trixie-slim AS builder
+FROM debian:trixie AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install build dependencies (include LV2 and plugin host headers)
@@ -50,8 +50,10 @@ RUN if [ -f Makefile ]; then \
 
 # Build utils library required by modhost-bridge
 WORKDIR /src/utils
+# Remove any build artifacts that may have been copied from the host (avoids CMakeCache path mismatch)
 RUN if [ -f CMakeLists.txt ]; then \
-            echo "Found CMakeLists.txt in utils; building..."; \
+            echo "Found CMakeLists.txt in utils; cleaning any preexisting build directory..."; \
+            rm -rf build || true; \
             mkdir -p build && cd build && cmake .. && make -j$(nproc) && cp libmod_utils.* ..; \
         else \
             echo "ERROR: No CMakeLists.txt found in utils; aborting Docker build"; \
@@ -60,7 +62,14 @@ RUN if [ -f CMakeLists.txt ]; then \
 
 # Build modhost-bridge (cmake)
 WORKDIR /src/modhost-bridge
-RUN mkdir -p build && cd build && cmake .. && make -j$(nproc)
+RUN if [ -f CMakeLists.txt ]; then \
+            echo "Found CMakeLists.txt in modhost-bridge; cleaning any preexisting build directory..."; \
+            rm -rf build || true; \
+            mkdir -p build && cd build && cmake .. && make -j$(nproc); \
+        else \
+            echo "ERROR: No CMakeLists.txt found in modhost-bridge; aborting Docker build"; \
+            exit 1; \
+        fi
 
 # Install stage: copy built binaries into a single prefix
 RUN mkdir -p /opt/marlise/bin
@@ -80,13 +89,14 @@ RUN mkdir -p /opt/marlise/lib
 RUN cp /src/utils/libmod_utils.* /opt/marlise/lib/
 
 
-FROM debian:trixie-slim AS runtime
+FROM debian:trixie AS runtime
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     jackd2 \
     libjack-jackd2-0 \
+    python3-zmq \
     libzmq5 \
     libjsoncpp26 \
     liblilv-0-0 \

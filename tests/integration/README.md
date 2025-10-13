@@ -25,5 +25,22 @@ Activate the test virtualenv (if used) and run pytest. Example:
 pytest tests/integration -q
 ```
 
+Quick tips for running audio-engine integration tests
+----------------------------------------------------
+- Use host networking for the container during local integration tests to
+  avoid network namespace mismatches (recommended):
+
+  MODHOST_TEST_USE_HOST_NETWORK=1 pytest tests/integration/...
+
+- If you already have a `modhost-bridge` running on the host (for local
+  debugging), prevent the container from starting its own bridge to avoid
+  port conflicts by setting:
+
+  SKIP_BRIDGE_IN_CONTAINER=1
+
+  The container entrypoint will skip starting the in-container bridge when
+  this variable is set. This is useful for manual debugging or when a
+  separate bridge process is preferred.
+
 Notes
 - The session fixture `modhost_container` speeds up the suite by starting a single container for the entire pytest session. Tests requiring a fresh container should request their own container helper instead of the session fixture.

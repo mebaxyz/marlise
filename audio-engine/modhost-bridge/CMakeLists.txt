@@ -15,11 +15,11 @@ if(NOT ZMQ_INCLUDE_DIR OR NOT ZMQ_LIBRARY)
 endif()
 
 # Find jsoncpp
-find_path(JSONCPP_INCLUDE_DIR jsoncpp/json/json.h PATHS /usr/include)
+find_path(JSONCPP_INCLUDE_DIR json/json.h PATHS /usr/include /usr/include/jsoncpp)
 find_library(JSONCPP_LIBRARY jsoncpp PATHS /usr/lib /usr/local/lib /usr/lib/x86_64-linux-gnu /usr/lib64)
 
 if(NOT JSONCPP_INCLUDE_DIR OR NOT JSONCPP_LIBRARY)
-    message(FATAL_ERROR "jsoncpp not found. Please install libjsoncpp-dev")
+    message(FATAL_ERROR "jsoncpp not found. Please install jsoncpp (Arch) or libjsoncpp-dev (Debian/Ubuntu)")
 endif()
 
 # Find spdlog
@@ -38,7 +38,7 @@ endif()
 
 # Find MOD utils library
 find_path(MOD_UTILS_INCLUDE_DIR utils.h PATHS ${CMAKE_SOURCE_DIR}/../utils)
-find_library(MOD_UTILS_LIBRARY mod_utils PATHS ${CMAKE_SOURCE_DIR}/../utils)
+find_library(MOD_UTILS_LIBRARY mod_utils PATHS ${CMAKE_SOURCE_DIR}/../utils/build ${CMAKE_SOURCE_DIR}/../utils)
 
 if(NOT MOD_UTILS_INCLUDE_DIR OR NOT MOD_UTILS_LIBRARY)
     message(FATAL_ERROR "MOD utils library not found. Please build the utils library first. MOD_UTILS_INCLUDE_DIR: ${MOD_UTILS_INCLUDE_DIR}, MOD_UTILS_LIBRARY: ${MOD_UTILS_LIBRARY}")
@@ -53,7 +53,8 @@ endif()
 
 # Include directories
 include_directories(${ZMQ_INCLUDE_DIR})
-include_directories(/usr/include/jsoncpp)
+include_directories(${JSONCPP_INCLUDE_DIR})
+include_directories(${JSONCPP_INCLUDE_DIR}/jsoncpp)  # For Debian/Ubuntu compatibility
 include_directories(${SPDLOG_INCLUDE_DIR})
 include_directories(${FMT_INCLUDE_DIR})
 include_directories(${MOD_UTILS_INCLUDE_DIR})
