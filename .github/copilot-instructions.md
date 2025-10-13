@@ -49,6 +49,8 @@ marlise/
 
 > NOTE: When you change code or add features, please update the top-level `CHANGELOG.md` and this instructions file to reflect the changes. Keep docs and instructions in sync with code.
 
+> TEST PLAN MAINTENANCE: When you add an integration test or expose a new RPC/handler, update the integration test plan file `tests/INTEGRATION_TEST_PLAN.md` and add an entry to this instructions file describing the new test. If you introduce a new public RPC or function that affects cross-process behavior, mark it as "untested" in the plan until a test is added. Consider adding a skipped (xfail) test to highlight missing coverage in CI.
+
 
 ## Architecture
 

@@ -1,0 +1,16 @@
+{
+  "name": "test-preset-with-modgui",
+  "description": "Preset with MOD GUI metadata for integration tests",
+  "parameters": {
+    "gain": 0.7,
+    "mix": 0.5
+  },
+  "mod_gui": {
+    "layout": {
+      "knobs": [
+        {"id": "gain", "x": 10, "y": 20},
+        {"id": "mix", "x": 40, "y": 20}
+      ]
+    }
+  }
+}

@@ -107,6 +107,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     socat \
     curl \
     guitarix \
+    calf-plugins \
+    swh-plugins \
+    tap-plugins \
+    timgm6mb-soundfont \
     && rm -rf /var/lib/apt/lists/*
 
 # Verify jack_lsp is available in the runtime image; fail build early if not present
