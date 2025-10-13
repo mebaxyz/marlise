@@ -41,6 +41,15 @@ marlise/
 └── README.md            # Project documentation
 ```
 
+## Recent changes
+
+- [Unreleased] - 2025-10-14
+    - modhost-bridge: delegate JACK connect/disconnect commands to mod-host and expose numeric `host_instance`.
+    - Bridge: auto-initialize JACK at startup and add integration test that validates plugin chaining and JACK connections.
+
+> NOTE: When you change code or add features, please update the top-level `CHANGELOG.md` and this instructions file to reflect the changes. Keep docs and instructions in sync with code.
+
+
 ## Architecture
 
 The system uses a 4-layer architecture with ZeroMQ-based communication:
