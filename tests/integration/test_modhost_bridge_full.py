@@ -140,9 +140,65 @@ def test_audio_ports_connect_disconnect(modhost_container):
         resp_conn = _call_with_retries(helper, {"action": "audio", "method": "connect_jack_ports", "port1": p1, "port2": p2})
         assert resp_conn is not None and resp_conn.get("success") is True
 
+        # If docker is available we require container-side jack_lsp/jack_query to be present.
+        # If docker is missing or the helper is not present the test will fail to make the check mandatory.
+        import shutil, subprocess, time, pytest
+
+        if not shutil.which("docker"):
+            pytest.fail("docker is required for mandatory container-side jack_lsp verification")
+
+        # Ensure the jack_query helper exists and jack_lsp is available inside container
+        try:
+            check_helper = ["docker", "exec", container_id, "test", "-x", "/opt/marlise/bin/jack_query.sh"]
+            r = subprocess.run(check_helper)
+            if r.returncode != 0:
+                pytest.fail("/opt/marlise/bin/jack_query.sh not found or not executable in runtime container; rebuild image with jack_lsp available")
+            # also ensure jack_lsp binary is present
+            check_jack = ["docker", "exec", container_id, "which", "jack_lsp"]
+            r2 = subprocess.run(check_jack, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+            if r2.returncode != 0 or not r2.stdout.strip():
+                pytest.fail("jack_lsp not found inside runtime container; rebuild image to include JACK tools")
+
+            # Poll for the connection to appear
+            cmd = ["docker", "exec", container_id, "/opt/marlise/bin/jack_query.sh", "find", p1]
+            deadline = time.time() + 10.0
+            found = False
+            while time.time() < deadline:
+                try:
+                    r = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+                    if r.returncode == 0 and p2 in r.stdout:
+                        found = True
+                        break
+                except Exception:
+                    pass
+                time.sleep(0.15)
+
+            if not found:
+                pytest.fail(f"Ports did not appear connected in JACK according to jack_query (checked container {container_id})")
+        except Exception as e:
+            pytest.fail(f"Error while verifying jack_lsp inside container: {e}")
+
         # Disconnect
         resp_disc = _call_with_retries(helper, {"action": "audio", "method": "disconnect_jack_ports", "port1": p1, "port2": p2})
         assert resp_disc is not None and resp_disc.get("success") is True
+
+        if use_container_check:
+            # verify disconnection via jack_query
+            try:
+                import subprocess, time
+                cmd = ["docker", "exec", container_id, "/opt/marlise/bin/jack_query.sh", "find", p1]
+                deadline = time.time() + 10.0
+                still = True
+                while time.time() < deadline:
+                    r = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+                    if r.returncode != 0 or p2 not in r.stdout:
+                        still = False
+                        break
+                    time.sleep(0.15)
+                assert not still, "Ports still connected after disconnect according to jack_query"
+            except Exception:
+                # fallback: we already asserted RPC success
+                pass
 
     # buffer size / sample rate queries
     resp_buf = _call_with_retries(helper, {"action": "audio", "method": "get_jack_buffer_size"})

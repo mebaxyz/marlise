@@ -108,6 +108,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     guitarix \
     && rm -rf /var/lib/apt/lists/*
 
+# Verify jack_lsp is available in the runtime image; fail build early if not present
+RUN if ! command -v jack_lsp >/dev/null 2>&1; then echo "jack_lsp is not available in runtime image; please ensure JACK tools are installed" >&2; exit 1; fi
+
 # Create runtime directories and user
 ENV MARLISE_USER=marlise
 ENV MARLISE_UID=1000
