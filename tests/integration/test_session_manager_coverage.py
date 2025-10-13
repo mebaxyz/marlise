@@ -101,14 +101,23 @@ def test_bridge_session_manager_coverage(modhost_container):
     if sys_capture and sys_playback:
         r1 = _call_with_retries(helper, {"action": "audio", "method": "connect_jack_ports", "port1": sys_capture, "port2": port_a_in}, retries=3)
         assert r1 and r1.get("success")
+        # verify sys_capture connected to port_a_in
+        check = subprocess.run(["docker", "exec", container_id, "jack_lsp", "-c", port_a_in], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+        assert sys_capture in check.stdout
 
         # Chain A_out -> B_in
         r2 = _call_with_retries(helper, {"action": "audio", "method": "connect_jack_ports", "port1": port_a_out, "port2": port_b_in}, retries=3)
         assert r2 and r2.get("success")
+        # verify a_out connected to b_in
+        check2 = subprocess.run(["docker", "exec", container_id, "jack_lsp", "-c", port_b_in], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+        assert port_a_out in check2.stdout
 
         # B_out -> system playback
         r3 = _call_with_retries(helper, {"action": "audio", "method": "connect_jack_ports", "port1": port_b_out, "port2": sys_playback}, retries=3)
         assert r3 and r3.get("success")
+        # verify b_out connected to system playback
+        check3 = subprocess.run(["docker", "exec", container_id, "jack_lsp", "-c", sys_playback], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+        assert port_b_out in check3.stdout
 
     # Verify via jack_lsp that ports exist (connectivity is best-effort here)
     jl = subprocess.run(["docker", "exec", container_id, "jack_lsp"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
