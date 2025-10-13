@@ -210,6 +210,11 @@ int main(int argc, char* argv[]) {
         // Initialize plugin manager
         plugin_manager->initialize();
 
+        // Initialize JACK audio system
+        if (!audio_system_manager->init()) {
+            spdlog::warn("Failed to initialize JACK audio system - audio operations may not work");
+        }
+
         feedback_reader.start();
         command_service->start();
 

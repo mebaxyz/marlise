@@ -165,14 +165,41 @@ PluginResponse PluginManager::process_load_plugin(const LoadPluginRequest& req) 
 
     const PluginInfo& plugin_info = plugin_it->second;
 
-    // Generate instance ID
+    // Generate instance ID for bridge tracking
     std::string instance_id = generate_instance_id();
+    
+    // Get numeric instance for mod-host
+    int numeric_instance = get_next_numeric_instance();
 
-    // Add to mod-host
-    std::string command = "add " + req.uri + " " + instance_id;
+    // Add to mod-host using the numeric instance
+    // mod-host command: add <uri> <instance_number>
+    // mod-host returns the instance number on success, or negative error code on failure
+    std::string command = "add " + req.uri + " " + std::to_string(numeric_instance);
     auto result = send_to_modhost(command);
     if (!result) {
         throw std::runtime_error("Failed to add plugin to mod-host");
+    }
+
+    // Parse the returned instance number from mod-host response
+    int returned_instance = -1;
+    try {
+        std::string resp = *result;
+        // Remove "resp " prefix if present
+        size_t pos = resp.find("resp ");
+        if (pos != std::string::npos) {
+            resp = resp.substr(pos + 5);
+        }
+        // Parse the first integer
+        returned_instance = std::stoi(resp);
+        
+        if (returned_instance < 0) {
+            throw std::runtime_error("mod-host returned error code: " + std::to_string(returned_instance));
+        }
+        
+        spdlog::info("mod-host confirmed plugin loaded with instance {}", returned_instance);
+    } catch (const std::exception& e) {
+        spdlog::error("Failed to parse mod-host response '{}': {}", *result, e.what());
+        throw std::runtime_error("Failed to parse mod-host response");
     }
 
     // Create plugin instance
@@ -187,6 +214,11 @@ PluginResponse PluginManager::process_load_plugin(const LoadPluginRequest& req) 
     instance.x = req.x;
     instance.y = req.y;
     instance.enabled = true;
+    instance.host_instance = returned_instance;  // Use the instance number confirmed by mod-host
+    
+    // Log the successful load
+    spdlog::info("Loaded plugin {} with instance_id={} and host_instance={}", 
+                 req.uri, instance_id, returned_instance);
 
     // Set initial parameters
     for (const auto& [param, value] : req.parameters) {
@@ -791,6 +823,13 @@ std::string PluginManager::generate_instance_id() {
     }
 
     return ss.str();
+}
+
+int PluginManager::get_next_numeric_instance() {
+    // Find the next available numeric instance slot for mod-host
+    // mod-host expects an integer instance ID
+    static int next_instance = 0;
+    return next_instance++;
 }
 
 } // namespace modhost_bridge

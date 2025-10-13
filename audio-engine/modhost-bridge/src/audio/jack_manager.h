@@ -2,6 +2,9 @@
 #include "../utils/types.h"
 #include <spdlog/spdlog.h>
 #include <cstring>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
 // Include MOD utils headers
 extern "C" {
@@ -15,7 +18,11 @@ namespace modhost_bridge {
  */
 class JackManager : public AudioSystemManager {
 public:
-    JackManager() : initialized_(false) {}
+    JackManager() : initialized_(false), mod_host_host_("127.0.0.1"), mod_host_port_(5555) {}
+    
+    JackManager(const std::string& mod_host_host, uint16_t mod_host_port) 
+        : initialized_(false), mod_host_host_(mod_host_host), mod_host_port_(mod_host_port) {}
+    
     ~JackManager() override {
         if (initialized_) {
             close();
@@ -181,7 +188,30 @@ public:
             return false;
         }
 
-        return ::connect_jack_ports(port1.c_str(), port2.c_str());
+        // Send connect command to mod-host
+        std::string command = "connect " + port1 + " " + port2;
+        spdlog::info("Sending to mod-host: {}", command);
+        auto response = send_to_modhost(command);
+        spdlog::info("Received from mod-host: '{}'", response ? *response : "no response");
+        
+        if (!response) {
+            spdlog::error("Failed to connect ports {} -> {}: no response from mod-host", port1, port2);
+            return false;
+        }
+        
+        // Check for success (resp 0) or any response starting with "resp"
+        // The response may have trailing newlines or whitespace
+        std::string resp_str = *response;
+        // Trim whitespace
+        resp_str.erase(resp_str.find_last_not_of(" \n\r\t") + 1);
+        
+        if (resp_str.find("resp 0") == std::string::npos) {
+            spdlog::error("Failed to connect ports {} -> {}: {}", port1, port2, resp_str);
+            return false;
+        }
+        
+        spdlog::info("Successfully connected ports {} -> {}", port1, port2);
+        return true;
     }
 
     bool connect_midi_output_ports(const std::string& port) override {
@@ -199,7 +229,15 @@ public:
             return false;
         }
 
-        return ::disconnect_jack_ports(port1.c_str(), port2.c_str());
+        // Send disconnect command to mod-host
+        std::string command = "disconnect " + port1 + " " + port2;
+        auto response = send_to_modhost(command);
+        if (!response || response->find("resp 0") == std::string::npos) {
+            spdlog::error("Failed to disconnect ports {} -> {}: {}", port1, port2,
+                         response ? *response : "no response");
+            return false;
+        }
+        return true;
     }
 
     bool disconnect_all_ports(const std::string& port) override {
@@ -208,7 +246,15 @@ public:
             return false;
         }
 
-        return ::disconnect_all_jack_ports(port.c_str());
+        // Send disconnect_all command to mod-host
+        std::string command = "disconnect_all " + port;
+        auto response = send_to_modhost(command);
+        if (!response || response->find("resp 0") == std::string::npos) {
+            spdlog::error("Failed to disconnect all ports for {}: {}", port,
+                         response ? *response : "no response");
+            return false;
+        }
+        return true;
     }
 
     void reset_xruns() override {
@@ -225,7 +271,56 @@ public:
     }
 
 private:
+    /**
+     * Send command to mod-host and get response
+     */
+    std::optional<std::string> send_to_modhost(const std::string& command) {
+        int sock = socket(AF_INET, SOCK_STREAM, 0);
+        if (sock < 0) {
+            spdlog::error("Failed to create socket for mod-host command");
+            return std::nullopt;
+        }
+
+        struct sockaddr_in serv_addr;
+        serv_addr.sin_family = AF_INET;
+        serv_addr.sin_port = htons(mod_host_port_);
+        if (inet_pton(AF_INET, mod_host_host_.c_str(), &serv_addr.sin_addr) <= 0) {
+            ::close(sock);
+            spdlog::error("Invalid mod-host address: {}", mod_host_host_);
+            return std::nullopt;
+        }
+
+        if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+            ::close(sock);
+            spdlog::error("Failed to connect to mod-host at {}:{}", mod_host_host_, mod_host_port_);
+            return std::nullopt;
+        }
+
+        // Send command
+        std::string cmd_with_newline = command + "\n";
+        ssize_t sent = send(sock, cmd_with_newline.c_str(), cmd_with_newline.length(), 0);
+        if (sent < 0) {
+            ::close(sock);
+            spdlog::error("Failed to send command to mod-host");
+            return std::nullopt;
+        }
+
+        // Read response
+        char buffer[1024] = {0};
+        ssize_t received = recv(sock, buffer, sizeof(buffer) - 1, 0);
+        ::close(sock);
+
+        if (received < 0) {
+            spdlog::error("Failed to receive response from mod-host");
+            return std::nullopt;
+        }
+
+        return std::string(buffer, received);
+    }
+
     bool initialized_;
+    std::string mod_host_host_;
+    uint16_t mod_host_port_;
 };
 
 } // namespace modhost_bridge

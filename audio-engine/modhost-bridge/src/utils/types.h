@@ -217,6 +217,7 @@ struct PluginInstance {
     bool enabled = true;
     std::string preset;
     std::chrono::system_clock::time_point created_at;
+    std::optional<int> host_instance; // numeric instance id assigned by mod-host (effect_<N>)
 
     PluginInstance() : created_at(std::chrono::system_clock::now()) {}
 };

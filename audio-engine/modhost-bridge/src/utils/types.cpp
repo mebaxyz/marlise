@@ -129,6 +129,12 @@ Json::Value to_json(const PluginInstance& instance) {
     ports["control_outputs"] = static_cast<int>(instance.ports.control_outputs.size());
     root["ports"] = ports;
 
+    if (instance.host_instance.has_value()) {
+        root["host_instance"] = instance.host_instance.value();
+    } else {
+        root["host_instance"] = Json::nullValue;
+    }
+
     // Convert timestamp
     auto time_t = std::chrono::system_clock::to_time_t(instance.created_at);
     std::tm tm = *std::gmtime(&time_t);

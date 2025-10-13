@@ -91,6 +91,11 @@ private:
      */
     std::string generate_instance_id();
 
+    /**
+     * Get the next available numeric instance for mod-host
+     */
+    int get_next_numeric_instance();
+
     // Command processing methods
     PluginResponse process_load_plugin(const LoadPluginRequest& req);
     PluginResponse process_unload_plugin(const UnloadPluginRequest& req);

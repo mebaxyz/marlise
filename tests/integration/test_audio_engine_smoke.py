@@ -25,8 +25,9 @@ def test_modhost_smoke(modhost_image_tag):
 
 
 def test_modhost_ping_socket(modhost_container):
-    # modhost_container now yields (container_id, host_port, host_port_fb, host_port_zmq)
-    container_id, host_port, host_port_fb, _host_port_zmq = modhost_container
+    # modhost_container yields (container_id, cmd_port, fb_port, zmq_cmd_port, zmq_pub_port, zmq_health_port)
+    # Older tests expected a 4-tuple; accept the 6-tuple and use the ports we need.
+    container_id, host_port, host_port_fb, host_port_zmq, _host_port_pub, _host_port_health = modhost_container
 
     # Try to connect command and feedback sockets, then send a ping and read
     # response. Both sockets must be connected before sending commands.
