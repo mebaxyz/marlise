@@ -96,6 +96,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     jackd2 \
     libjack-jackd2-0 \
+    jack-tools \
     python3-zmq \
     libzmq5 \
     libjsoncpp26 \
@@ -105,6 +106,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     alsa-utils \
     socat \
     curl \
+    guitarix \
     && rm -rf /var/lib/apt/lists/*
 
 # Create runtime directories and user
@@ -136,6 +138,10 @@ RUN chmod +x /opt/marlise/entrypoint.sh
 
 # Copy supervisord config
 RUN mkdir -p /opt/logs || true
+
+# Copy helper scripts into image
+COPY scripts/jack_query.sh /opt/marlise/bin/jack_query.sh
+RUN chmod +x /opt/marlise/bin/jack_query.sh || true
 
 # Default entrypoint uses tini and our entrypoint wrapper to start jackd, bridge, and exec mod-host
 ENTRYPOINT ["/bin/bash", "/opt/marlise/entrypoint.sh"]
