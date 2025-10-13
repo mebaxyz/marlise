@@ -96,7 +96,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     jackd2 \
     libjack-jackd2-0 \
-    jack-tools \
     python3-zmq \
     libzmq5 \
     libjsoncpp26 \
